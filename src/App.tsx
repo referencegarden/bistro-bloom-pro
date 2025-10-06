@@ -9,6 +9,7 @@ import Products from "./pages/Products";
 import Sales from "./pages/Sales";
 import Purchases from "./pages/Purchases";
 import Categories from "./pages/Categories";
+import Suppliers from "./pages/Suppliers";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,14 @@ const App = () => (
             element={
               <Layout>
                 <Categories />
+              </Layout>
+            }
+          />
+          <Route
+            path="/suppliers"
+            element={
+              <Layout>
+                <Suppliers />
               </Layout>
             }
           />

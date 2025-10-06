@@ -18,10 +18,13 @@ interface Product {
   id: string;
   name: string;
   current_stock: number;
-  unit_price: number;
+  sales_price: number;
+  cost_price: number;
   low_stock_threshold: number;
   category_id: string | null;
+  supplier_id: string | null;
   categories?: { name: string } | null;
+  suppliers?: { name: string } | null;
 }
 
 export default function Products() {
@@ -36,7 +39,7 @@ export default function Products() {
   async function loadProducts() {
     const { data, error } = await supabase
       .from("products")
-      .select("*, categories(name)")
+      .select("*, categories(name), suppliers(name)")
       .order("name");
 
     if (error) {
@@ -89,8 +92,10 @@ export default function Products() {
             <TableRow>
               <TableHead>Name</TableHead>
               <TableHead>Category</TableHead>
+              <TableHead>Supplier</TableHead>
               <TableHead>Stock</TableHead>
-              <TableHead>Unit Price</TableHead>
+              <TableHead>Cost Price</TableHead>
+              <TableHead>Sales Price</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -100,8 +105,10 @@ export default function Products() {
               <TableRow key={product.id}>
                 <TableCell className="font-medium">{product.name}</TableCell>
                 <TableCell>{product.categories?.name || "N/A"}</TableCell>
+                <TableCell>{product.suppliers?.name || "N/A"}</TableCell>
                 <TableCell>{product.current_stock}</TableCell>
-                <TableCell>${product.unit_price.toFixed(2)}</TableCell>
+                <TableCell>{product.cost_price.toFixed(2)} DH</TableCell>
+                <TableCell>{product.sales_price.toFixed(2)} DH</TableCell>
                 <TableCell>
                   {product.current_stock <= product.low_stock_threshold ? (
                     <Badge variant="destructive">Low Stock</Badge>

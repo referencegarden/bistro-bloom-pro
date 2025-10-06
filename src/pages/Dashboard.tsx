@@ -4,6 +4,7 @@ import { StatCard } from "@/components/StatCard";
 import { Package, ShoppingCart, TrendingUp, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { DailyReportExport } from "@/components/DailyReportExport";
 
 interface DashboardStats {
   totalProducts: number;
@@ -60,9 +61,12 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-        <p className="text-muted-foreground">Overview of your restaurant inventory</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">Overview of your restaurant inventory</p>
+        </div>
+        <DailyReportExport />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -78,12 +82,12 @@ export default function Dashboard() {
         />
         <StatCard
           title="Total Sales"
-          value={`$${stats.totalSalesValue.toFixed(2)}`}
+          value={`${stats.totalSalesValue.toFixed(2)} DH`}
           icon={ShoppingCart}
         />
         <StatCard
           title="Total Purchases"
-          value={`$${stats.totalPurchasesValue.toFixed(2)}`}
+          value={`${stats.totalPurchasesValue.toFixed(2)} DH`}
           icon={TrendingUp}
         />
       </div>

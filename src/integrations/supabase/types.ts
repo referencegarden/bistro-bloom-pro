@@ -38,32 +38,38 @@ export type Database = {
       products: {
         Row: {
           category_id: string | null
+          cost_price: number
           created_at: string | null
           current_stock: number
           id: string
           low_stock_threshold: number
           name: string
-          unit_price: number
+          sales_price: number
+          supplier_id: string | null
           updated_at: string | null
         }
         Insert: {
           category_id?: string | null
+          cost_price?: number
           created_at?: string | null
           current_stock?: number
           id?: string
           low_stock_threshold?: number
           name: string
-          unit_price?: number
+          sales_price?: number
+          supplier_id?: string | null
           updated_at?: string | null
         }
         Update: {
           category_id?: string | null
+          cost_price?: number
           created_at?: string | null
           current_stock?: number
           id?: string
           low_stock_threshold?: number
           name?: string
-          unit_price?: number
+          sales_price?: number
+          supplier_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -72,6 +78,13 @@ export type Database = {
             columns: ["category_id"]
             isOneToOne: false
             referencedRelation: "categories"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "products_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -83,6 +96,7 @@ export type Database = {
           product_id: string
           purchase_date: string | null
           quantity: number
+          supplier_id: string | null
           total_cost: number | null
           unit_cost: number
         }
@@ -92,6 +106,7 @@ export type Database = {
           product_id: string
           purchase_date?: string | null
           quantity: number
+          supplier_id?: string | null
           total_cost?: number | null
           unit_cost: number
         }
@@ -101,6 +116,7 @@ export type Database = {
           product_id?: string
           purchase_date?: string | null
           quantity?: number
+          supplier_id?: string | null
           total_cost?: number | null
           unit_cost?: number
         }
@@ -110,6 +126,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
             referencedColumns: ["id"]
           },
         ]
@@ -151,6 +174,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      suppliers: {
+        Row: {
+          contact: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+        }
+        Insert: {
+          contact?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+        }
+        Update: {
+          contact?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {

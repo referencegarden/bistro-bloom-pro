@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid } from "lucide-react";
+import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navigation = [
@@ -8,6 +8,7 @@ const navigation = [
   { name: "Sales", href: "/sales", icon: ShoppingCart },
   { name: "Purchases", href: "/purchases", icon: TrendingUp },
   { name: "Categories", href: "/categories", icon: LayoutGrid },
+  { name: "Suppliers", href: "/suppliers", icon: Users },
 ];
 
 export function Sidebar() {

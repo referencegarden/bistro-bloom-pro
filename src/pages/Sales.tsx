@@ -86,9 +86,9 @@ export default function Sales() {
                   {sale.products?.name || "N/A"}
                 </TableCell>
                 <TableCell>{sale.quantity}</TableCell>
-                <TableCell>${sale.unit_price.toFixed(2)}</TableCell>
+                <TableCell>{sale.unit_price.toFixed(2)} DH</TableCell>
                 <TableCell className="font-semibold">
-                  ${sale.total_price.toFixed(2)}
+                  {sale.total_price.toFixed(2)} DH
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {sale.notes || "-"}

@@ -23,12 +23,19 @@ interface Category {
   name: string;
 }
 
+interface Supplier {
+  id: string;
+  name: string;
+}
+
 interface Product {
   id: string;
   name: string;
   category_id: string | null;
+  supplier_id: string | null;
   current_stock: number;
-  unit_price: number;
+  sales_price: number;
+  cost_price: number;
   low_stock_threshold: number;
 }
 
@@ -40,16 +47,20 @@ interface ProductDialogProps {
 
 export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [formData, setFormData] = useState({
     name: "",
     category_id: "",
+    supplier_id: "",
     current_stock: 0,
-    unit_price: 0,
+    sales_price: 0,
+    cost_price: 0,
     low_stock_threshold: 10,
   });
 
   useEffect(() => {
     loadCategories();
+    loadSuppliers();
   }, []);
 
   useEffect(() => {
@@ -57,16 +68,20 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
       setFormData({
         name: product.name,
         category_id: product.category_id || "",
+        supplier_id: product.supplier_id || "",
         current_stock: product.current_stock,
-        unit_price: product.unit_price,
+        sales_price: product.sales_price,
+        cost_price: product.cost_price,
         low_stock_threshold: product.low_stock_threshold,
       });
     } else {
       setFormData({
         name: "",
         category_id: "",
+        supplier_id: "",
         current_stock: 0,
-        unit_price: 0,
+        sales_price: 0,
+        cost_price: 0,
         low_stock_threshold: 10,
       });
     }
@@ -77,12 +92,18 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
     setCategories(data || []);
   }
 
+  async function loadSuppliers() {
+    const { data } = await supabase.from("suppliers").select("*").order("name");
+    setSuppliers(data || []);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
     const data = {
       ...formData,
       category_id: formData.category_id || null,
+      supplier_id: formData.supplier_id || null,
     };
 
     if (product) {
@@ -146,6 +167,26 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
             </Select>
           </div>
           <div>
+            <Label htmlFor="supplier">Supplier</Label>
+            <Select
+              value={formData.supplier_id}
+              onValueChange={(value) =>
+                setFormData({ ...formData, supplier_id: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select supplier" />
+              </SelectTrigger>
+              <SelectContent>
+                {suppliers.map((sup) => (
+                  <SelectItem key={sup.id} value={sup.id}>
+                    {sup.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
             <Label htmlFor="stock">Current Stock</Label>
             <Input
               id="stock"
@@ -159,15 +200,29 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
             />
           </div>
           <div>
-            <Label htmlFor="price">Unit Price ($)</Label>
+            <Label htmlFor="cost_price">Cost Price (DH)</Label>
             <Input
-              id="price"
+              id="cost_price"
               type="number"
               step="0.01"
               min="0"
-              value={formData.unit_price}
+              value={formData.cost_price}
               onChange={(e) =>
-                setFormData({ ...formData, unit_price: Number(e.target.value) })
+                setFormData({ ...formData, cost_price: Number(e.target.value) })
+              }
+              required
+            />
+          </div>
+          <div>
+            <Label htmlFor="sales_price">Sales Price (DH)</Label>
+            <Input
+              id="sales_price"
+              type="number"
+              step="0.01"
+              min="0"
+              value={formData.sales_price}
+              onChange={(e) =>
+                setFormData({ ...formData, sales_price: Number(e.target.value) })
               }
               required
             />

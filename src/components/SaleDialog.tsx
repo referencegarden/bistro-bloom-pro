@@ -22,7 +22,7 @@ import { toast } from "sonner";
 interface Product {
   id: string;
   name: string;
-  unit_price: number;
+  sales_price: number;
   current_stock: number;
 }
 
@@ -55,7 +55,7 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
       setFormData({
         ...formData,
         product_id: productId,
-        unit_price: product.unit_price,
+        unit_price: product.sales_price,
       });
     }
   }
@@ -130,7 +130,7 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
             />
           </div>
           <div>
-            <Label htmlFor="unit_price">Unit Price ($)</Label>
+            <Label htmlFor="unit_price">Unit Price (DH)</Label>
             <Input
               id="unit_price"
               type="number"

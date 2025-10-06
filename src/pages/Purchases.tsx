@@ -22,6 +22,7 @@ interface Purchase {
   purchase_date: string;
   notes: string | null;
   products: { name: string } | null;
+  suppliers: { name: string } | null;
 }
 
 export default function Purchases() {
@@ -35,7 +36,7 @@ export default function Purchases() {
   async function loadPurchases() {
     const { data, error } = await supabase
       .from("purchases")
-      .select("*, products(name)")
+      .select("*, products(name), suppliers(name)")
       .order("purchase_date", { ascending: false });
 
     if (error) {
@@ -70,6 +71,7 @@ export default function Purchases() {
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Product</TableHead>
+              <TableHead>Supplier</TableHead>
               <TableHead>Quantity</TableHead>
               <TableHead>Unit Cost</TableHead>
               <TableHead>Total</TableHead>
@@ -85,10 +87,11 @@ export default function Purchases() {
                 <TableCell className="font-medium">
                   {purchase.products?.name || "N/A"}
                 </TableCell>
+                <TableCell>{purchase.suppliers?.name || "N/A"}</TableCell>
                 <TableCell>{purchase.quantity}</TableCell>
-                <TableCell>${purchase.unit_cost.toFixed(2)}</TableCell>
+                <TableCell>{purchase.unit_cost.toFixed(2)} DH</TableCell>
                 <TableCell className="font-semibold">
-                  ${purchase.total_cost.toFixed(2)}
+                  {purchase.total_cost.toFixed(2)} DH
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {purchase.notes || "-"}
