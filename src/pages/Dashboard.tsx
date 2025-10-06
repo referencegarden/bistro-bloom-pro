@@ -63,30 +63,30 @@ export default function Dashboard() {
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Overview of your restaurant inventory</p>
+          <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
+          <p className="text-muted-foreground">Vue d'ensemble de votre inventaire</p>
         </div>
         <DailyReportExport />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Total Products"
+          title="Total Produits"
           value={stats.totalProducts}
           icon={Package}
         />
         <StatCard
-          title="Total Stock Items"
+          title="Total Stock"
           value={stats.totalStock}
           icon={Package}
         />
         <StatCard
-          title="Total Sales"
+          title="Total Ventes"
           value={`${stats.totalSalesValue.toFixed(2)} DH`}
           icon={ShoppingCart}
         />
         <StatCard
-          title="Total Purchases"
+          title="Total Achats"
           value={`${stats.totalPurchasesValue.toFixed(2)} DH`}
           icon={TrendingUp}
         />
@@ -97,7 +97,7 @@ export default function Dashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-warning" />
-              Low Stock Alerts
+              Alertes Stock Faible
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -110,10 +110,10 @@ export default function Dashboard() {
                   <div>
                     <p className="font-medium">{product.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      Current stock: {product.current_stock} units
+                      Stock actuel: {product.current_stock} unités
                     </p>
                   </div>
-                  <Badge variant="destructive">Low Stock</Badge>
+                  <Badge variant="destructive">Stock Faible</Badge>
                 </div>
               ))}
             </div>

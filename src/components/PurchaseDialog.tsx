@@ -76,7 +76,7 @@ export function PurchaseDialog({ open, onClose }: PurchaseDialogProps) {
     e.preventDefault();
 
     if (!formData.product_id) {
-      toast.error("Please select a product");
+      toast.error("Veuillez sélectionner un produit");
       return;
     }
 
@@ -89,11 +89,11 @@ export function PurchaseDialog({ open, onClose }: PurchaseDialogProps) {
     });
 
     if (error) {
-      toast.error("Failed to record purchase");
+      toast.error("Échec d'enregistrement de l'achat");
       return;
     }
 
-    toast.success("Purchase recorded successfully");
+    toast.success("Achat enregistré avec succès");
     setFormData({ product_id: "", supplier_id: "", quantity: 1, unit_cost: 0, notes: "" });
     onClose();
   }
@@ -102,17 +102,17 @@ export function PurchaseDialog({ open, onClose }: PurchaseDialogProps) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record Purchase</DialogTitle>
+          <DialogTitle>Enregistrer Achat</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="product">Product</Label>
+            <Label htmlFor="product">Produit</Label>
             <Select
               value={formData.product_id}
               onValueChange={handleProductChange}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select product" />
+                <SelectValue placeholder="Sélectionner produit" />
               </SelectTrigger>
               <SelectContent>
                 {products.map((product) => (
@@ -124,7 +124,7 @@ export function PurchaseDialog({ open, onClose }: PurchaseDialogProps) {
             </Select>
           </div>
           <div>
-            <Label htmlFor="supplier">Supplier</Label>
+            <Label htmlFor="supplier">Fournisseur</Label>
             <Select
               value={formData.supplier_id}
               onValueChange={(value) =>
@@ -132,7 +132,7 @@ export function PurchaseDialog({ open, onClose }: PurchaseDialogProps) {
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select supplier (optional)" />
+                <SelectValue placeholder="Sélectionner fournisseur (optionnel)" />
               </SelectTrigger>
               <SelectContent>
                 {suppliers.map((supplier) => (
@@ -144,7 +144,7 @@ export function PurchaseDialog({ open, onClose }: PurchaseDialogProps) {
             </Select>
           </div>
           <div>
-            <Label htmlFor="quantity">Quantity</Label>
+            <Label htmlFor="quantity">Quantité</Label>
             <Input
               id="quantity"
               type="number"
@@ -157,7 +157,7 @@ export function PurchaseDialog({ open, onClose }: PurchaseDialogProps) {
             />
           </div>
           <div>
-            <Label htmlFor="unit_cost">Unit Cost (DH)</Label>
+            <Label htmlFor="unit_cost">Coût Unitaire (DH)</Label>
             <Input
               id="unit_cost"
               type="number"
@@ -171,19 +171,19 @@ export function PurchaseDialog({ open, onClose }: PurchaseDialogProps) {
             />
           </div>
           <div>
-            <Label htmlFor="notes">Notes (optional)</Label>
+            <Label htmlFor="notes">Notes (optionnel)</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Add notes about this purchase..."
+              placeholder="Ajouter des notes sur cet achat..."
             />
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              Annuler
             </Button>
-            <Button type="submit">Record Purchase</Button>
+            <Button type="submit">Enregistrer Achat</Button>
           </div>
         </form>
       </DialogContent>

@@ -89,11 +89,11 @@ export function SupplierDialog({ open, onClose, supplier }: SupplierDialogProps)
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{supplier ? "Edit Supplier" : "Add Supplier"}</DialogTitle>
+          <DialogTitle>{supplier ? "Modifier Fournisseur" : "Ajouter Fournisseur"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">Nom</Label>
             <Input
               id="name"
               value={formData.name}
@@ -102,7 +102,7 @@ export function SupplierDialog({ open, onClose, supplier }: SupplierDialogProps)
             />
           </div>
           <div>
-            <Label htmlFor="contact">Contact Person</Label>
+            <Label htmlFor="contact">Personne Contact</Label>
             <Input
               id="contact"
               value={formData.contact}
@@ -110,7 +110,7 @@ export function SupplierDialog({ open, onClose, supplier }: SupplierDialogProps)
             />
           </div>
           <div>
-            <Label htmlFor="phone">Phone</Label>
+            <Label htmlFor="phone">Téléphone</Label>
             <Input
               id="phone"
               value={formData.phone}
@@ -128,9 +128,9 @@ export function SupplierDialog({ open, onClose, supplier }: SupplierDialogProps)
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              Annuler
             </Button>
-            <Button type="submit">{supplier ? "Update" : "Create"}</Button>
+            <Button type="submit">{supplier ? "Modifier" : "Créer"}</Button>
           </div>
         </form>
       </DialogContent>

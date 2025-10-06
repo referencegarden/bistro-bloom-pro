@@ -71,12 +71,12 @@ export default function Suppliers() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Suppliers</h1>
-          <p className="text-muted-foreground">Manage your suppliers</p>
+          <h1 className="text-3xl font-bold tracking-tight">Fournisseurs</h1>
+          <p className="text-muted-foreground">Gérer vos fournisseurs</p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Add Supplier
+          Ajouter Fournisseur
         </Button>
       </div>
 
@@ -84,9 +84,9 @@ export default function Suppliers() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Contact Person</TableHead>
-              <TableHead>Phone</TableHead>
+              <TableHead>Nom</TableHead>
+              <TableHead>Personne Contact</TableHead>
+              <TableHead>Téléphone</TableHead>
               <TableHead>Email</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -104,14 +104,14 @@ export default function Suppliers() {
                     size="sm"
                     onClick={() => handleEdit(supplier)}
                   >
-                    Edit
+                    Modifier
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDelete(supplier.id)}
                   >
-                    Delete
+                    Supprimer
                   </Button>
                 </TableCell>
               </TableRow>

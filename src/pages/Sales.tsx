@@ -55,12 +55,12 @@ export default function Sales() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Sales</h1>
-          <p className="text-muted-foreground">Record product sales</p>
+          <h1 className="text-3xl font-bold tracking-tight">Ventes</h1>
+          <p className="text-muted-foreground">Enregistrer les ventes</p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Record Sale
+          Enregistrer Vente
         </Button>
       </div>
 
@@ -69,9 +69,9 @@ export default function Sales() {
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>Quantity</TableHead>
-              <TableHead>Unit Price</TableHead>
+              <TableHead>Produit</TableHead>
+              <TableHead>Quantité</TableHead>
+              <TableHead>Prix Unitaire</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Notes</TableHead>
             </TableRow>

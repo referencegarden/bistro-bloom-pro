@@ -69,12 +69,12 @@ export default function Categories() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Categories</h1>
-          <p className="text-muted-foreground">Organize your products</p>
+          <h1 className="text-3xl font-bold tracking-tight">Catégories</h1>
+          <p className="text-muted-foreground">Organiser vos produits</p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Add Category
+          Ajouter Catégorie
         </Button>
       </div>
 
@@ -82,7 +82,7 @@ export default function Categories() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
+              <TableHead>Nom</TableHead>
               <TableHead>Description</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -100,14 +100,14 @@ export default function Categories() {
                     size="sm"
                     onClick={() => handleEdit(category)}
                   >
-                    Edit
+                    Modifier
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDelete(category.id)}
                   >
-                    Delete
+                    Supprimer
                   </Button>
                 </TableCell>
               </TableRow>

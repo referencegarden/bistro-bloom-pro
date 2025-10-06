@@ -113,18 +113,18 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
         .eq("id", product.id);
 
       if (error) {
-        toast.error("Failed to update product");
+        toast.error("Échec de la mise à jour du produit");
         return;
       }
-      toast.success("Product updated");
+      toast.success("Produit mis à jour");
     } else {
       const { error } = await supabase.from("products").insert(data);
 
       if (error) {
-        toast.error("Failed to create product");
+        toast.error("Échec de la création du produit");
         return;
       }
-      toast.success("Product created");
+      toast.success("Produit créé");
     }
 
     onClose();
@@ -134,11 +134,11 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{product ? "Edit Product" : "Add Product"}</DialogTitle>
+          <DialogTitle>{product ? "Modifier Produit" : "Ajouter Produit"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">Nom</Label>
             <Input
               id="name"
               value={formData.name}
@@ -147,7 +147,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
             />
           </div>
           <div>
-            <Label htmlFor="category">Category</Label>
+            <Label htmlFor="category">Catégorie</Label>
             <Select
               value={formData.category_id}
               onValueChange={(value) =>
@@ -155,7 +155,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder="Sélectionner catégorie" />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((cat) => (
@@ -167,7 +167,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
             </Select>
           </div>
           <div>
-            <Label htmlFor="supplier">Supplier</Label>
+            <Label htmlFor="supplier">Fournisseur</Label>
             <Select
               value={formData.supplier_id}
               onValueChange={(value) =>
@@ -175,7 +175,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select supplier" />
+                <SelectValue placeholder="Sélectionner fournisseur (optionnel)" />
               </SelectTrigger>
               <SelectContent>
                 {suppliers.map((sup) => (
@@ -187,7 +187,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
             </Select>
           </div>
           <div>
-            <Label htmlFor="stock">Current Stock</Label>
+            <Label htmlFor="stock">Stock Actuel</Label>
             <Input
               id="stock"
               type="number"
@@ -200,7 +200,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
             />
           </div>
           <div>
-            <Label htmlFor="cost_price">Cost Price (DH)</Label>
+            <Label htmlFor="cost_price">Prix de Revient (DH)</Label>
             <Input
               id="cost_price"
               type="number"
@@ -214,7 +214,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
             />
           </div>
           <div>
-            <Label htmlFor="sales_price">Sales Price (DH)</Label>
+            <Label htmlFor="sales_price">Prix de Vente (DH)</Label>
             <Input
               id="sales_price"
               type="number"
@@ -228,7 +228,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
             />
           </div>
           <div>
-            <Label htmlFor="threshold">Low Stock Threshold</Label>
+            <Label htmlFor="threshold">Seuil Stock Minimum</Label>
             <Input
               id="threshold"
               type="number"
@@ -245,9 +245,9 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              Annuler
             </Button>
-            <Button type="submit">{product ? "Update" : "Create"}</Button>
+            <Button type="submit">{product ? "Modifier" : "Créer"}</Button>
           </div>
         </form>
       </DialogContent>

@@ -3,12 +3,12 @@ import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users } from "luci
 import { cn } from "@/lib/utils";
 
 const navigation = [
-  { name: "Dashboard", href: "/", icon: Home },
-  { name: "Products", href: "/products", icon: Package },
-  { name: "Sales", href: "/sales", icon: ShoppingCart },
-  { name: "Purchases", href: "/purchases", icon: TrendingUp },
-  { name: "Categories", href: "/categories", icon: LayoutGrid },
-  { name: "Suppliers", href: "/suppliers", icon: Users },
+  { name: "Tableau de bord", href: "/", icon: Home },
+  { name: "Produits", href: "/products", icon: Package },
+  { name: "Ventes", href: "/sales", icon: ShoppingCart },
+  { name: "Achats", href: "/purchases", icon: TrendingUp },
+  { name: "Catégories", href: "/categories", icon: LayoutGrid },
+  { name: "Fournisseurs", href: "/suppliers", icon: Users },
 ];
 
 export function Sidebar() {

@@ -65,12 +65,12 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
 
     const product = products.find((p) => p.id === formData.product_id);
     if (!product) {
-      toast.error("Please select a product");
+      toast.error("Veuillez sélectionner un produit");
       return;
     }
 
     if (formData.quantity > product.current_stock) {
-      toast.error(`Not enough stock. Available: ${product.current_stock}`);
+      toast.error(`Stock insuffisant. Disponible: ${product.current_stock}`);
       return;
     }
 
@@ -82,11 +82,11 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
     });
 
     if (error) {
-      toast.error("Failed to record sale");
+      toast.error("Échec d'enregistrement de la vente");
       return;
     }
 
-    toast.success("Sale recorded successfully");
+    toast.success("Vente enregistrée avec succès");
     setFormData({ product_id: "", quantity: 1, unit_price: 0, notes: "" });
     onClose();
   }
@@ -95,17 +95,17 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Record Sale</DialogTitle>
+          <DialogTitle>Enregistrer Vente</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="product">Product</Label>
+            <Label htmlFor="product">Produit</Label>
             <Select
               value={formData.product_id}
               onValueChange={handleProductChange}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select product" />
+                <SelectValue placeholder="Sélectionner produit" />
               </SelectTrigger>
               <SelectContent>
                 {products.map((product) => (
@@ -117,7 +117,7 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
             </Select>
           </div>
           <div>
-            <Label htmlFor="quantity">Quantity</Label>
+            <Label htmlFor="quantity">Quantité</Label>
             <Input
               id="quantity"
               type="number"
@@ -130,7 +130,7 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
             />
           </div>
           <div>
-            <Label htmlFor="unit_price">Unit Price (DH)</Label>
+            <Label htmlFor="unit_price">Prix Unitaire (DH)</Label>
             <Input
               id="unit_price"
               type="number"
@@ -144,19 +144,19 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
             />
           </div>
           <div>
-            <Label htmlFor="notes">Notes (optional)</Label>
+            <Label htmlFor="notes">Notes (optionnel)</Label>
             <Textarea
               id="notes"
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Add notes about this sale..."
+              placeholder="Ajouter des notes sur cette vente..."
             />
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              Annuler
             </Button>
-            <Button type="submit">Record Sale</Button>
+            <Button type="submit">Enregistrer Vente</Button>
           </div>
         </form>
       </DialogContent>

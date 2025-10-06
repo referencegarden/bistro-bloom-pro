@@ -77,12 +77,12 @@ export default function Products() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-          <p className="text-muted-foreground">Manage your inventory</p>
+          <h1 className="text-3xl font-bold tracking-tight">Produits</h1>
+          <p className="text-muted-foreground">Gérer votre inventaire</p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Add Product
+          Ajouter Produit
         </Button>
       </div>
 
@@ -90,13 +90,13 @@ export default function Products() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Supplier</TableHead>
+              <TableHead>Nom</TableHead>
+              <TableHead>Catégorie</TableHead>
+              <TableHead>Fournisseur</TableHead>
               <TableHead>Stock</TableHead>
-              <TableHead>Cost Price</TableHead>
-              <TableHead>Sales Price</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead>Prix Coût</TableHead>
+              <TableHead>Prix Vente</TableHead>
+              <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -111,9 +111,9 @@ export default function Products() {
                 <TableCell>{product.sales_price.toFixed(2)} DH</TableCell>
                 <TableCell>
                   {product.current_stock <= product.low_stock_threshold ? (
-                    <Badge variant="destructive">Low Stock</Badge>
+                    <Badge variant="destructive">Stock Faible</Badge>
                   ) : (
-                    <Badge variant="secondary">In Stock</Badge>
+                    <Badge variant="secondary">En Stock</Badge>
                   )}
                 </TableCell>
                 <TableCell className="text-right space-x-2">
@@ -122,14 +122,14 @@ export default function Products() {
                     size="sm"
                     onClick={() => handleEdit(product)}
                   >
-                    Edit
+                    Modifier
                   </Button>
                   <Button
                     variant="destructive"
                     size="sm"
                     onClick={() => handleDelete(product.id)}
                   >
-                    Delete
+                    Supprimer
                   </Button>
                 </TableCell>
               </TableRow>

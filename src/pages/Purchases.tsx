@@ -56,12 +56,12 @@ export default function Purchases() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Purchases</h1>
-          <p className="text-muted-foreground">Record incoming stock</p>
+          <h1 className="text-3xl font-bold tracking-tight">Achats</h1>
+          <p className="text-muted-foreground">Enregistrer les achats</p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Record Purchase
+          Enregistrer Achat
         </Button>
       </div>
 
@@ -70,10 +70,10 @@ export default function Purchases() {
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
-              <TableHead>Product</TableHead>
-              <TableHead>Supplier</TableHead>
-              <TableHead>Quantity</TableHead>
-              <TableHead>Unit Cost</TableHead>
+              <TableHead>Produit</TableHead>
+              <TableHead>Fournisseur</TableHead>
+              <TableHead>Quantité</TableHead>
+              <TableHead>Coût Unitaire</TableHead>
               <TableHead>Total</TableHead>
               <TableHead>Notes</TableHead>
             </TableRow>

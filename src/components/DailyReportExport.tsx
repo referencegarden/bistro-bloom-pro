@@ -218,7 +218,7 @@ export function DailyReportExport({ date = new Date() }: DailyReportExportProps)
   return (
     <Button onClick={generatePDFReport} variant="outline">
       <FileDown className="mr-2 h-4 w-4" />
-      Export Daily Report
+      Exporter Rapport Journalier
     </Button>
   );
 }

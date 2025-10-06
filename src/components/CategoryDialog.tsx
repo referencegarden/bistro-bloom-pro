@@ -81,12 +81,12 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {category ? "Edit Category" : "Add Category"}
+            {category ? "Modifier Catégorie" : "Ajouter Catégorie"}
           </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">Nom</Label>
             <Input
               id="name"
               value={formData.name}
@@ -95,21 +95,21 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
             />
           </div>
           <div>
-            <Label htmlFor="description">Description (optional)</Label>
+            <Label htmlFor="description">Description (optionnel)</Label>
             <Textarea
               id="description"
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
-              placeholder="Add a description..."
+              placeholder="Ajouter une description..."
             />
           </div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
+              Annuler
             </Button>
-            <Button type="submit">{category ? "Update" : "Create"}</Button>
+            <Button type="submit">{category ? "Modifier" : "Créer"}</Button>
           </div>
         </form>
       </DialogContent>
