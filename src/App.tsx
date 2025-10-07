@@ -11,6 +11,7 @@ import Sales from "./pages/Sales";
 import Purchases from "./pages/Purchases";
 import Categories from "./pages/Categories";
 import Suppliers from "./pages/Suppliers";
+import Users from "./pages/Users";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -80,6 +81,16 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <Suppliers />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/users"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Users />
                 </Layout>
               </ProtectedRoute>
             }
