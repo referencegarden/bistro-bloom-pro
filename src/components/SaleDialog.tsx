@@ -6,6 +6,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +24,7 @@ interface Product {
   id: string;
   name: string;
   current_stock: number;
+  sales_price: number;
 }
 
 interface Employee {
@@ -60,9 +62,9 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
   }, [open]);
 
   async function loadProducts() {
-    const { data } = await supabase
+const { data } = await supabase
       .from("products")
-      .select("id, name, current_stock")
+      .select("id, name, current_stock, sales_price")
       .order("name");
     setProducts(data || []);
   }
@@ -108,12 +110,12 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
       return;
     }
 
+const unitPrice = typeof product.sales_price === "number" ? product.sales_price : 0;
     const { error } = await supabase.from("sales").insert({
       product_id: formData.product_id,
       employee_id: formData.employee_id,
       quantity: formData.quantity,
-      unit_price: null,
-      total_price: null,
+      unit_price: unitPrice,
       notes: formData.notes || null,
     });
 
@@ -129,8 +131,9 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
-        <DialogHeader>
+<DialogHeader>
           <DialogTitle>Enregistrer Sortie</DialogTitle>
+          <DialogDescription>Sélectionnez le produit, l’employé et la quantité. Le prix unitaire utilise le prix de vente du produit.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
