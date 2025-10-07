@@ -37,7 +37,10 @@ interface Product {
   sales_price: number;
   cost_price: number;
   low_stock_threshold: number;
+  unit_of_measure?: string;
 }
+
+const UNIT_OPTIONS = ["kg", "litre", "pièce", "unité", "gramme", "ml", "boîte", "paquet"];
 
 interface ProductDialogProps {
   open: boolean;
@@ -56,6 +59,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
     sales_price: 0,
     cost_price: 0,
     low_stock_threshold: 10,
+    unit_of_measure: "unité",
   });
 
   useEffect(() => {
@@ -73,6 +77,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
         sales_price: product.sales_price,
         cost_price: product.cost_price,
         low_stock_threshold: product.low_stock_threshold,
+        unit_of_measure: product.unit_of_measure || "unité",
       });
     } else {
       setFormData({
@@ -83,6 +88,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
         sales_price: 0,
         cost_price: 0,
         low_stock_threshold: 10,
+        unit_of_measure: "unité",
       });
     }
   }, [product]);
@@ -145,6 +151,26 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
             />
+          </div>
+          <div>
+            <Label htmlFor="unit_of_measure">Unité de Mesure</Label>
+            <Select
+              value={formData.unit_of_measure}
+              onValueChange={(value) =>
+                setFormData({ ...formData, unit_of_measure: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {UNIT_OPTIONS.map((unit) => (
+                  <SelectItem key={unit} value={unit}>
+                    {unit}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div>
             <Label htmlFor="category">Catégorie</Label>

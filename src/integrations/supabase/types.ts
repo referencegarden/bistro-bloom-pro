@@ -46,6 +46,7 @@ export type Database = {
           name: string
           sales_price: number
           supplier_id: string | null
+          unit_of_measure: string | null
           updated_at: string | null
         }
         Insert: {
@@ -58,6 +59,7 @@ export type Database = {
           name: string
           sales_price?: number
           supplier_id?: string | null
+          unit_of_measure?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -70,6 +72,7 @@ export type Database = {
           name?: string
           sales_price?: number
           supplier_id?: string | null
+          unit_of_measure?: string | null
           updated_at?: string | null
         }
         Relationships: [
