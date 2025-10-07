@@ -69,13 +69,11 @@ export default function Sales() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Produit</TableHead>
-              <TableHead>Employé</TableHead>
-              <TableHead>Quantité</TableHead>
-              <TableHead>Prix Unitaire</TableHead>
-              <TableHead>Total</TableHead>
-              <TableHead>Notes</TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Produit</TableHead>
+            <TableHead>Employé</TableHead>
+            <TableHead>Quantité</TableHead>
+            <TableHead>Notes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -91,10 +89,6 @@ export default function Sales() {
                   {sale.employees?.name || "-"}
                 </TableCell>
                 <TableCell>{sale.quantity}</TableCell>
-                <TableCell>{sale.unit_price.toFixed(2)} DH</TableCell>
-                <TableCell className="font-semibold">
-                  {sale.total_price.toFixed(2)} DH
-                </TableCell>
                 <TableCell className="text-muted-foreground">
                   {sale.notes || "-"}
                 </TableCell>

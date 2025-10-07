@@ -44,7 +44,7 @@ export function DailyReportExport({ date = new Date() }: DailyReportExportProps)
       );
 
       // Calculate daily sales and purchases
-      const dailySales = sales.reduce((sum, s) => sum + Number(s.total_price || 0), 0);
+      const dailySalesQuantity = sales.reduce((sum, s) => sum + s.quantity, 0);
       const dailyPurchases = purchases.reduce(
         (sum, p) => sum + Number(p.total_cost || 0),
         0
@@ -82,7 +82,7 @@ export function DailyReportExport({ date = new Date() }: DailyReportExportProps)
             </div>
             <div class="summary-item">
               <span class="summary-label">Total Sorties de Stock (Aujourd'hui):</span>
-              <span class="summary-value">${dailySales.toFixed(2)} DH</span>
+              <span class="summary-value">${dailySalesQuantity} unités</span>
             </div>
             <div class="summary-item">
               <span class="summary-label">Total Achats (Aujourd'hui):</span>
@@ -135,8 +135,6 @@ export function DailyReportExport({ date = new Date() }: DailyReportExportProps)
                 <th>Produit</th>
                 <th>Employé</th>
                 <th>Quantité</th>
-                <th>Prix Unitaire</th>
-                <th>Total</th>
               </tr>
             </thead>
             <tbody>
@@ -148,8 +146,6 @@ export function DailyReportExport({ date = new Date() }: DailyReportExportProps)
                   <td>${s.products?.name || "N/A"}</td>
                   <td>${s.employees?.name || "-"}</td>
                   <td>${s.quantity}</td>
-                  <td>${s.unit_price.toFixed(2)} DH</td>
-                  <td>${s.total_price?.toFixed(2) || "0.00"} DH</td>
                 </tr>
               `
                 )

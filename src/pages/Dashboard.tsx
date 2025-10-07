@@ -9,7 +9,7 @@ import { DailyReportExport } from "@/components/DailyReportExport";
 interface DashboardStats {
   totalProducts: number;
   totalStock: number;
-  totalSalesValue: number;
+  totalSalesQuantity: number;
   totalPurchasesValue: number;
   lowStockProducts: Array<{
     id: string;
@@ -23,7 +23,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
     totalStock: 0,
-    totalSalesValue: 0,
+    totalSalesQuantity: 0,
     totalPurchasesValue: 0,
     lowStockProducts: [],
   });
@@ -35,7 +35,7 @@ export default function Dashboard() {
   async function loadDashboardData() {
     const [productsRes, salesRes, purchasesRes] = await Promise.all([
       supabase.from("products").select("*"),
-      supabase.from("sales").select("total_price"),
+      supabase.from("sales").select("quantity"),
       supabase.from("purchases").select("total_cost"),
     ]);
 
@@ -45,14 +45,14 @@ export default function Dashboard() {
         (p) => p.current_stock <= p.low_stock_threshold
       );
 
-      const totalSales = salesRes.data?.reduce((sum, s) => sum + Number(s.total_price), 0) || 0;
+      const totalSalesQty = salesRes.data?.reduce((sum, s) => sum + s.quantity, 0) || 0;
       const totalPurchases =
         purchasesRes.data?.reduce((sum, p) => sum + Number(p.total_cost), 0) || 0;
 
       setStats({
         totalProducts: productsRes.data.length,
         totalStock,
-        totalSalesValue: totalSales,
+        totalSalesQuantity: totalSalesQty,
         totalPurchasesValue: totalPurchases,
         lowStockProducts: lowStock,
       });
@@ -82,7 +82,7 @@ export default function Dashboard() {
         />
         <StatCard
           title="Total Sorties de Stock"
-          value={`${stats.totalSalesValue.toFixed(2)} DH`}
+          value={`${stats.totalSalesQuantity} unités`}
           icon={ShoppingCart}
         />
         <StatCard

@@ -22,7 +22,6 @@ import { toast } from "sonner";
 interface Product {
   id: string;
   name: string;
-  sales_price: number;
   current_stock: number;
 }
 
@@ -44,7 +43,6 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
     product_id: "",
     employee_id: "",
     quantity: 1,
-    unit_price: 0,
     notes: "",
   });
 
@@ -56,7 +54,6 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
         product_id: "",
         employee_id: "",
         quantity: 1,
-        unit_price: 0,
         notes: "",
       });
     }
@@ -65,7 +62,7 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
   async function loadProducts() {
     const { data } = await supabase
       .from("products")
-      .select("id, name, sales_price, current_stock")
+      .select("id, name, current_stock")
       .order("name");
     setProducts(data || []);
   }
@@ -86,14 +83,10 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
   }
 
   function handleProductChange(productId: string) {
-    const product = products.find((p) => p.id === productId);
-    if (product) {
-      setFormData({
-        ...formData,
-        product_id: productId,
-        unit_price: product.sales_price,
-      });
-    }
+    setFormData({
+      ...formData,
+      product_id: productId,
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -119,8 +112,8 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
       product_id: formData.product_id,
       employee_id: formData.employee_id,
       quantity: formData.quantity,
-      unit_price: formData.unit_price,
-      total_price: formData.quantity * formData.unit_price,
+      unit_price: null,
+      total_price: null,
       notes: formData.notes || null,
     });
 
@@ -129,7 +122,7 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
       return;
     }
 
-    toast.success("Vente enregistrée avec succès");
+    toast.success("Sortie enregistrée avec succès");
     onClose();
   }
 
@@ -137,7 +130,7 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Enregistrer Vente</DialogTitle>
+          <DialogTitle>Enregistrer Sortie</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -195,20 +188,6 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
             />
           </div>
           <div>
-            <Label htmlFor="unit_price">Prix Unitaire (DH)</Label>
-            <Input
-              id="unit_price"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.unit_price}
-              onChange={(e) =>
-                setFormData({ ...formData, unit_price: Number(e.target.value) })
-              }
-              required
-            />
-          </div>
-          <div>
             <Label htmlFor="notes">Notes (optionnel)</Label>
             <Textarea
               id="notes"
@@ -221,7 +200,7 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
             <Button type="button" variant="outline" onClick={onClose}>
               Annuler
             </Button>
-            <Button type="submit">Enregistrer Vente</Button>
+            <Button type="submit">Enregistrer Sortie</Button>
           </div>
         </form>
       </DialogContent>
