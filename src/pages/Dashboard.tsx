@@ -81,7 +81,7 @@ export default function Dashboard() {
           icon={Package}
         />
         <StatCard
-          title="Total Ventes"
+          title="Total Sorties de Stock"
           value={`${stats.totalSalesValue.toFixed(2)} DH`}
           icon={ShoppingCart}
         />

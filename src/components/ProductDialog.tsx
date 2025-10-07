@@ -55,7 +55,6 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
     name: "",
     category_id: "",
     supplier_id: "",
-    cost_price: 0,
     low_stock_threshold: 10,
     unit_of_measure: "unité",
   });
@@ -71,7 +70,6 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
         name: product.name,
         category_id: product.category_id || "",
         supplier_id: product.supplier_id || "",
-        cost_price: product.cost_price,
         low_stock_threshold: product.low_stock_threshold,
         unit_of_measure: product.unit_of_measure || "unité",
       });
@@ -80,7 +78,6 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
         name: "",
         category_id: "",
         supplier_id: "",
-        cost_price: 0,
         low_stock_threshold: 10,
         unit_of_measure: "unité",
       });
@@ -104,8 +101,6 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
       ...formData,
       category_id: formData.category_id || null,
       supplier_id: formData.supplier_id || null,
-      current_stock: 0,
-      sales_price: 0,
     };
 
     if (product) {
@@ -120,7 +115,12 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
       }
       toast.success("Produit mis à jour");
     } else {
-      const { error } = await supabase.from("products").insert(data);
+      const { error } = await supabase.from("products").insert({
+        ...data,
+        cost_price: 0,
+        current_stock: 0,
+        sales_price: 0,
+      });
 
       if (error) {
         toast.error("Échec de la création du produit");
@@ -207,20 +207,6 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
                 ))}
               </SelectContent>
             </Select>
-          </div>
-          <div>
-            <Label htmlFor="cost_price">Prix de Revient (DH)</Label>
-            <Input
-              id="cost_price"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.cost_price}
-              onChange={(e) =>
-                setFormData({ ...formData, cost_price: Number(e.target.value) })
-              }
-              required
-            />
           </div>
           <div>
             <Label htmlFor="threshold">Seuil Stock Minimum</Label>

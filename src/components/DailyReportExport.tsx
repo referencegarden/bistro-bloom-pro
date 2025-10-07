@@ -56,7 +56,7 @@ export function DailyReportExport({ date = new Date() }: DailyReportExportProps)
         <html>
         <head>
           <meta charset="utf-8">
-          <title>Daily Report - ${format(date, "MMMM dd, yyyy")}</title>
+          <title>Rapport Journalier - ${format(date, "MMMM dd, yyyy")}</title>
           <style>
             body { font-family: Arial, sans-serif; margin: 20px; }
             h1 { color: #ea580c; text-align: center; }
@@ -71,39 +71,39 @@ export function DailyReportExport({ date = new Date() }: DailyReportExportProps)
           </style>
         </head>
         <body>
-          <h1>RestaurantPro - Daily Report</h1>
+          <h1>RestaurantPro - Rapport Journalier</h1>
           <p style="text-align: center; color: #666;">${format(date, "MMMM dd, yyyy")}</p>
           
           <div class="summary">
-            <h2>Summary</h2>
+            <h2>Résumé</h2>
             <div class="summary-item">
-              <span class="summary-label">Total Inventory Value:</span>
+              <span class="summary-label">Valeur Totale de l'Inventaire:</span>
               <span class="summary-value">${inventoryValue.toFixed(2)} DH</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">Total Sales (Today):</span>
+              <span class="summary-label">Total Sorties de Stock (Aujourd'hui):</span>
               <span class="summary-value">${dailySales.toFixed(2)} DH</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">Total Purchases (Today):</span>
+              <span class="summary-label">Total Achats (Aujourd'hui):</span>
               <span class="summary-value">${dailyPurchases.toFixed(2)} DH</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">Total Products:</span>
+              <span class="summary-label">Total Produits:</span>
               <span class="summary-value">${products.length}</span>
             </div>
           </div>
 
-          <h2>Current Inventory</h2>
+          <h2>Inventaire Actuel</h2>
           <table>
             <thead>
               <tr>
-                <th>Product</th>
-                <th>Category</th>
+                <th>Produit</th>
+                <th>Catégorie</th>
                 <th>Stock</th>
-                <th>Cost Price</th>
-                <th>Sales Price</th>
-                <th>Inventory Value</th>
+                <th>Prix de Revient</th>
+                <th>Prix de Vente</th>
+                <th>Valeur Inventaire</th>
               </tr>
             </thead>
             <tbody>
@@ -127,14 +127,14 @@ export function DailyReportExport({ date = new Date() }: DailyReportExportProps)
           ${
             sales.length > 0
               ? `
-          <h2>Today's Sales</h2>
+          <h2>Sorties de Stock du Jour</h2>
           <table>
             <thead>
               <tr>
-                <th>Time</th>
-                <th>Product</th>
-                <th>Quantity</th>
-                <th>Unit Price</th>
+                <th>Heure</th>
+                <th>Produit</th>
+                <th>Quantité</th>
+                <th>Prix Unitaire</th>
                 <th>Total</th>
               </tr>
             </thead>
@@ -161,15 +161,15 @@ export function DailyReportExport({ date = new Date() }: DailyReportExportProps)
           ${
             purchases.length > 0
               ? `
-          <h2>Today's Purchases</h2>
+          <h2>Achats du Jour</h2>
           <table>
             <thead>
               <tr>
-                <th>Time</th>
-                <th>Product</th>
-                <th>Supplier</th>
-                <th>Quantity</th>
-                <th>Unit Cost</th>
+                <th>Heure</th>
+                <th>Produit</th>
+                <th>Fournisseur</th>
+                <th>Quantité</th>
+                <th>Coût Unitaire</th>
                 <th>Total</th>
               </tr>
             </thead>
