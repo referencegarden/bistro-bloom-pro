@@ -55,8 +55,6 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
     name: "",
     category_id: "",
     supplier_id: "",
-    current_stock: 0,
-    sales_price: 0,
     cost_price: 0,
     low_stock_threshold: 10,
     unit_of_measure: "unité",
@@ -73,8 +71,6 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
         name: product.name,
         category_id: product.category_id || "",
         supplier_id: product.supplier_id || "",
-        current_stock: product.current_stock,
-        sales_price: product.sales_price,
         cost_price: product.cost_price,
         low_stock_threshold: product.low_stock_threshold,
         unit_of_measure: product.unit_of_measure || "unité",
@@ -84,8 +80,6 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
         name: "",
         category_id: "",
         supplier_id: "",
-        current_stock: 0,
-        sales_price: 0,
         cost_price: 0,
         low_stock_threshold: 10,
         unit_of_measure: "unité",
@@ -110,6 +104,8 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
       ...formData,
       category_id: formData.category_id || null,
       supplier_id: formData.supplier_id || null,
+      current_stock: 0,
+      sales_price: 0,
     };
 
     if (product) {
@@ -213,19 +209,6 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
             </Select>
           </div>
           <div>
-            <Label htmlFor="stock">Stock Actuel</Label>
-            <Input
-              id="stock"
-              type="number"
-              min="0"
-              value={formData.current_stock}
-              onChange={(e) =>
-                setFormData({ ...formData, current_stock: Number(e.target.value) })
-              }
-              required
-            />
-          </div>
-          <div>
             <Label htmlFor="cost_price">Prix de Revient (DH)</Label>
             <Input
               id="cost_price"
@@ -235,20 +218,6 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
               value={formData.cost_price}
               onChange={(e) =>
                 setFormData({ ...formData, cost_price: Number(e.target.value) })
-              }
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="sales_price">Prix de Vente (DH)</Label>
-            <Input
-              id="sales_price"
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.sales_price}
-              onChange={(e) =>
-                setFormData({ ...formData, sales_price: Number(e.target.value) })
               }
               required
             />

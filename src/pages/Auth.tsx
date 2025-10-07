@@ -43,6 +43,23 @@ export default function Auth() {
 
     if (error) {
       toast.error("Échec de connexion: " + error.message);
+      setLoading(false);
+      return;
+    }
+
+    // Bootstrap admin role for ayoub.iqrae@gmail.com if no role exists
+    if (email === 'ayoub.iqrae@gmail.com') {
+      const { data, error: rpcError } = await supabase.rpc('bootstrap_admin', {
+        target_email: email
+      });
+
+      if (rpcError) {
+        console.error('Bootstrap admin error:', rpcError);
+      } else if (data && typeof data === 'object' && 'success' in data && data.success) {
+        toast.success("Connexion réussie! Droits admin attribués.");
+      } else {
+        toast.success("Connexion réussie!");
+      }
     } else {
       toast.success("Connexion réussie!");
     }

@@ -8,7 +8,7 @@ import { toast } from "sonner";
 const navigation = [
   { name: "Tableau de bord", href: "/", icon: Home },
   { name: "Produits", href: "/products", icon: Package },
-  { name: "Ventes", href: "/sales", icon: ShoppingCart },
+  { name: "Sortie de Stock", href: "/sales", icon: ShoppingCart },
   { name: "Achats", href: "/purchases", icon: TrendingUp },
   { name: "Catégories", href: "/categories", icon: LayoutGrid },
   { name: "Fournisseurs", href: "/suppliers", icon: Users },

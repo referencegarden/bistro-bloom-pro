@@ -55,12 +55,12 @@ export default function Sales() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Ventes</h1>
-          <p className="text-muted-foreground">Enregistrer les ventes</p>
+          <h1 className="text-3xl font-bold tracking-tight">Sortie de Stock</h1>
+          <p className="text-muted-foreground">Enregistrer les sorties de stock</p>
         </div>
         <Button onClick={() => setDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
-          Enregistrer Vente
+          Enregistrer Sortie
         </Button>
       </div>
 
