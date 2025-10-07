@@ -26,6 +26,12 @@ interface Product {
   current_stock: number;
 }
 
+interface Employee {
+  id: string;
+  name: string;
+  position: string | null;
+}
+
 interface SaleDialogProps {
   open: boolean;
   onClose: () => void;
@@ -33,20 +39,50 @@ interface SaleDialogProps {
 
 export function SaleDialog({ open, onClose }: SaleDialogProps) {
   const [products, setProducts] = useState<Product[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [formData, setFormData] = useState({
     product_id: "",
+    employee_id: "",
     quantity: 1,
     unit_price: 0,
     notes: "",
   });
 
   useEffect(() => {
-    loadProducts();
-  }, []);
+    if (open) {
+      loadProducts();
+      loadEmployees();
+      setFormData({
+        product_id: "",
+        employee_id: "",
+        quantity: 1,
+        unit_price: 0,
+        notes: "",
+      });
+    }
+  }, [open]);
 
   async function loadProducts() {
-    const { data } = await supabase.from("products").select("*").order("name");
+    const { data } = await supabase
+      .from("products")
+      .select("id, name, sales_price, current_stock")
+      .order("name");
     setProducts(data || []);
+  }
+
+  async function loadEmployees() {
+    const { data, error } = await supabase
+      .from("employees")
+      .select("id, name, position")
+      .eq("is_active", true)
+      .order("name");
+
+    if (error) {
+      toast.error("Échec du chargement des employés");
+      return;
+    }
+
+    setEmployees(data || []);
   }
 
   function handleProductChange(productId: string) {
@@ -69,6 +105,11 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
       return;
     }
 
+    if (!formData.employee_id) {
+      toast.error("Veuillez sélectionner un employé");
+      return;
+    }
+
     if (formData.quantity > product.current_stock) {
       toast.error(`Stock insuffisant. Disponible: ${product.current_stock}`);
       return;
@@ -76,8 +117,10 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
 
     const { error } = await supabase.from("sales").insert({
       product_id: formData.product_id,
+      employee_id: formData.employee_id,
       quantity: formData.quantity,
       unit_price: formData.unit_price,
+      total_price: formData.quantity * formData.unit_price,
       notes: formData.notes || null,
     });
 
@@ -87,7 +130,6 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
     }
 
     toast.success("Vente enregistrée avec succès");
-    setFormData({ product_id: "", quantity: 1, unit_price: 0, notes: "" });
     onClose();
   }
 
@@ -116,6 +158,29 @@ export function SaleDialog({ open, onClose }: SaleDialogProps) {
               </SelectContent>
             </Select>
           </div>
+
+          <div>
+            <Label htmlFor="employee">Employé *</Label>
+            <Select
+              value={formData.employee_id}
+              onValueChange={(value) =>
+                setFormData({ ...formData, employee_id: value })
+              }
+            >
+              <SelectTrigger id="employee">
+                <SelectValue placeholder="Sélectionner un employé" />
+              </SelectTrigger>
+              <SelectContent>
+                {employees.map((employee) => (
+                  <SelectItem key={employee.id} value={employee.id}>
+                    {employee.name}
+                    {employee.position && ` (${employee.position})`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <div>
             <Label htmlFor="quantity">Quantité</Label>
             <Input

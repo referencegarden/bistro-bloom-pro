@@ -12,6 +12,7 @@ const navigation = [
   { name: "Achats", href: "/purchases", icon: TrendingUp },
   { name: "Catégories", href: "/categories", icon: LayoutGrid },
   { name: "Fournisseurs", href: "/suppliers", icon: Users },
+  { name: "Employés", href: "/employees", icon: Users },
 ];
 
 export function Sidebar() {

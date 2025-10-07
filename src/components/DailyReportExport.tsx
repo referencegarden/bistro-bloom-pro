@@ -18,7 +18,7 @@ export function DailyReportExport({ date = new Date() }: DailyReportExportProps)
         supabase.from("products").select("*, categories(name), suppliers(name)"),
         supabase
           .from("sales")
-          .select("*, products(name)")
+          .select("*, products(name), employees(name)")
           .gte("sale_date", `${dateStr}T00:00:00`)
           .lte("sale_date", `${dateStr}T23:59:59`),
         supabase
@@ -133,6 +133,7 @@ export function DailyReportExport({ date = new Date() }: DailyReportExportProps)
               <tr>
                 <th>Heure</th>
                 <th>Produit</th>
+                <th>Employé</th>
                 <th>Quantité</th>
                 <th>Prix Unitaire</th>
                 <th>Total</th>
@@ -141,10 +142,11 @@ export function DailyReportExport({ date = new Date() }: DailyReportExportProps)
             <tbody>
               ${sales
                 .map(
-                  (s) => `
+                  (s: any) => `
                 <tr>
                   <td>${format(new Date(s.sale_date), "HH:mm")}</td>
                   <td>${s.products?.name || "N/A"}</td>
+                  <td>${s.employees?.name || "-"}</td>
                   <td>${s.quantity}</td>
                   <td>${s.unit_price.toFixed(2)} DH</td>
                   <td>${s.total_price?.toFixed(2) || "0.00"} DH</td>

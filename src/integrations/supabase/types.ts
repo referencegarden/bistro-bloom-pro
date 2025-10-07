@@ -35,6 +35,42 @@ export type Database = {
         }
         Relationships: []
       }
+      employees: {
+        Row: {
+          created_at: string
+          email: string | null
+          employee_number: string | null
+          id: string
+          is_active: boolean
+          name: string
+          phone: string | null
+          position: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          employee_number?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          employee_number?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          phone?: string | null
+          position?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           category_id: string | null
@@ -142,6 +178,7 @@ export type Database = {
       }
       sales: {
         Row: {
+          employee_id: string | null
           id: string
           notes: string | null
           product_id: string
@@ -151,6 +188,7 @@ export type Database = {
           unit_price: number
         }
         Insert: {
+          employee_id?: string | null
           id?: string
           notes?: string | null
           product_id: string
@@ -160,6 +198,7 @@ export type Database = {
           unit_price: number
         }
         Update: {
+          employee_id?: string | null
           id?: string
           notes?: string | null
           product_id?: string
@@ -169,6 +208,13 @@ export type Database = {
           unit_price?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_product_id_fkey"
             columns: ["product_id"]

@@ -22,6 +22,7 @@ interface Sale {
   sale_date: string;
   notes: string | null;
   products: { name: string } | null;
+  employees: { name: string } | null;
 }
 
 export default function Sales() {
@@ -35,7 +36,7 @@ export default function Sales() {
   async function loadSales() {
     const { data, error } = await supabase
       .from("sales")
-      .select("*, products(name)")
+      .select("*, products(name), employees(name)")
       .order("sale_date", { ascending: false });
 
     if (error) {
@@ -70,6 +71,7 @@ export default function Sales() {
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Produit</TableHead>
+              <TableHead>Employé</TableHead>
               <TableHead>Quantité</TableHead>
               <TableHead>Prix Unitaire</TableHead>
               <TableHead>Total</TableHead>
@@ -84,6 +86,9 @@ export default function Sales() {
                 </TableCell>
                 <TableCell className="font-medium">
                   {sale.products?.name || "N/A"}
+                </TableCell>
+                <TableCell>
+                  {sale.employees?.name || "-"}
                 </TableCell>
                 <TableCell>{sale.quantity}</TableCell>
                 <TableCell>{sale.unit_price.toFixed(2)} DH</TableCell>
