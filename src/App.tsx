@@ -4,12 +4,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
+import { ProtectedRoute } from "./components/ProtectedRoute";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Sales from "./pages/Sales";
 import Purchases from "./pages/Purchases";
 import Categories from "./pages/Categories";
 import Suppliers from "./pages/Suppliers";
+import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -21,52 +23,65 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
+          <Route path="/auth" element={<Auth />} />
           <Route
             path="/"
             element={
-              <Layout>
-                <Dashboard />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <Dashboard />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/products"
             element={
-              <Layout>
-                <Products />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <Products />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/sales"
             element={
-              <Layout>
-                <Sales />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <Sales />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/purchases"
             element={
-              <Layout>
-                <Purchases />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <Purchases />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/categories"
             element={
-              <Layout>
-                <Categories />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <Categories />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           <Route
             path="/suppliers"
             element={
-              <Layout>
-                <Suppliers />
-              </Layout>
+              <ProtectedRoute>
+                <Layout>
+                  <Suppliers />
+                </Layout>
+              </ProtectedRoute>
             }
           />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
