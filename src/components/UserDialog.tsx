@@ -62,26 +62,16 @@ export function UserDialog({ open, onOpenChange, user }: UserDialogProps) {
 
         toast.success("User role updated successfully");
       } else {
-        // Create new user
-        const redirectUrl = `${window.location.origin}/`;
-        
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email,
-          password,
-          email_confirm: true,
-          user_metadata: {
-            created_by_admin: true
-          }
+        // Create new user via edge function
+        const { data, error } = await supabase.functions.invoke('create-user', {
+          body: { email, password, role }
         });
 
-        if (authError) throw authError;
+        if (error) throw error;
 
-        // Assign role
-        const { error: roleError } = await supabase
-          .from("user_roles")
-          .insert({ user_id: authData.user.id, role: role as any });
-
-        if (roleError) throw roleError;
+        if (data.error) {
+          throw new Error(data.error);
+        }
 
         // Show the generated password to admin
         toast.success(`User created! Password: ${password}`, {

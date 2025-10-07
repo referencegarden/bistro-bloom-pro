@@ -37,41 +37,17 @@ export default function Users() {
     try {
       setLoading(true);
       
-      // Get all user roles
-      const { data: userRoles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("*");
-
-      if (rolesError) throw rolesError;
-
-      // Get all users from auth (via admin API would be needed for production)
-      // For now, we'll show users that have roles
-      const { data: { users: authUsers }, error: authError } = await supabase.auth.admin.listUsers();
+      // Get all users via edge function
+      const { data, error } = await supabase.functions.invoke('list-users');
       
-      if (authError) {
-        console.error("Error fetching auth users:", authError);
-        // Fallback: just show users with roles
-        const usersWithRoles = userRoles?.map(role => ({
-          id: role.user_id,
-          email: "User " + role.user_id.substring(0, 8),
-          role: role.role,
-          created_at: role.created_at
-        })) || [];
-        setUsers(usersWithRoles);
-      } else {
-        // Merge auth users with their roles
-        const usersWithRoles: UserWithRole[] = authUsers.map(user => {
-          const userRole = userRoles?.find(r => r.user_id === user.id);
-          return {
-            id: user.id,
-            email: user.email || "",
-            role: userRole?.role,
-            created_at: user.created_at
-          };
-        });
-        setUsers(usersWithRoles);
+      if (error) throw error;
+
+      if (data.error) {
+        throw new Error(data.error);
       }
-    } catch (error) {
+
+      setUsers(data.users || []);
+    } catch (error: any) {
       console.error("Error loading users:", error);
       toast.error("Failed to load users");
     } finally {
@@ -81,22 +57,20 @@ export default function Users() {
 
   const handleDelete = async (userId: string) => {
     try {
-      // Delete user role
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .delete()
-        .eq("user_id", userId);
+      // Delete user via edge function
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId }
+      });
 
-      if (roleError) throw roleError;
+      if (error) throw error;
 
-      // Delete user from auth (requires admin privileges)
-      const { error: authError } = await supabase.auth.admin.deleteUser(userId);
-      
-      if (authError) throw authError;
+      if (data.error) {
+        throw new Error(data.error);
+      }
 
       toast.success("User deleted successfully");
       loadUsers();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting user:", error);
       toast.error("Failed to delete user");
     }
