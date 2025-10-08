@@ -4,7 +4,7 @@ import { StatCard } from "@/components/StatCard";
 import { Package, ShoppingCart, TrendingUp, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { DailyReportExport } from "@/components/DailyReportExport";
+import { ReportExport } from "@/components/ReportExport";
 
 interface DashboardStats {
   totalProducts: number;
@@ -66,7 +66,7 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold tracking-tight">Tableau de bord</h1>
           <p className="text-muted-foreground">Vue d'ensemble de votre inventaire</p>
         </div>
-        <DailyReportExport />
+        <ReportExport />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
