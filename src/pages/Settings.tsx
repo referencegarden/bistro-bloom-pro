@@ -164,8 +164,8 @@ export default function Settings() {
 
       {/* Sticky Save Bar */}
       {isDirty && <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
-          <div className="container flex items-center justify-end gap-4 py-4 bg-green-800">
-            <Button variant="outline" onClick={handleCancel} disabled={updateMutation.isPending} className="text-stone-50 bg-green-950 hover:bg-green-800">
+          <div className="container flex items-center justify-end gap-4 py-4">
+            <Button variant="outline" onClick={handleCancel} disabled={updateMutation.isPending}>
               Annuler
             </Button>
             <Button onClick={handleSaveAll} disabled={updateMutation.isPending || !settings}>
