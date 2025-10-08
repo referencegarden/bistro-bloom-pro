@@ -9,23 +9,22 @@ import { toast } from "sonner";
 import { ColorPicker } from "@/components/ColorPicker";
 import { LogoUpload } from "@/components/LogoUpload";
 import { Separator } from "@/components/ui/separator";
-
 export default function Settings() {
   const queryClient = useQueryClient();
-
-  const { data: settings, isLoading } = useQuery({
+  const {
+    data: settings,
+    isLoading
+  } = useQuery({
     queryKey: ["app-settings"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("app_settings")
-        .select("*")
-        .single();
-      
+      const {
+        data,
+        error
+      } = await supabase.from("app_settings").select("*").single();
       if (error) throw error;
       return data;
-    },
+    }
   });
-
   const [restaurantName, setRestaurantName] = useState("");
   const [adminLogoUrl, setAdminLogoUrl] = useState("");
   const [loginLogoUrl, setLoginLogoUrl] = useState("");
@@ -44,52 +43,41 @@ export default function Settings() {
       setBackgroundColor(settings.background_color);
     }
   }, [settings]);
-
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
-      const { error } = await supabase
-        .from("app_settings")
-        .update(data)
-        .eq("id", settings?.id);
-      
+      const {
+        error
+      } = await supabase.from("app_settings").update(data).eq("id", settings?.id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["app-settings"] });
+      queryClient.invalidateQueries({
+        queryKey: ["app-settings"]
+      });
       toast.success("Paramètres enregistrés avec succès");
     },
-    onError: (error) => {
+    onError: error => {
       console.error("Error updating settings:", error);
       toast.error("Échec de la mise à jour des paramètres");
-    },
+    }
   });
 
   // Track if there are unsaved changes
-  const isDirty = settings ? (
-    restaurantName !== settings.restaurant_name ||
-    adminLogoUrl !== (settings.admin_logo_url || "") ||
-    loginLogoUrl !== (settings.login_logo_url || "") ||
-    primaryColor !== settings.primary_color ||
-    secondaryColor !== settings.secondary_color ||
-    backgroundColor !== settings.background_color
-  ) : false;
-
+  const isDirty = settings ? restaurantName !== settings.restaurant_name || adminLogoUrl !== (settings.admin_logo_url || "") || loginLogoUrl !== (settings.login_logo_url || "") || primaryColor !== settings.primary_color || secondaryColor !== settings.secondary_color || backgroundColor !== settings.background_color : false;
   const handleSaveAll = () => {
     if (!restaurantName.trim()) {
       toast.error("Le nom du restaurant ne peut pas être vide");
       return;
     }
-
     updateMutation.mutate({
       restaurant_name: restaurantName,
       admin_logo_url: adminLogoUrl || null,
       login_logo_url: loginLogoUrl || null,
       primary_color: primaryColor,
       secondary_color: secondaryColor,
-      background_color: backgroundColor,
+      background_color: backgroundColor
     });
   };
-
   const handleCancel = () => {
     if (settings) {
       setRestaurantName(settings.restaurant_name);
@@ -100,17 +88,12 @@ export default function Settings() {
       setBackgroundColor(settings.background_color);
     }
   };
-
   if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
+    return <div className="flex items-center justify-center h-full">
         <p className="text-muted-foreground">Chargement...</p>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <div className="space-y-6 pb-24">
+  return <div className="space-y-6 pb-24">
       <div>
         <h1 className="text-3xl font-bold">Paramètres de l'Application</h1>
         <p className="text-muted-foreground">Personnalisez l'apparence et les informations de votre application</p>
@@ -123,18 +106,8 @@ export default function Settings() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-6 md:grid-cols-2">
-            <LogoUpload
-              label="Logo Interface Admin"
-              currentUrl={adminLogoUrl}
-              onChange={setAdminLogoUrl}
-              bucketPath="admin-logo"
-            />
-            <LogoUpload
-              label="Logo Page de Connexion"
-              currentUrl={loginLogoUrl}
-              onChange={setLoginLogoUrl}
-              bucketPath="login-logo"
-            />
+            <LogoUpload label="Logo Interface Admin" currentUrl={adminLogoUrl} onChange={setAdminLogoUrl} bucketPath="admin-logo" />
+            <LogoUpload label="Logo Page de Connexion" currentUrl={loginLogoUrl} onChange={setLoginLogoUrl} bucketPath="login-logo" />
           </div>
         </CardContent>
       </Card>
@@ -147,12 +120,7 @@ export default function Settings() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="restaurant-name">Nom du Restaurant</Label>
-            <Input
-              id="restaurant-name"
-              value={restaurantName}
-              onChange={(e) => setRestaurantName(e.target.value)}
-              placeholder="RestaurantPro"
-            />
+            <Input id="restaurant-name" value={restaurantName} onChange={e => setRestaurantName(e.target.value)} placeholder="RestaurantPro" />
           </div>
         </CardContent>
       </Card>
@@ -164,21 +132,9 @@ export default function Settings() {
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-3">
-            <ColorPicker
-              label="Couleur Primaire"
-              value={primaryColor}
-              onChange={setPrimaryColor}
-            />
-            <ColorPicker
-              label="Couleur Secondaire"
-              value={secondaryColor}
-              onChange={setSecondaryColor}
-            />
-            <ColorPicker
-              label="Couleur de Fond"
-              value={backgroundColor}
-              onChange={setBackgroundColor}
-            />
+            <ColorPicker label="Couleur Primaire" value={primaryColor} onChange={setPrimaryColor} />
+            <ColorPicker label="Couleur Secondaire" value={secondaryColor} onChange={setSecondaryColor} />
+            <ColorPicker label="Couleur de Fond" value={backgroundColor} onChange={setBackgroundColor} />
           </div>
 
           <Separator />
@@ -186,22 +142,19 @@ export default function Settings() {
           <div className="space-y-4">
             <h4 className="font-medium">Aperçu</h4>
             <div className="grid gap-2 md:grid-cols-3">
-              <div 
-                className="h-20 rounded-lg border"
-                style={{ backgroundColor: primaryColor }}
-              >
+              <div className="h-20 rounded-lg border" style={{
+              backgroundColor: primaryColor
+            }}>
                 <p className="text-center text-white text-sm font-medium pt-8">Primaire</p>
               </div>
-              <div 
-                className="h-20 rounded-lg border"
-                style={{ backgroundColor: secondaryColor }}
-              >
+              <div className="h-20 rounded-lg border" style={{
+              backgroundColor: secondaryColor
+            }}>
                 <p className="text-center text-white text-sm font-medium pt-8">Secondaire</p>
               </div>
-              <div 
-                className="h-20 rounded-lg border"
-                style={{ backgroundColor: backgroundColor }}
-              >
+              <div className="h-20 rounded-lg border" style={{
+              backgroundColor: backgroundColor
+            }}>
                 <p className="text-center text-foreground text-sm font-medium pt-8">Fond</p>
               </div>
             </div>
@@ -210,25 +163,15 @@ export default function Settings() {
       </Card>
 
       {/* Sticky Save Bar */}
-      {isDirty && (
-        <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
-          <div className="container flex items-center justify-end gap-4 py-4">
-            <Button
-              variant="outline"
-              onClick={handleCancel}
-              disabled={updateMutation.isPending}
-            >
+      {isDirty && <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
+          <div className="container flex items-center justify-end gap-4 py-4 bg-green-800">
+            <Button variant="outline" onClick={handleCancel} disabled={updateMutation.isPending} className="text-stone-50 bg-green-950 hover:bg-green-800">
               Annuler
             </Button>
-            <Button
-              onClick={handleSaveAll}
-              disabled={updateMutation.isPending || !settings}
-            >
+            <Button onClick={handleSaveAll} disabled={updateMutation.isPending || !settings}>
               {updateMutation.isPending ? "Enregistrement..." : "Enregistrer les modifications"}
             </Button>
           </div>
-        </div>
-      )}
-    </div>
-  );
+        </div>}
+    </div>;
 }
