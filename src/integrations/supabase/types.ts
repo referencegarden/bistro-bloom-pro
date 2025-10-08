@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          admin_logo_url: string | null
+          background_color: string
+          created_at: string
+          id: string
+          login_logo_url: string | null
+          primary_color: string
+          restaurant_name: string
+          secondary_color: string
+          updated_at: string
+        }
+        Insert: {
+          admin_logo_url?: string | null
+          background_color?: string
+          created_at?: string
+          id?: string
+          login_logo_url?: string | null
+          primary_color?: string
+          restaurant_name?: string
+          secondary_color?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_logo_url?: string | null
+          background_color?: string
+          created_at?: string
+          id?: string
+          login_logo_url?: string | null
+          primary_color?: string
+          restaurant_name?: string
+          secondary_color?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       categories: {
         Row: {
           created_at: string | null

@@ -12,6 +12,7 @@ import Purchases from "./pages/Purchases";
 import Categories from "./pages/Categories";
 import Suppliers from "./pages/Suppliers";
 import Employees from "./pages/Employees";
+import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -91,6 +92,16 @@ const App = () => (
               <ProtectedRoute>
                 <Layout>
                   <Employees />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Settings />
                 </Layout>
               </ProtectedRoute>
             }
