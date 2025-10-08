@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,15 +26,15 @@ export default function Settings() {
     },
   });
 
-  const [restaurantName, setRestaurantName] = useState(settings?.restaurant_name || "");
-  const [adminLogoUrl, setAdminLogoUrl] = useState(settings?.admin_logo_url || "");
-  const [loginLogoUrl, setLoginLogoUrl] = useState(settings?.login_logo_url || "");
-  const [primaryColor, setPrimaryColor] = useState(settings?.primary_color || "hsl(142.1 76.2% 36.3%)");
-  const [secondaryColor, setSecondaryColor] = useState(settings?.secondary_color || "hsl(221.2 83.2% 53.3%)");
-  const [backgroundColor, setBackgroundColor] = useState(settings?.background_color || "hsl(0 0% 100%)");
+  const [restaurantName, setRestaurantName] = useState("");
+  const [adminLogoUrl, setAdminLogoUrl] = useState("");
+  const [loginLogoUrl, setLoginLogoUrl] = useState("");
+  const [primaryColor, setPrimaryColor] = useState("hsl(142.1 76.2% 36.3%)");
+  const [secondaryColor, setSecondaryColor] = useState("hsl(221.2 83.2% 53.3%)");
+  const [backgroundColor, setBackgroundColor] = useState("hsl(0 0% 100%)");
 
   // Update local state when settings load
-  useState(() => {
+  useEffect(() => {
     if (settings) {
       setRestaurantName(settings.restaurant_name);
       setAdminLogoUrl(settings.admin_logo_url || "");
@@ -43,7 +43,7 @@ export default function Settings() {
       setSecondaryColor(settings.secondary_color);
       setBackgroundColor(settings.background_color);
     }
-  });
+  }, [settings]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
