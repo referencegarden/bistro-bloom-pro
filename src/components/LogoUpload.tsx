@@ -9,13 +9,13 @@ import { toast } from "sonner";
 interface LogoUploadProps {
   label: string;
   currentUrl?: string;
-  onUpload: (url: string) => void;
+  onChange: (url: string) => void;
   bucketPath: string;
 }
 
-export function LogoUpload({ label, currentUrl, onUpload, bucketPath }: LogoUploadProps) {
+export function LogoUpload({ label, currentUrl, onChange, bucketPath }: LogoUploadProps) {
   const [uploading, setUploading] = useState(false);
-  const [preview, setPreview] = useState<string | undefined>(currentUrl);
+  const [preview, setPreview] = useState<string>(currentUrl || "");
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -39,7 +39,7 @@ export function LogoUpload({ label, currentUrl, onUpload, bucketPath }: LogoUplo
       const fileExt = file.name.split(".").pop();
       const fileName = `${bucketPath}-${Date.now()}.${fileExt}`;
 
-      const { error: uploadError, data } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from("branding")
         .upload(fileName, file, { upsert: true });
 
@@ -50,19 +50,19 @@ export function LogoUpload({ label, currentUrl, onUpload, bucketPath }: LogoUplo
         .getPublicUrl(fileName);
 
       setPreview(publicUrl);
-      onUpload(publicUrl);
-      toast.success("Logo téléchargé avec succès");
+      onChange(publicUrl);
+      toast.success("Logo chargé (cliquez sur Enregistrer pour sauvegarder)");
     } catch (error) {
       console.error("Error uploading logo:", error);
-      toast.error("Échec du téléchargement du logo");
+      toast.error("Échec du chargement du logo");
     } finally {
       setUploading(false);
     }
   };
 
   const handleRemove = () => {
-    setPreview(undefined);
-    onUpload("");
+    setPreview("");
+    onChange("");
   };
 
   return (

@@ -80,14 +80,11 @@ export default function Settings() {
     updateMutation.mutate({ restaurant_name: restaurantName });
   };
 
-  const handleLogoUpdate = (type: "admin" | "login", url: string) => {
-    if (type === "admin") {
-      setAdminLogoUrl(url);
-      updateMutation.mutate({ admin_logo_url: url });
-    } else {
-      setLoginLogoUrl(url);
-      updateMutation.mutate({ login_logo_url: url });
-    }
+  const handleSaveLogos = () => {
+    updateMutation.mutate({
+      admin_logo_url: adminLogoUrl,
+      login_logo_url: loginLogoUrl,
+    });
   };
 
   if (isLoading) {
@@ -110,19 +107,24 @@ export default function Settings() {
           <CardTitle>Logos</CardTitle>
           <CardDescription>Téléchargez les logos pour l'interface admin et la page de connexion</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-6 md:grid-cols-2">
-          <LogoUpload
-            label="Logo Interface Admin"
-            currentUrl={adminLogoUrl}
-            onUpload={(url) => handleLogoUpdate("admin", url)}
-            bucketPath="admin-logo"
-          />
-          <LogoUpload
-            label="Logo Page de Connexion"
-            currentUrl={loginLogoUrl}
-            onUpload={(url) => handleLogoUpdate("login", url)}
-            bucketPath="login-logo"
-          />
+        <CardContent className="space-y-4">
+          <div className="grid gap-6 md:grid-cols-2">
+            <LogoUpload
+              label="Logo Interface Admin"
+              currentUrl={adminLogoUrl}
+              onChange={setAdminLogoUrl}
+              bucketPath="admin-logo"
+            />
+            <LogoUpload
+              label="Logo Page de Connexion"
+              currentUrl={loginLogoUrl}
+              onChange={setLoginLogoUrl}
+              bucketPath="login-logo"
+            />
+          </div>
+          <Button onClick={handleSaveLogos} disabled={updateMutation.isPending}>
+            Enregistrer les logos
+          </Button>
         </CardContent>
       </Card>
 
