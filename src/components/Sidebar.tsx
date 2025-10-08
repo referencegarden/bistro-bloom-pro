@@ -39,7 +39,7 @@ export function AppSidebar() {
       const { data, error } = await supabase
         .from("app_settings")
         .select("*")
-        .single();
+        .maybeSingle();
       
       if (error) throw error;
       return data;
@@ -49,12 +49,32 @@ export function AppSidebar() {
   // Apply colors dynamically
   useEffect(() => {
     if (settings) {
-      document.documentElement.style.setProperty("--primary", settings.primary_color);
-      document.documentElement.style.setProperty("--secondary", settings.secondary_color);
-      document.documentElement.style.setProperty("--background", settings.background_color);
-      
-      // Update page title
-      document.title = settings.restaurant_name;
+      const normalize = (val?: string | null) => {
+        if (!val) return undefined;
+        const trimmed = val.trim();
+        const match = trimmed.match(/^hsl\((.*)\)$/i);
+        return match ? match[1] : trimmed;
+      };
+
+      const primary = normalize(settings.primary_color);
+      const secondary = normalize(settings.secondary_color);
+      const background = normalize(settings.background_color);
+
+      if (primary) {
+        document.documentElement.style.setProperty("--primary", primary);
+        document.documentElement.style.setProperty("--accent", primary);
+        document.documentElement.style.setProperty("--ring", primary);
+      }
+      if (secondary) {
+        document.documentElement.style.setProperty("--secondary", secondary);
+      }
+      if (background) {
+        document.documentElement.style.setProperty("--background", background);
+      }
+
+      if (settings.restaurant_name) {
+        document.title = settings.restaurant_name;
+      }
     }
   }, [settings]);
 
