@@ -64,27 +64,41 @@ export default function Settings() {
     },
   });
 
-  const handleSaveColors = () => {
+  // Track if there are unsaved changes
+  const isDirty = settings ? (
+    restaurantName !== settings.restaurant_name ||
+    adminLogoUrl !== (settings.admin_logo_url || "") ||
+    loginLogoUrl !== (settings.login_logo_url || "") ||
+    primaryColor !== settings.primary_color ||
+    secondaryColor !== settings.secondary_color ||
+    backgroundColor !== settings.background_color
+  ) : false;
+
+  const handleSaveAll = () => {
+    if (!restaurantName.trim()) {
+      toast.error("Le nom du restaurant ne peut pas être vide");
+      return;
+    }
+
     updateMutation.mutate({
+      restaurant_name: restaurantName,
+      admin_logo_url: adminLogoUrl || null,
+      login_logo_url: loginLogoUrl || null,
       primary_color: primaryColor,
       secondary_color: secondaryColor,
       background_color: backgroundColor,
     });
   };
 
-  const handleSaveName = () => {
-    if (!restaurantName.trim()) {
-      toast.error("Le nom du restaurant ne peut pas être vide");
-      return;
+  const handleCancel = () => {
+    if (settings) {
+      setRestaurantName(settings.restaurant_name);
+      setAdminLogoUrl(settings.admin_logo_url || "");
+      setLoginLogoUrl(settings.login_logo_url || "");
+      setPrimaryColor(settings.primary_color);
+      setSecondaryColor(settings.secondary_color);
+      setBackgroundColor(settings.background_color);
     }
-    updateMutation.mutate({ restaurant_name: restaurantName });
-  };
-
-  const handleSaveLogos = () => {
-    updateMutation.mutate({
-      admin_logo_url: adminLogoUrl,
-      login_logo_url: loginLogoUrl,
-    });
   };
 
   if (isLoading) {
@@ -96,7 +110,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-24">
       <div>
         <h1 className="text-3xl font-bold">Paramètres de l'Application</h1>
         <p className="text-muted-foreground">Personnalisez l'apparence et les informations de votre application</p>
@@ -122,9 +136,6 @@ export default function Settings() {
               bucketPath="login-logo"
             />
           </div>
-          <Button onClick={handleSaveLogos} disabled={updateMutation.isPending}>
-            Enregistrer les logos
-          </Button>
         </CardContent>
       </Card>
 
@@ -143,9 +154,6 @@ export default function Settings() {
               placeholder="RestaurantPro"
             />
           </div>
-          <Button onClick={handleSaveName} disabled={updateMutation.isPending}>
-            Enregistrer le nom
-          </Button>
         </CardContent>
       </Card>
 
@@ -198,12 +206,29 @@ export default function Settings() {
               </div>
             </div>
           </div>
-
-          <Button onClick={handleSaveColors} disabled={updateMutation.isPending}>
-            Enregistrer les couleurs
-          </Button>
         </CardContent>
       </Card>
+
+      {/* Sticky Save Bar */}
+      {isDirty && (
+        <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
+          <div className="container flex items-center justify-end gap-4 py-4">
+            <Button
+              variant="outline"
+              onClick={handleCancel}
+              disabled={updateMutation.isPending}
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleSaveAll}
+              disabled={updateMutation.isPending || !settings}
+            >
+              {updateMutation.isPending ? "Enregistrement..." : "Enregistrer les modifications"}
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
