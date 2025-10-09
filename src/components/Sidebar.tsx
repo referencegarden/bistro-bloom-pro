@@ -3,6 +3,7 @@ import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Set
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
 import {
   Sidebar,
   SidebarContent,
@@ -32,6 +33,7 @@ const navigation = [
 export function AppSidebar() {
   const navigate = useNavigate();
   const { open } = useSidebar();
+  const { isAdmin, permissions } = useEmployeePermissions();
 
   const { data: settings } = useQuery({
     queryKey: ["app-settings"],
@@ -78,6 +80,28 @@ export function AppSidebar() {
     }
   }, [settings]);
 
+  const filteredNavigation = navigation.filter((item) => {
+    if (isAdmin) return true;
+    
+    switch (item.href) {
+      case "/":
+        return permissions?.can_view_reports;
+      case "/products":
+        return permissions?.can_view_products;
+      case "/sales":
+        return permissions?.can_make_sales;
+      case "/purchases":
+        return permissions?.can_manage_stock;
+      case "/categories":
+      case "/suppliers":
+      case "/employees":
+      case "/settings":
+        return false;
+      default:
+        return false;
+    }
+  });
+
   async function handleSignOut() {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -111,7 +135,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigation.map((item) => (
+              {filteredNavigation.map((item) => (
                 <SidebarMenuItem key={item.name}>
                   <SidebarMenuButton asChild>
                     <NavLink

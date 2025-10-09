@@ -42,9 +42,16 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
   const [pinEnabled, setPinEnabled] = useState(false);
   const [pin, setPin] = useState("");
   const [pinConfirm, setPinConfirm] = useState("");
+  
+  const [permissions, setPermissions] = useState({
+    can_make_sales: true,
+    can_view_products: true,
+    can_view_reports: false,
+    can_manage_stock: false,
+  });
 
   useEffect(() => {
-    if (employee) {
+    if (employee && open) {
       setFormData({
         name: employee.name,
         employee_number: employee.employee_number || "",
@@ -54,6 +61,23 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         is_active: employee.is_active,
       });
       setPinEnabled((employee as any).pin_enabled || false);
+      
+      // Load existing permissions
+      supabase
+        .from("employee_permissions")
+        .select("*")
+        .eq("employee_id", employee.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setPermissions({
+              can_make_sales: data.can_make_sales,
+              can_view_products: data.can_view_products,
+              can_view_reports: data.can_view_reports,
+              can_manage_stock: data.can_manage_stock,
+            });
+          }
+        });
     } else {
       setFormData({
         name: "",
@@ -64,6 +88,12 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         is_active: true,
       });
       setPinEnabled(false);
+      setPermissions({
+        can_make_sales: true,
+        can_view_products: true,
+        can_view_reports: false,
+        can_manage_stock: false,
+      });
     }
     setPin("");
     setPinConfirm("");
@@ -115,6 +145,13 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
           .eq("id", employee.id);
 
         if (error) throw error;
+        
+        // Update permissions
+        await supabase
+          .from("employee_permissions")
+          .update(permissions)
+          .eq("employee_id", employee.id);
+        
         toast.success("Employé mis à jour avec succès");
       } else {
         const { data: newEmployee, error } = await supabase
@@ -126,16 +163,13 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         if (error) throw error;
         employeeId = newEmployee.id;
 
-        // Create default permissions
+        // Create permissions with selected values
         await supabase.from("employee_permissions").insert({
           employee_id: employeeId,
-          can_make_sales: true,
-          can_view_products: true,
+          ...permissions,
         });
 
-        // If PIN is enabled, create auth user (we'll handle this in edge function)
         if (pinEnabled) {
-          // The edge function will create the auth user on first login
           toast.success("Employé créé avec succès. L'employé peut maintenant se connecter avec son PIN.");
         } else {
           toast.success("Employé créé avec succès");
@@ -268,6 +302,81 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
                 </div>
               </>
             )}
+          </div>
+
+          <Separator className="my-4" />
+
+          <div className="space-y-4">
+            <Label className="text-base">Permissions d'Accès</Label>
+            <p className="text-sm text-muted-foreground">
+              Sélectionnez les fonctionnalités auxquelles cet employé peut accéder
+            </p>
+            
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="can_make_sales">Sortie de Stock</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Peut enregistrer des ventes
+                  </p>
+                </div>
+                <Switch
+                  id="can_make_sales"
+                  checked={permissions.can_make_sales}
+                  onCheckedChange={(checked) => 
+                    setPermissions({...permissions, can_make_sales: checked})
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="can_view_products">Consulter Produits</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Peut voir la liste des produits
+                  </p>
+                </div>
+                <Switch
+                  id="can_view_products"
+                  checked={permissions.can_view_products}
+                  onCheckedChange={(checked) => 
+                    setPermissions({...permissions, can_view_products: checked})
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="can_view_reports">Voir Rapports</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Peut accéder au tableau de bord
+                  </p>
+                </div>
+                <Switch
+                  id="can_view_reports"
+                  checked={permissions.can_view_reports}
+                  onCheckedChange={(checked) => 
+                    setPermissions({...permissions, can_view_reports: checked})
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="can_manage_stock">Gérer Stock</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Peut gérer achats et stock
+                  </p>
+                </div>
+                <Switch
+                  id="can_manage_stock"
+                  checked={permissions.can_manage_stock}
+                  onCheckedChange={(checked) => 
+                    setPermissions({...permissions, can_manage_stock: checked})
+                  }
+                />
+              </div>
+            </div>
           </div>
 
           <Separator className="my-4" />

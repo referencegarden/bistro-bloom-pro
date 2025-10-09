@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PermissionRoute } from "./components/PermissionRoute";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Sales from "./pages/Sales";
@@ -30,9 +31,11 @@ const App = () => (
             path="/"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Dashboard />
-                </Layout>
+                <PermissionRoute requiredPermission="can_view_reports">
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />
@@ -40,9 +43,11 @@ const App = () => (
             path="/products"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Products />
-                </Layout>
+                <PermissionRoute requiredPermission="can_view_products">
+                  <Layout>
+                    <Products />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />
@@ -50,9 +55,11 @@ const App = () => (
             path="/sales"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Sales />
-                </Layout>
+                <PermissionRoute requiredPermission="can_make_sales">
+                  <Layout>
+                    <Sales />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />
@@ -60,9 +67,11 @@ const App = () => (
             path="/purchases"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Purchases />
-                </Layout>
+                <PermissionRoute requiredPermission="can_manage_stock">
+                  <Layout>
+                    <Purchases />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />
@@ -70,9 +79,11 @@ const App = () => (
             path="/categories"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Categories />
-                </Layout>
+                <PermissionRoute adminOnly>
+                  <Layout>
+                    <Categories />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />
@@ -80,9 +91,11 @@ const App = () => (
             path="/suppliers"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Suppliers />
-                </Layout>
+                <PermissionRoute adminOnly>
+                  <Layout>
+                    <Suppliers />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />
@@ -90,9 +103,11 @@ const App = () => (
             path="/employees"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Employees />
-                </Layout>
+                <PermissionRoute adminOnly>
+                  <Layout>
+                    <Employees />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />
@@ -100,9 +115,11 @@ const App = () => (
             path="/settings"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Settings />
-                </Layout>
+                <PermissionRoute adminOnly>
+                  <Layout>
+                    <Settings />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />
