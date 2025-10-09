@@ -71,47 +71,6 @@ export type Database = {
         }
         Relationships: []
       }
-      employee_permissions: {
-        Row: {
-          can_make_sales: boolean
-          can_manage_stock: boolean
-          can_view_products: boolean
-          can_view_reports: boolean
-          created_at: string
-          employee_id: string
-          id: string
-          updated_at: string
-        }
-        Insert: {
-          can_make_sales?: boolean
-          can_manage_stock?: boolean
-          can_view_products?: boolean
-          can_view_reports?: boolean
-          created_at?: string
-          employee_id: string
-          id?: string
-          updated_at?: string
-        }
-        Update: {
-          can_make_sales?: boolean
-          can_manage_stock?: boolean
-          can_view_products?: boolean
-          can_view_reports?: boolean
-          created_at?: string
-          employee_id?: string
-          id?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "employee_permissions_employee_id_fkey"
-            columns: ["employee_id"]
-            isOneToOne: true
-            referencedRelation: "employees"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       employees: {
         Row: {
           created_at: string
@@ -121,11 +80,8 @@ export type Database = {
           is_active: boolean
           name: string
           phone: string | null
-          pin_enabled: boolean
-          pin_hash: string | null
           position: string | null
           updated_at: string
-          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -135,11 +91,8 @@ export type Database = {
           is_active?: boolean
           name: string
           phone?: string | null
-          pin_enabled?: boolean
-          pin_hash?: string | null
           position?: string | null
           updated_at?: string
-          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -149,11 +102,8 @@ export type Database = {
           is_active?: boolean
           name?: string
           phone?: string | null
-          pin_enabled?: boolean
-          pin_hash?: string | null
           position?: string | null
           updated_at?: string
-          user_id?: string | null
         }
         Relationships: []
       }
@@ -376,7 +326,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "user" | "employee"
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -504,7 +454,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "user", "employee"],
+      app_role: ["admin", "user"],
     },
   },
 } as const

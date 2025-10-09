@@ -5,9 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Store, User, Lock } from "lucide-react";
+import { Store } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Auth() {
@@ -15,8 +14,6 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [employeeIdentifier, setEmployeeIdentifier] = useState("");
-  const [pin, setPin] = useState("");
 
   const { data: settings } = useQuery({
     queryKey: ["app-settings-public"],
@@ -49,7 +46,7 @@ export default function Auth() {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  async function handleAdminSignIn(e: React.FormEvent) {
+  async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
 
@@ -84,54 +81,6 @@ export default function Auth() {
     setLoading(false);
   }
 
-  async function handleEmployeeSignIn(e: React.FormEvent) {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('employee-pin-login', {
-        body: { employeeIdentifier, pin }
-      });
-
-      if (error) throw error;
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      // Use the magiclink properties to sign in
-      const { data: signInData, error: signInError } = await supabase.auth.verifyOtp({
-        token_hash: data.session.properties.hashed_token,
-        type: 'magiclink',
-      });
-
-      if (signInError) throw signInError;
-
-      toast.success(`Bienvenue ${data.employee.name}`);
-      
-      // Smart redirect based on permissions using the employee id from the response
-      const { data: perms } = await supabase
-        .from("employee_permissions")
-        .select("*")
-        .eq("employee_id", data.employee.id)
-        .maybeSingle();
-
-      if (perms?.can_make_sales) {
-        navigate("/sales");
-      } else if (perms?.can_view_products) {
-        navigate("/products");
-      } else if (perms?.can_view_reports) {
-        navigate("/");
-      } else {
-        navigate("/sales");
-      }
-    } catch (error: any) {
-      console.error("Error during employee sign-in:", error);
-      toast.error(error.message || "Code PIN invalide");
-    } finally {
-      setLoading(false);
-    }
-  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
@@ -158,86 +107,33 @@ export default function Auth() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="employee" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="employee">
-                <User className="mr-2 h-4 w-4" />
-                Employé
-              </TabsTrigger>
-              <TabsTrigger value="admin">
-                <Lock className="mr-2 h-4 w-4" />
-                Admin
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="employee" className="mt-4">
-              <form onSubmit={handleEmployeeSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="employee">Numéro ou Nom</Label>
-                  <Input
-                    id="employee"
-                    type="text"
-                    placeholder="Votre numéro ou nom"
-                    value={employeeIdentifier}
-                    onChange={(e) => setEmployeeIdentifier(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="pin">Code PIN</Label>
-                  <Input
-                    id="pin"
-                    type="password"
-                    inputMode="numeric"
-                    placeholder="••••"
-                    maxLength={6}
-                    value={pin}
-                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                    required
-                    disabled={loading}
-                    className="text-center text-2xl tracking-widest"
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Connexion..." : "Se connecter"}
-                </Button>
-              </form>
-            </TabsContent>
-
-            <TabsContent value="admin" className="mt-4">
-              <form onSubmit={handleAdminSignIn} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
-                  <Input
-                    id="signin-email"
-                    type="email"
-                    placeholder="votre@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signin-password">Mot de passe</Label>
-                  <Input
-                    id="signin-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    disabled={loading}
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Connexion..." : "Se connecter"}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-
+          <form onSubmit={handleSignIn} className="space-y-4 mt-4">
+            <div className="space-y-2">
+              <Label htmlFor="signin-email">Email</Label>
+              <Input
+                id="signin-email"
+                type="email"
+                placeholder="votre@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="signin-password">Mot de passe</Label>
+              <Input
+                id="signin-password"
+                type="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Connexion..." : "Se connecter"}
+            </Button>
+          </form>
           <p className="text-sm text-muted-foreground text-center mt-4">
             Besoin d'un compte ? Contactez l'administrateur.
           </p>

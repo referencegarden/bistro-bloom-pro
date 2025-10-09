@@ -36,15 +36,7 @@ export default function Employees() {
   async function loadEmployees() {
     const { data, error } = await supabase
       .from("employees")
-      .select(`
-        *,
-        employee_permissions (
-          can_make_sales,
-          can_view_products,
-          can_view_reports,
-          can_manage_stock
-        )
-      `)
+      .select("*")
       .order("name", { ascending: true });
 
     if (error) {
@@ -107,8 +99,6 @@ export default function Employees() {
               <TableHead>Poste</TableHead>
               <TableHead>Téléphone</TableHead>
               <TableHead>Email</TableHead>
-              <TableHead>Accès PIN</TableHead>
-              <TableHead>Permissions</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -121,27 +111,6 @@ export default function Employees() {
                 <TableCell>{employee.position || "-"}</TableCell>
                 <TableCell>{employee.phone || "-"}</TableCell>
                 <TableCell>{employee.email || "-"}</TableCell>
-                <TableCell>
-                  <Badge variant={(employee as any).pin_enabled ? "default" : "outline"}>
-                    {(employee as any).pin_enabled ? "Activé" : "Désactivé"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex flex-wrap gap-1">
-                    {(employee as any).employee_permissions?.[0]?.can_make_sales && (
-                      <Badge variant="outline" className="text-xs">Ventes</Badge>
-                    )}
-                    {(employee as any).employee_permissions?.[0]?.can_view_products && (
-                      <Badge variant="outline" className="text-xs">Produits</Badge>
-                    )}
-                    {(employee as any).employee_permissions?.[0]?.can_view_reports && (
-                      <Badge variant="outline" className="text-xs">Rapports</Badge>
-                    )}
-                    {(employee as any).employee_permissions?.[0]?.can_manage_stock && (
-                      <Badge variant="outline" className="text-xs">Stock</Badge>
-                    )}
-                  </div>
-                </TableCell>
                 <TableCell>
                   <Badge variant={employee.is_active ? "default" : "secondary"}>
                     {employee.is_active ? "Actif" : "Inactif"}
