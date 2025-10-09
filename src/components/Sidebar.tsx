@@ -80,23 +80,26 @@ export function AppSidebar() {
     }
   }, [settings]);
 
+  // Filter navigation based on user permissions
   const filteredNavigation = navigation.filter((item) => {
+    // Default to true for admin users
     if (isAdmin) return true;
     
+    // Filter based on employee permissions
     switch (item.href) {
       case "/":
-        return permissions?.can_view_reports;
+        return permissions?.can_view_reports || false;
       case "/products":
-        return permissions?.can_view_products;
+        return permissions?.can_view_products || false;
       case "/sales":
-        return permissions?.can_make_sales;
+        return permissions?.can_make_sales || false;
       case "/purchases":
-        return permissions?.can_manage_stock;
+        return permissions?.can_manage_stock || false;
       case "/categories":
       case "/suppliers":
       case "/employees":
       case "/settings":
-        return false;
+        return false; // Admin-only pages
       default:
         return false;
     }
