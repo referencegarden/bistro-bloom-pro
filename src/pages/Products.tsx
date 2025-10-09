@@ -6,8 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ProductDialog } from "@/components/ProductDialog";
+import { ProductImport } from "@/components/ProductImport";
 import { toast } from "sonner";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { Upload } from "lucide-react";
 interface Product {
   id: string;
   name: string;
@@ -28,6 +30,7 @@ interface Product {
 export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -85,10 +88,16 @@ export default function Products() {
           <h1 className="text-3xl font-bold tracking-tight">Produits</h1>
           <p className="text-muted-foreground">Gérer votre inventaire</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Ajouter Produit
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+            <Upload className="mr-2 h-4 w-4" />
+            Importer Excel
+          </Button>
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Ajouter Produit
+          </Button>
+        </div>
       </div>
 
       <div className="flex items-center gap-2">
@@ -172,5 +181,6 @@ export default function Products() {
         </div>}
 
       <ProductDialog open={dialogOpen} onClose={handleDialogClose} product={editingProduct} />
+      <ProductImport open={importDialogOpen} onClose={() => setImportDialogOpen(false)} />
     </div>;
 }

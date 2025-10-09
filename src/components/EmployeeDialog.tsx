@@ -118,7 +118,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
       email: formData.email.trim() || null,
       is_active: formData.is_active,
       pin_enabled: formData.pin_enabled,
-      pin_hash: formData.pin_enabled && formData.pin ? formData.pin : null,
+      pin_hash: formData.pin_enabled && formData.pin ? btoa(formData.pin) : null,
     };
 
     let employeeId = employee?.id;
