@@ -34,6 +34,8 @@ serve(async (req) => {
 
     // Find employee by PIN hash
     const encodedPin = btoa(pin);
+    console.log('Looking for employee with encoded PIN');
+    
     const { data: employee, error: employeeError } = await supabaseClient
       .from('employees')
       .select('*')
@@ -43,22 +45,24 @@ serve(async (req) => {
       .single();
 
     if (employeeError || !employee) {
+      console.error('Employee lookup failed:', employeeError);
       return new Response(
         JSON.stringify({ error: 'Invalid PIN' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
+    console.log('Employee found:', { id: employee.id, name: employee.name, has_user_id: !!employee.user_id });
+
     // Generate a unique email and password for this employee if they don't have a user_id
     let userId = employee.user_id;
+    const uniqueEmail = `employee_${employee.id}@internal.app`;
+    const employeePassword = `emp_${employee.id}_${employee.pin_hash}`;
 
     if (!userId) {
-      const uniqueEmail = `employee_${employee.id}@internal.app`;
-      const randomPassword = crypto.randomUUID();
-
       const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
         email: uniqueEmail,
-        password: randomPassword,
+        password: employeePassword,
         email_confirm: true,
       });
 
@@ -90,38 +94,36 @@ serve(async (req) => {
       if (roleError) {
         console.error('Failed to assign employee role:', roleError);
       }
+    } else {
+      // Update existing user's password to match the current pattern
+      await supabaseClient.auth.admin.updateUserById(userId, {
+        password: employeePassword,
+      });
     }
 
-    // Generate a one-time login link
-    const { data: linkData, error: linkError } = await supabaseClient.auth.admin.generateLink({
-      type: 'magiclink',
-      email: `employee_${employee.id}@internal.app`,
+    console.log('User ID ready:', userId);
+    console.log('Signing in employee with credentials');
+
+    // Sign in the employee to get tokens
+    const { data: sessionData, error: signInError } = await supabaseClient.auth.signInWithPassword({
+      email: uniqueEmail,
+      password: employeePassword,
     });
 
-    if (linkError || !linkData) {
-      console.error('Magic link error:', linkError);
+    if (signInError || !sessionData.session) {
+      console.error('Sign in error:', signInError);
       return new Response(
         JSON.stringify({ error: 'Failed to generate login session' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Extract the tokens from the link
-    const url = new URL(linkData.properties.action_link);
-    const access_token = url.searchParams.get('access_token');
-    const refresh_token = url.searchParams.get('refresh_token');
-
-    if (!access_token || !refresh_token) {
-      return new Response(
-        JSON.stringify({ error: 'Failed to generate tokens' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
+    console.log('Tokens generated successfully');
 
     return new Response(
       JSON.stringify({
-        access_token,
-        refresh_token,
+        access_token: sessionData.session.access_token,
+        refresh_token: sessionData.session.refresh_token,
         employee: {
           id: employee.id,
           name: employee.name,
