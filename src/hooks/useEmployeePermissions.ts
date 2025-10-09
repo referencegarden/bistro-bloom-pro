@@ -33,23 +33,14 @@ export function useEmployeePermissions() {
     enabled: !!session?.user?.id,
   });
 
-  const { data: permissions } = useQuery({
+  const { data: permissions, isLoading: permissionsLoading } = useQuery({
     queryKey: ["employee-permissions", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
       
-      const { data: employee } = await supabase
-        .from("employees")
-        .select("id")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
-      
-      if (!employee) return null;
-      
       const { data } = await supabase
         .from("employee_permissions")
         .select("*")
-        .eq("employee_id", employee.id)
         .maybeSingle();
       
       return data as EmployeePermissions | null;
@@ -81,7 +72,7 @@ export function useEmployeePermissions() {
         can_view_reports: false,
         can_manage_stock: false,
       },
-      loading: !permissions,
+      loading: permissionsLoading,
     };
   }
 
