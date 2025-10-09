@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
+import { PermissionRoute } from "./components/PermissionRoute";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Sales from "./pages/Sales";
@@ -30,9 +31,11 @@ const App = () => (
             path="/"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Dashboard />
-                </Layout>
+                <PermissionRoute permission="can_view_reports">
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />
@@ -40,9 +43,11 @@ const App = () => (
             path="/products"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Products />
-                </Layout>
+                <PermissionRoute permission="can_view_products">
+                  <Layout>
+                    <Products />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />
@@ -50,9 +55,11 @@ const App = () => (
             path="/sales"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Sales />
-                </Layout>
+                <PermissionRoute permission="can_make_sales">
+                  <Layout>
+                    <Sales />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />
@@ -60,9 +67,11 @@ const App = () => (
             path="/purchases"
             element={
               <ProtectedRoute>
-                <Layout>
-                  <Purchases />
-                </Layout>
+                <PermissionRoute permission="can_manage_stock">
+                  <Layout>
+                    <Purchases />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />

@@ -16,7 +16,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
 
 const navigation = [
   { name: "Tableau de bord", href: "/", icon: Home },
@@ -32,6 +33,7 @@ const navigation = [
 export function AppSidebar() {
   const navigate = useNavigate();
   const { open } = useSidebar();
+  const { isAdmin, permissions } = useEmployeePermissions();
 
   const { data: settings } = useQuery({
     queryKey: ["app-settings"],
@@ -78,6 +80,27 @@ export function AppSidebar() {
     }
   }, [settings]);
 
+  const filteredNavigation = useMemo(() => {
+    if (isAdmin) return navigation;
+
+    return navigation.filter((item) => {
+      // Always show dashboard
+      if (item.href === "/") return permissions.can_view_reports;
+      // Settings only for admins
+      if (item.href === "/settings") return false;
+      // Categories, Suppliers, Employees only for admins
+      if (["/categories", "/suppliers", "/employees"].includes(item.href)) return false;
+      // Products visibility
+      if (item.href === "/products") return permissions.can_view_products;
+      // Sales visibility
+      if (item.href === "/sales") return permissions.can_make_sales;
+      // Purchases only for admins or those who can manage stock
+      if (item.href === "/purchases") return permissions.can_manage_stock;
+      
+      return true;
+    });
+  }, [isAdmin, permissions]);
+
   async function handleSignOut() {
     const { error } = await supabase.auth.signOut();
     if (error) {
@@ -111,7 +134,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigation.map((item) => (
+              {filteredNavigation.map((item) => (
                 <SidebarMenuItem key={item.name}>
                   <SidebarMenuButton asChild>
                     <NavLink

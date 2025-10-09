@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Store } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -14,6 +15,8 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [employeeNumber, setEmployeeNumber] = useState("");
+  const [pin, setPin] = useState("");
 
   const { data: settings } = useQuery({
     queryKey: ["app-settings-public"],
@@ -81,6 +84,60 @@ export default function Auth() {
     setLoading(false);
   }
 
+  async function handleEmployeeLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('employee-pin-login', {
+        body: { employee_number: employeeNumber, pin },
+      });
+
+      if (error) throw error;
+
+      if (data.error) {
+        toast.error(data.error);
+        setLoading(false);
+        return;
+      }
+
+      // Set the session using the tokens
+      const { error: sessionError } = await supabase.auth.setSession({
+        access_token: data.access_token,
+        refresh_token: data.refresh_token,
+      });
+
+      if (sessionError) {
+        toast.error("Échec de connexion");
+        setLoading(false);
+        return;
+      }
+
+      toast.success(`Bienvenue ${data.employee.name}`);
+
+      // Smart redirect based on permissions
+      const { data: perms } = await supabase
+        .from("employee_permissions")
+        .select("*")
+        .eq("employee_id", data.employee.id)
+        .maybeSingle();
+
+      if (perms?.can_make_sales) {
+        navigate("/sales");
+      } else if (perms?.can_view_products) {
+        navigate("/products");
+      } else if (perms?.can_view_reports) {
+        navigate("/");
+      } else {
+        navigate("/sales");
+      }
+    } catch (error) {
+      console.error('Employee login error:', error);
+      toast.error("Échec de connexion");
+    } finally {
+      setLoading(false);
+    }
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
@@ -107,33 +164,74 @@ export default function Auth() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSignIn} className="space-y-4 mt-4">
-            <div className="space-y-2">
-              <Label htmlFor="signin-email">Email</Label>
-              <Input
-                id="signin-email"
-                type="email"
-                placeholder="votre@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="signin-password">Mot de passe</Label>
-              <Input
-                id="signin-password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Connexion..." : "Se connecter"}
-            </Button>
-          </form>
+          <Tabs defaultValue="admin" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="admin">Administrateur</TabsTrigger>
+              <TabsTrigger value="employee">Employé</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="admin" className="space-y-4 mt-4">
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signin-email">Email</Label>
+                  <Input
+                    id="signin-email"
+                    type="email"
+                    placeholder="votre@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signin-password">Mot de passe</Label>
+                  <Input
+                    id="signin-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Connexion..." : "Se connecter"}
+                </Button>
+              </form>
+            </TabsContent>
+
+            <TabsContent value="employee" className="space-y-4 mt-4">
+              <form onSubmit={handleEmployeeLogin} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="employee-number">Numéro d'Employé</Label>
+                  <Input
+                    id="employee-number"
+                    type="text"
+                    placeholder="Ex: EMP001"
+                    value={employeeNumber}
+                    onChange={(e) => setEmployeeNumber(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="employee-pin">Code PIN</Label>
+                  <Input
+                    id="employee-pin"
+                    type="password"
+                    placeholder="••••"
+                    maxLength={6}
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Connexion..." : "Se connecter"}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
+
           <p className="text-sm text-muted-foreground text-center mt-4">
             Besoin d'un compte ? Contactez l'administrateur.
           </p>
