@@ -95,14 +95,17 @@ serve(async (req) => {
         console.error('Failed to assign employee role:', roleError);
       }
     } else {
-      // Update existing user's password to match the current pattern
+      // Update existing user's email and password to normalize the auth user
+      console.log('Updating existing auth user to normalize credentials');
       await supabaseClient.auth.admin.updateUserById(userId, {
+        email: uniqueEmail,
         password: employeePassword,
+        email_confirm: true,
       });
     }
 
     console.log('User ID ready:', userId);
-    console.log('Signing in employee with credentials');
+    console.log('Attempting sign in with email:', uniqueEmail);
 
     // Sign in the employee to get tokens
     const { data: sessionData, error: signInError } = await supabaseClient.auth.signInWithPassword({

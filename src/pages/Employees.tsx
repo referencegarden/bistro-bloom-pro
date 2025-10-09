@@ -22,6 +22,7 @@ interface Employee {
   phone: string | null;
   email: string | null;
   is_active: boolean;
+  pin_enabled: boolean;
 }
 
 export default function Employees() {

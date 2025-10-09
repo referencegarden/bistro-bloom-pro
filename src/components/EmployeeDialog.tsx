@@ -20,6 +20,7 @@ interface Employee {
   phone: string | null;
   email: string | null;
   is_active: boolean;
+  pin_enabled: boolean;
 }
 
 interface EmployeeDialogProps {
@@ -62,7 +63,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         phone: employee.phone || "",
         email: employee.email || "",
         is_active: employee.is_active,
-        pin_enabled: false,
+        pin_enabled: employee.pin_enabled,
         pin: "",
       });
 
@@ -110,6 +111,19 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
       return;
     }
 
+    // Check if enabling PIN for first time and PIN is empty
+    const wasDisabled = !employee?.pin_enabled;
+    if (formData.pin_enabled && wasDisabled && !formData.pin.trim()) {
+      toast.error("Veuillez saisir un code PIN");
+      return;
+    }
+
+    // Check PIN format if provided
+    if (formData.pin.trim() && formData.pin.trim().length < 4) {
+      toast.error("Le code PIN doit contenir au moins 4 chiffres");
+      return;
+    }
+
     const data = {
       name: formData.name.trim(),
       employee_number: formData.employee_number.trim() || null,
@@ -118,7 +132,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
       email: formData.email.trim() || null,
       is_active: formData.is_active,
       pin_enabled: formData.pin_enabled,
-      pin_hash: formData.pin_enabled && formData.pin ? btoa(formData.pin) : null,
+      pin_hash: formData.pin_enabled && formData.pin.trim() ? btoa(formData.pin.trim()) : null,
     };
 
     let employeeId = employee?.id;
@@ -269,7 +283,9 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
 
           {formData.pin_enabled && (
             <div className="space-y-2">
-              <Label htmlFor="pin">Code PIN (4-6 chiffres)</Label>
+              <Label htmlFor="pin">
+                Code PIN (4-6 chiffres) {!employee?.pin_enabled && "*"}
+              </Label>
               <Input
                 id="pin"
                 type="password"
@@ -277,9 +293,8 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
                 onChange={(e) =>
                   setFormData({ ...formData, pin: e.target.value })
                 }
-                placeholder="****"
+                placeholder={employee?.pin_enabled ? "Laisser vide pour garder l'actuel" : "****"}
                 maxLength={6}
-                required={formData.pin_enabled}
               />
             </div>
           )}
