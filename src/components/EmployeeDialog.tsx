@@ -150,15 +150,17 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
 
     // Update permissions
     if (employeeId) {
-      const { error: permError } = await supabase
-        .from("employee_permissions")
-        .upsert({
-          employee_id: employeeId,
-          can_make_sales: permissions.can_make_sales,
-          can_view_products: permissions.can_view_products,
-          can_view_reports: permissions.can_view_reports,
-          can_manage_stock: permissions.can_manage_stock,
-        });
+    const { error: permError } = await supabase
+      .from("employee_permissions")
+      .upsert({
+        employee_id: employeeId,
+        can_make_sales: permissions.can_make_sales,
+        can_view_products: permissions.can_view_products,
+        can_view_reports: permissions.can_view_reports,
+        can_manage_stock: permissions.can_manage_stock,
+      }, {
+        onConflict: 'employee_id'
+      });
 
       if (permError) {
         toast.error("Échec de la mise à jour des permissions");

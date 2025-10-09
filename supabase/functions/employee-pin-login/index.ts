@@ -23,35 +23,28 @@ serve(async (req) => {
       }
     );
 
-    const { employee_number, pin } = await req.json();
+    const { pin } = await req.json();
 
-    if (!employee_number || !pin) {
+    if (!pin) {
       return new Response(
-        JSON.stringify({ error: 'Employee number and PIN are required' }),
+        JSON.stringify({ error: 'PIN is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Find employee by employee_number
+    // Find employee by PIN hash
+    const encodedPin = btoa(pin);
     const { data: employee, error: employeeError } = await supabaseClient
       .from('employees')
       .select('*')
-      .eq('employee_number', employee_number)
+      .eq('pin_hash', encodedPin)
       .eq('is_active', true)
       .eq('pin_enabled', true)
       .single();
 
     if (employeeError || !employee) {
       return new Response(
-        JSON.stringify({ error: 'Invalid credentials' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Verify PIN
-    if (employee.pin_hash !== pin) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid credentials' }),
+        JSON.stringify({ error: 'Invalid PIN' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }

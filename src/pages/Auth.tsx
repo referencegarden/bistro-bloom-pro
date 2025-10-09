@@ -15,7 +15,6 @@ export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [employeeNumber, setEmployeeNumber] = useState("");
   const [pin, setPin] = useState("");
 
   const { data: settings } = useQuery({
@@ -90,7 +89,7 @@ export default function Auth() {
 
     try {
       const { data, error } = await supabase.functions.invoke('employee-pin-login', {
-        body: { employee_number: employeeNumber, pin },
+        body: { pin },
       });
 
       if (error) throw error;
@@ -203,32 +202,25 @@ export default function Auth() {
             <TabsContent value="employee" className="space-y-4 mt-4">
               <form onSubmit={handleEmployeeLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="employee-number">Numéro d'Employé</Label>
-                  <Input
-                    id="employee-number"
-                    type="text"
-                    placeholder="Ex: EMP001"
-                    value={employeeNumber}
-                    onChange={(e) => setEmployeeNumber(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label htmlFor="employee-pin">Code PIN</Label>
                   <Input
                     id="employee-pin"
                     type="password"
-                    placeholder="••••"
+                    placeholder="Entrez votre code PIN"
                     maxLength={6}
                     value={pin}
                     onChange={(e) => setPin(e.target.value)}
                     required
+                    autoFocus
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Connexion..." : "Se connecter"}
                 </Button>
               </form>
+              <p className="text-sm text-center text-muted-foreground mt-4">
+                Contactez votre administrateur si vous avez oublié votre code PIN
+              </p>
             </TabsContent>
           </Tabs>
 
