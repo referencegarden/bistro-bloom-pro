@@ -56,9 +56,9 @@ serve(async (req) => {
       );
     }
 
-    // Verify PIN using bcrypt
-    const bcrypt = await import('https://deno.land/x/bcrypt@v0.4.1/mod.ts');
-    const pinValid = await bcrypt.compare(pin, employee.pin_hash);
+    // Verify PIN (stored as Base64)
+    const encodedPin = btoa(pin);
+    const pinValid = encodedPin === employee.pin_hash;
 
     if (!pinValid) {
       console.log('Invalid PIN for employee:', employee.name);
