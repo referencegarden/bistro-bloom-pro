@@ -99,6 +99,7 @@ export default function Employees() {
               <TableHead>Poste</TableHead>
               <TableHead>Téléphone</TableHead>
               <TableHead>Email</TableHead>
+              <TableHead>Accès PIN</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -111,6 +112,11 @@ export default function Employees() {
                 <TableCell>{employee.position || "-"}</TableCell>
                 <TableCell>{employee.phone || "-"}</TableCell>
                 <TableCell>{employee.email || "-"}</TableCell>
+                <TableCell>
+                  <Badge variant={(employee as any).pin_enabled ? "default" : "outline"}>
+                    {(employee as any).pin_enabled ? "Activé" : "Désactivé"}
+                  </Badge>
+                </TableCell>
                 <TableCell>
                   <Badge variant={employee.is_active ? "default" : "secondary"}>
                     {employee.is_active ? "Actif" : "Inactif"}

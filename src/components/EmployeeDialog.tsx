@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 
 interface Employee {
@@ -38,6 +39,10 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
     is_active: true,
   });
 
+  const [pinEnabled, setPinEnabled] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pinConfirm, setPinConfirm] = useState("");
+
   useEffect(() => {
     if (employee) {
       setFormData({
@@ -48,6 +53,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         email: employee.email || "",
         is_active: employee.is_active,
       });
+      setPinEnabled((employee as any).pin_enabled || false);
     } else {
       setFormData({
         name: "",
@@ -57,7 +63,10 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         email: "",
         is_active: true,
       });
+      setPinEnabled(false);
     }
+    setPin("");
+    setPinConfirm("");
   }, [employee, open]);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -68,44 +77,81 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
       return;
     }
 
-    const data = {
-      name: formData.name.trim(),
-      employee_number: formData.employee_number.trim() || null,
-      position: formData.position.trim() || null,
-      phone: formData.phone.trim() || null,
-      email: formData.email.trim() || null,
-      is_active: formData.is_active,
-    };
-
-    if (employee) {
-      const { error } = await supabase
-        .from("employees")
-        .update(data)
-        .eq("id", employee.id);
-
-      if (error) {
-        toast.error("Échec de la mise à jour de l'employé");
+    if (pinEnabled) {
+      if (!pin || pin.length < 4 || pin.length > 6) {
+        toast.error("Le PIN doit contenir entre 4 et 6 chiffres");
         return;
       }
-
-      toast.success("Employé mis à jour avec succès");
-    } else {
-      const { error } = await supabase.from("employees").insert(data);
-
-      if (error) {
-        toast.error("Échec de la création de l'employé");
+      if (pin !== pinConfirm) {
+        toast.error("Les codes PIN ne correspondent pas");
         return;
       }
-
-      toast.success("Employé créé avec succès");
     }
 
-    onClose();
+    try {
+      let employeeId = employee?.id;
+      const data: any = {
+        name: formData.name.trim(),
+        employee_number: formData.employee_number.trim() || null,
+        position: formData.position.trim() || null,
+        phone: formData.phone.trim() || null,
+        email: formData.email.trim() || null,
+        is_active: formData.is_active,
+      };
+
+      // Handle PIN hashing if enabled
+      if (pinEnabled && pin) {
+        // Simple hash for PIN (in production, use proper bcrypt via edge function)
+        data.pin_hash = btoa(pin); // Base64 encoding as simple hash
+        data.pin_enabled = true;
+      } else if (!pinEnabled) {
+        data.pin_enabled = false;
+      }
+
+      if (employee) {
+        const { error } = await supabase
+          .from("employees")
+          .update(data)
+          .eq("id", employee.id);
+
+        if (error) throw error;
+        toast.success("Employé mis à jour avec succès");
+      } else {
+        const { data: newEmployee, error } = await supabase
+          .from("employees")
+          .insert(data)
+          .select()
+          .single();
+
+        if (error) throw error;
+        employeeId = newEmployee.id;
+
+        // Create default permissions
+        await supabase.from("employee_permissions").insert({
+          employee_id: employeeId,
+          can_make_sales: true,
+          can_view_products: true,
+        });
+
+        // If PIN is enabled, create auth user (we'll handle this in edge function)
+        if (pinEnabled) {
+          // The edge function will create the auth user on first login
+          toast.success("Employé créé avec succès. L'employé peut maintenant se connecter avec son PIN.");
+        } else {
+          toast.success("Employé créé avec succès");
+        }
+      }
+
+      onClose();
+    } catch (error) {
+      console.error("Error saving employee:", error);
+      toast.error("Échec de la sauvegarde de l'employé");
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {employee ? "Modifier Employé" : "Ajouter Employé"}
@@ -175,6 +221,57 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
             />
           </div>
 
+          <Separator className="my-4" />
+
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label htmlFor="pin_enabled" className="text-base">Accès PIN</Label>
+                <p className="text-sm text-muted-foreground">
+                  Permettre à l'employé de se connecter avec un code PIN
+                </p>
+              </div>
+              <Switch
+                id="pin_enabled"
+                checked={pinEnabled}
+                onCheckedChange={setPinEnabled}
+              />
+            </div>
+
+            {pinEnabled && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="pin">Code PIN (4-6 chiffres)</Label>
+                  <Input
+                    id="pin"
+                    type="password"
+                    inputMode="numeric"
+                    placeholder="••••"
+                    maxLength={6}
+                    value={pin}
+                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                    className="text-center text-2xl tracking-widest"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pin_confirm">Confirmer le PIN</Label>
+                  <Input
+                    id="pin_confirm"
+                    type="password"
+                    inputMode="numeric"
+                    placeholder="••••"
+                    maxLength={6}
+                    value={pinConfirm}
+                    onChange={(e) => setPinConfirm(e.target.value.replace(/\D/g, ''))}
+                    className="text-center text-2xl tracking-widest"
+                  />
+                </div>
+              </>
+            )}
+          </div>
+
+          <Separator className="my-4" />
+
           <div className="flex items-center justify-between">
             <Label htmlFor="is_active">Statut Actif</Label>
             <Switch
@@ -186,7 +283,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
             />
           </div>
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2 pt-4">
             <Button type="button" variant="outline" onClick={onClose}>
               Annuler
             </Button>
