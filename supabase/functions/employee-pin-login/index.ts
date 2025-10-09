@@ -94,15 +94,30 @@ serve(async (req) => {
       userId = authData.user.id;
 
       // Update employee with user_id
-      await supabaseClient
+      const { error: updateError } = await supabaseClient
         .from('employees')
         .update({ user_id: userId })
         .eq('id', employee.id);
 
+      if (updateError) {
+        console.error('Failed to update employee user_id:', updateError);
+        return new Response(
+          JSON.stringify({ error: 'Failed to link employee account' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      console.log('Successfully updated employee user_id:', employee.id);
+
       // Assign employee role
-      await supabaseClient
+      const { error: roleError } = await supabaseClient
         .from('user_roles')
         .insert({ user_id: userId, role: 'employee' });
+
+      if (roleError) {
+        console.error('Failed to assign employee role:', roleError);
+        // Don't fail the login if role assignment fails, it might already exist
+      }
     }
 
     // Generate session for the employee

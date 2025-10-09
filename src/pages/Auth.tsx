@@ -109,31 +109,21 @@ export default function Auth() {
 
       toast.success(`Bienvenue ${data.employee.name}`);
       
-      // Smart redirect based on permissions
-      const { data: employee } = await supabase
-        .from("employees")
-        .select("id")
-        .eq("user_id", signInData.user.id)
+      // Smart redirect based on permissions using the employee id from the response
+      const { data: perms } = await supabase
+        .from("employee_permissions")
+        .select("*")
+        .eq("employee_id", data.employee.id)
         .maybeSingle();
 
-      if (employee) {
-        const { data: perms } = await supabase
-          .from("employee_permissions")
-          .select("*")
-          .eq("employee_id", employee.id)
-          .maybeSingle();
-
-        if (perms?.can_make_sales) {
-          navigate("/sales");
-        } else if (perms?.can_view_products) {
-          navigate("/products");
-        } else if (perms?.can_view_reports) {
-          navigate("/");
-        } else {
-          navigate("/sales");
-        }
-      } else {
+      if (perms?.can_make_sales) {
+        navigate("/sales");
+      } else if (perms?.can_view_products) {
+        navigate("/products");
+      } else if (perms?.can_view_reports) {
         navigate("/");
+      } else {
+        navigate("/sales");
       }
     } catch (error: any) {
       console.error("Error during employee sign-in:", error);
