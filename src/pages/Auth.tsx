@@ -41,7 +41,11 @@ export default function Auth() {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session) {
-        navigate("/");
+        setTimeout(() => {
+          if (window.location.pathname === '/auth') {
+            navigate("/");
+          }
+        }, 0);
       }
     });
 

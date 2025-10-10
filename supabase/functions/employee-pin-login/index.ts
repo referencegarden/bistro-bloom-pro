@@ -54,12 +54,14 @@ serve(async (req) => {
 
     console.log('Employee found:', { id: employee.id, name: employee.name, has_user_id: !!employee.user_id });
 
-    // Generate a unique email and password for this employee if they don't have a user_id
+    // Generate a unique email and password for this employee
     let userId = employee.user_id;
     const uniqueEmail = `employee_${employee.id}@internal.app`;
     const employeePassword = `emp_${employee.id}_${employee.pin_hash}`;
+    let signInEmail = uniqueEmail;
 
     if (!userId) {
+      // Create new auth user
       const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
         email: uniqueEmail,
         password: employeePassword,
@@ -95,23 +97,45 @@ serve(async (req) => {
         console.error('Failed to assign employee role:', roleError);
       }
     } else {
-      // Update existing user's email and password to normalize the auth user
-      console.log('Updating existing auth user to normalize credentials');
-      await supabaseClient.auth.admin.updateUserById(userId, {
-        email: uniqueEmail,
+      // Update existing user's password only (avoid email collision)
+      console.log('Updating existing auth user password');
+      const { data: userData, error: fetchError } = await supabaseClient.auth.admin.getUserById(userId);
+      
+      if (fetchError) {
+        console.error('Failed to fetch existing user:', fetchError);
+      } else if (userData?.user?.email) {
+        signInEmail = userData.user.email;
+        console.log('Current auth email:', signInEmail);
+      }
+
+      const { error: pwError } = await supabaseClient.auth.admin.updateUserById(userId, {
         password: employeePassword,
-        email_confirm: true,
       });
+
+      if (pwError) {
+        console.error('Failed to update password:', pwError);
+      } else {
+        console.log('Password updated successfully');
+      }
     }
 
     console.log('User ID ready:', userId);
-    console.log('Attempting sign in with email:', uniqueEmail);
+    console.log('Attempting sign in with email:', signInEmail);
 
     // Sign in the employee to get tokens
-    const { data: sessionData, error: signInError } = await supabaseClient.auth.signInWithPassword({
-      email: uniqueEmail,
+    let { data: sessionData, error: signInError } = await supabaseClient.auth.signInWithPassword({
+      email: signInEmail,
       password: employeePassword,
     });
+
+    // Fallback: if sign-in failed and we used a different email, try uniqueEmail
+    if (signInError && signInEmail !== uniqueEmail) {
+      console.warn('Primary sign-in failed, retrying with uniqueEmail');
+      ({ data: sessionData, error: signInError } = await supabaseClient.auth.signInWithPassword({
+        email: uniqueEmail,
+        password: employeePassword,
+      }));
+    }
 
     if (signInError || !sessionData.session) {
       console.error('Sign in error:', signInError);

@@ -23,9 +23,19 @@ export function PermissionRoute({ children, permission }: PermissionRouteProps) 
     return <>{children}</>;
   }
 
-  // Check specific permission
+  // Check specific permission and redirect to appropriate page
   if (permission && !permissions[permission]) {
-    return <Navigate to="/" replace />;
+    const fallback = isAdmin
+      ? '/'
+      : permissions.can_make_sales
+        ? '/sales'
+        : permissions.can_view_products
+          ? '/products'
+          : permissions.can_view_reports
+            ? '/'
+            : '/auth';
+    
+    return <Navigate to={fallback} replace />;
   }
 
   return <>{children}</>;
