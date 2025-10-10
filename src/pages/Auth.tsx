@@ -71,6 +71,7 @@ export default function Auth() {
       toast.success("Connexion réussie!");
     }
 
+    navigate("/");
     setLoading(false);
   }
 
