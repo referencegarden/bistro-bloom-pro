@@ -21,6 +21,7 @@ interface Employee {
   email: string | null;
   is_active: boolean;
   pin_enabled: boolean;
+  pin_hash: string | null;
 }
 
 interface EmployeeDialogProps {
@@ -63,7 +64,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         phone: employee.phone || "",
         email: employee.email || "",
         is_active: employee.is_active,
-        pin_enabled: employee.pin_enabled,
+        pin_enabled: employee.pin_enabled && !!employee.pin_hash,
         pin: "",
       });
 
@@ -111,9 +112,14 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
       return;
     }
 
-    // Check if enabling PIN for first time and PIN is empty
-    const wasDisabled = !employee?.pin_enabled;
-    if (formData.pin_enabled && wasDisabled && !formData.pin.trim()) {
+    // Determine PIN state transitions
+    const effectiveWasEnabled = !!employee?.pin_enabled && !!employee?.pin_hash;
+    const effectiveWillBeEnabled = formData.pin_enabled;
+    const isDisabling = effectiveWasEnabled && !effectiveWillBeEnabled;
+    const isEnabling = !effectiveWasEnabled && effectiveWillBeEnabled;
+
+    // If enabling PIN for first time, require a PIN
+    if (isEnabling && !formData.pin.trim()) {
       toast.error("Veuillez saisir un code PIN");
       return;
     }
@@ -124,7 +130,8 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
       return;
     }
 
-    const data = {
+    // Build base data
+    const data: any = {
       name: formData.name.trim(),
       employee_number: formData.employee_number.trim() || null,
       position: formData.position.trim() || null,
@@ -132,8 +139,20 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
       email: formData.email.trim() || null,
       is_active: formData.is_active,
       pin_enabled: formData.pin_enabled,
-      pin_hash: formData.pin_enabled && formData.pin.trim() ? btoa(formData.pin.trim()) : null,
     };
+
+    // Handle pin_hash based on state transitions
+    if (isDisabling) {
+      // Explicitly disable: clear the hash
+      data.pin_hash = null;
+    } else if (formData.pin_enabled && formData.pin.trim()) {
+      // New PIN provided: encode and save
+      data.pin_hash = btoa(formData.pin.trim());
+    } else if (!employee) {
+      // Creating new employee without PIN: set null
+      data.pin_hash = null;
+    }
+    // If editing and PIN enabled but no new PIN provided: don't include pin_hash (preserve existing)
 
     let employeeId = employee?.id;
 

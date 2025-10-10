@@ -81,7 +81,7 @@ export default function Auth() {
 
     try {
       const { data, error } = await supabase.functions.invoke('employee-pin-login', {
-        body: { pin },
+        body: { pin: pin.trim() },
       });
 
       if (error) throw error;
