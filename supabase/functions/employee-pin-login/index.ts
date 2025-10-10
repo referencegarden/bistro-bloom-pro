@@ -25,24 +25,25 @@ serve(async (req) => {
 
     const { pin } = await req.json();
 
-    if (!pin) {
+    const trimmedPin = typeof pin === 'string' ? pin.trim() : '';
+    if (!trimmedPin) {
       return new Response(
         JSON.stringify({ error: 'PIN is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Find employee by PIN hash
-    const encodedPin = btoa(pin);
-    console.log('Looking for employee with encoded PIN');
-    
+    // Find employee by PIN hash (ensure consistent trimming)
+    const encodedPin = btoa(trimmedPin);
+    console.log('Looking for employee with encoded PIN (trim applied)');
+
     const { data: employee, error: employeeError } = await supabaseClient
       .from('employees')
       .select('*')
       .eq('pin_hash', encodedPin)
       .eq('is_active', true)
       .eq('pin_enabled', true)
-      .single();
+      .maybeSingle();
 
     if (employeeError || !employee) {
       console.error('Employee lookup failed:', employeeError);
