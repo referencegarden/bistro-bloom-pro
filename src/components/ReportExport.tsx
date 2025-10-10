@@ -83,6 +83,10 @@ export function ReportExport() {
       );
 
       const totalSalesQuantity = sales.reduce((sum, s) => sum + s.quantity, 0);
+      const totalSalesValue = sales.reduce(
+        (sum, s) => sum + Number(s.total_price || (s.quantity * s.unit_price)),
+        0
+      );
       const totalPurchases = purchases.reduce(
         (sum, p) => sum + Number(p.total_cost || 0),
         0
@@ -121,6 +125,10 @@ export function ReportExport() {
             <div class="summary-item">
               <span class="summary-label">Total Sorties de Stock (${periodLabel}):</span>
               <span class="summary-value">${totalSalesQuantity} unités</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Valeur Sorties de Stock (${periodLabel}):</span>
+              <span class="summary-value">${totalSalesValue.toFixed(2)} DH</span>
             </div>
             <div class="summary-item">
               <span class="summary-label">Total Achats (${periodLabel}):</span>
@@ -173,6 +181,8 @@ export function ReportExport() {
                 <th>Produit</th>
                 <th>Employé</th>
                 <th>Quantité</th>
+                <th>Prix Unitaire</th>
+                <th>Total</th>
               </tr>
             </thead>
             <tbody>
@@ -184,6 +194,8 @@ export function ReportExport() {
                   <td>${s.products?.name || "N/A"}</td>
                   <td>${s.employees?.name || "-"}</td>
                   <td>${s.quantity}</td>
+                  <td>${Number(s.unit_price || 0).toFixed(2)} DH</td>
+                  <td>${Number(s.total_price || 0).toFixed(2)} DH</td>
                 </tr>
               `
                 )

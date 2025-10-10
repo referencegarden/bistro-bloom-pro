@@ -10,7 +10,9 @@ interface DashboardStats {
   totalProducts: number;
   totalStock: number;
   totalSalesQuantity: number;
+  totalSalesValue: number;
   totalPurchasesValue: number;
+  totalStockValue: number;
   lowStockProducts: Array<{
     id: string;
     name: string;
@@ -24,7 +26,9 @@ export default function Dashboard() {
     totalProducts: 0,
     totalStock: 0,
     totalSalesQuantity: 0,
+    totalSalesValue: 0,
     totalPurchasesValue: 0,
+    totalStockValue: 0,
     lowStockProducts: [],
   });
 
@@ -35,17 +39,23 @@ export default function Dashboard() {
   async function loadDashboardData() {
     const [productsRes, salesRes, purchasesRes] = await Promise.all([
       supabase.from("products").select("*"),
-      supabase.from("sales").select("quantity"),
+      supabase.from("sales").select("quantity, unit_price, total_price"),
       supabase.from("purchases").select("total_cost"),
     ]);
 
     if (productsRes.data) {
       const totalStock = productsRes.data.reduce((sum, p) => sum + p.current_stock, 0);
+      const totalStockValue = productsRes.data.reduce(
+        (sum, p) => sum + (p.current_stock * Number(p.cost_price)), 0
+      );
       const lowStock = productsRes.data.filter(
         (p) => p.current_stock <= p.low_stock_threshold
       );
 
       const totalSalesQty = salesRes.data?.reduce((sum, s) => sum + s.quantity, 0) || 0;
+      const totalSalesValue = salesRes.data?.reduce(
+        (sum, s) => sum + Number(s.total_price || (s.quantity * s.unit_price)), 0
+      ) || 0;
       const totalPurchases =
         purchasesRes.data?.reduce((sum, p) => sum + Number(p.total_cost), 0) || 0;
 
@@ -53,7 +63,9 @@ export default function Dashboard() {
         totalProducts: productsRes.data.length,
         totalStock,
         totalSalesQuantity: totalSalesQty,
+        totalSalesValue,
         totalPurchasesValue: totalPurchases,
+        totalStockValue,
         lowStockProducts: lowStock,
       });
     }
@@ -69,7 +81,7 @@ export default function Dashboard() {
         <ReportExport />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatCard
           title="Total Produits"
           value={stats.totalProducts}
@@ -81,8 +93,18 @@ export default function Dashboard() {
           icon={Package}
         />
         <StatCard
+          title="Valeur Totale Stock"
+          value={`${stats.totalStockValue.toFixed(2)} DH`}
+          icon={Package}
+        />
+        <StatCard
           title="Total Sorties de Stock"
           value={`${stats.totalSalesQuantity} unités`}
+          icon={ShoppingCart}
+        />
+        <StatCard
+          title="Valeur Sorties de Stock"
+          value={`${stats.totalSalesValue.toFixed(2)} DH`}
           icon={ShoppingCart}
         />
         <StatCard
