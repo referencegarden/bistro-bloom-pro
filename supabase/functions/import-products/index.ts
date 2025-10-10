@@ -72,12 +72,22 @@ serve(async (req) => {
 
       try {
         // Validate required fields
-        if (!product.name || !product.cost) {
+        if (!product.name) {
           results.failed++;
           results.errors.push({
             row: rowNumber,
             name: product.name || 'Unknown',
-            error: 'Missing required fields (name or cost)',
+            error: 'Missing product name',
+          });
+          continue;
+        }
+
+        if (product.cost === undefined || product.cost === null) {
+          results.failed++;
+          results.errors.push({
+            row: rowNumber,
+            name: product.name,
+            error: 'Missing cost/price value',
           });
           continue;
         }
@@ -96,9 +106,9 @@ serve(async (req) => {
           continue;
         }
 
-        // Parse cost
+        // Parse cost - allow 0 for inventory/equipment items
         const cost = parseFloat(product.cost);
-        if (isNaN(cost) || cost < 0) {
+        if (isNaN(cost)) {
           results.failed++;
           results.errors.push({
             row: rowNumber,

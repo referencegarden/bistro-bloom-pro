@@ -53,11 +53,33 @@ export const ProductImport = ({ open, onClose }: ProductImportProps) => {
           normalizedRow[key.toLowerCase().trim()] = row[key];
         });
 
+        const rawCategory = normalizedRow['category name'] || 
+                            normalizedRow.category || 
+                            normalizedRow.catégorie || 
+                            normalizedRow.categorie ||
+                            normalizedRow.categ_id ||
+                            normalizedRow['categ id'] ||
+                            normalizedRow.categ ||
+                            '';
+        
+        // Extract last part if it's a path like "MATERIEL / MATERIEL BAR"
+        const category_name = rawCategory.includes('/') 
+          ? rawCategory.split('/').pop()?.trim() 
+          : rawCategory;
+
         return {
           name: normalizedRow.name || normalizedRow.nom || '',
           unit_of_measure: normalizedRow['unit of measure'] || normalizedRow['unité de mesure'] || normalizedRow.unit || '',
-          cost: parseFloat(normalizedRow.cost || normalizedRow.coût || normalizedRow.prix || 0),
-          category_name: normalizedRow['category name'] || normalizedRow.category || normalizedRow.catégorie || normalizedRow.categorie || '',
+          cost: parseFloat(
+            normalizedRow.cost || 
+            normalizedRow.coût || 
+            normalizedRow.prix || 
+            normalizedRow['sales price'] ||
+            normalizedRow['prix de vente'] ||
+            normalizedRow['sale price'] ||
+            0
+          ),
+          category_name,
         };
       });
 
@@ -92,11 +114,33 @@ export const ProductImport = ({ open, onClose }: ProductImportProps) => {
           normalizedRow[key.toLowerCase().trim()] = row[key];
         });
 
+        const rawCategory = normalizedRow['category name'] || 
+                            normalizedRow.category || 
+                            normalizedRow.catégorie || 
+                            normalizedRow.categorie ||
+                            normalizedRow.categ_id ||
+                            normalizedRow['categ id'] ||
+                            normalizedRow.categ ||
+                            '';
+        
+        // Extract last part if it's a path like "MATERIEL / MATERIEL BAR"
+        const category_name = rawCategory.includes('/') 
+          ? rawCategory.split('/').pop()?.trim() 
+          : rawCategory;
+
         return {
           name: normalizedRow.name || normalizedRow.nom || '',
           unit_of_measure: normalizedRow['unit of measure'] || normalizedRow['unité de mesure'] || normalizedRow.unit || '',
-          cost: parseFloat(normalizedRow.cost || normalizedRow.coût || normalizedRow.prix || 0),
-          category_name: normalizedRow['category name'] || normalizedRow.category || normalizedRow.catégorie || normalizedRow.categorie || '',
+          cost: parseFloat(
+            normalizedRow.cost || 
+            normalizedRow.coût || 
+            normalizedRow.prix || 
+            normalizedRow['sales price'] ||
+            normalizedRow['prix de vente'] ||
+            normalizedRow['sale price'] ||
+            0
+          ),
+          category_name,
         };
       });
 
