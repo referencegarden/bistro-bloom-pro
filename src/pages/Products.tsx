@@ -123,7 +123,6 @@ export default function Products() {
               <TableHead>Fournisseur</TableHead>
               <TableHead>Stock</TableHead>
               <TableHead>Prix Coût</TableHead>
-              <TableHead>Prix Vente</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -140,7 +139,6 @@ export default function Products() {
                   <TableCell>{product.suppliers?.name || "N/A"}</TableCell>
                   <TableCell>{product.current_stock}</TableCell>
                   <TableCell>{product.cost_price.toFixed(2)} DH</TableCell>
-                  <TableCell>{product.sales_price.toFixed(2)} DH</TableCell>
                   <TableCell>
                     {product.current_stock <= product.low_stock_threshold ? <Badge variant="destructive">Stock Faible</Badge> : <Badge variant="secondary" className="bg-yellow-400">En Stock</Badge>}
                   </TableCell>
