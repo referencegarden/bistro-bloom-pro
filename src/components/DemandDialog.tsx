@@ -110,12 +110,12 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-3 sm:p-4 md:p-6 mx-2">
         <DialogHeader>
-          <DialogTitle>Nouvelle Demande de Produit</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Nouvelle Demande de Produit</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
-          <div className="space-y-4 py-4">
+          <div className="space-y-3 sm:space-y-4 py-3 sm:py-4">
             <div className="space-y-2">
               <Label htmlFor="product">Produit *</Label>
               <Select
