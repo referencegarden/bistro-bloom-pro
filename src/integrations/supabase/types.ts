@@ -157,6 +157,57 @@ export type Database = {
         }
         Relationships: []
       }
+      product_demands: {
+        Row: {
+          fulfilled_at: string | null
+          id: string
+          notes: string | null
+          product_id: string
+          quantity: number
+          requested_at: string
+          requested_by: string
+          status: Database["public"]["Enums"]["demand_status"]
+          updated_at: string
+        }
+        Insert: {
+          fulfilled_at?: string | null
+          id?: string
+          notes?: string | null
+          product_id: string
+          quantity: number
+          requested_at?: string
+          requested_by: string
+          status?: Database["public"]["Enums"]["demand_status"]
+          updated_at?: string
+        }
+        Update: {
+          fulfilled_at?: string | null
+          id?: string
+          notes?: string | null
+          product_id?: string
+          quantity?: number
+          requested_at?: string
+          requested_by?: string
+          status?: Database["public"]["Enums"]["demand_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_demands_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_demands_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           category_id: string | null
@@ -216,6 +267,7 @@ export type Database = {
       }
       purchases: {
         Row: {
+          demand_id: string | null
           id: string
           notes: string | null
           product_id: string
@@ -226,6 +278,7 @@ export type Database = {
           unit_cost: number
         }
         Insert: {
+          demand_id?: string | null
           id?: string
           notes?: string | null
           product_id: string
@@ -236,6 +289,7 @@ export type Database = {
           unit_cost: number
         }
         Update: {
+          demand_id?: string | null
           id?: string
           notes?: string | null
           product_id?: string
@@ -246,6 +300,13 @@ export type Database = {
           unit_cost?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "purchases_demand_id_fkey"
+            columns: ["demand_id"]
+            isOneToOne: false
+            referencedRelation: "product_demands"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "purchases_product_id_fkey"
             columns: ["product_id"]
@@ -377,6 +438,7 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "user" | "employee"
+      demand_status: "pending" | "in_stock" | "fulfilled" | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -505,6 +567,7 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user", "employee"],
+      demand_status: ["pending", "in_stock", "fulfilled", "cancelled"],
     },
   },
 } as const

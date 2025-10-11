@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings } from "lucide-react";
+import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -24,6 +24,7 @@ const navigation = [
   { name: "Produits", href: "/products", icon: Package },
   { name: "Sortie de Stock", href: "/sales", icon: ShoppingCart },
   { name: "Achats", href: "/purchases", icon: TrendingUp },
+  { name: "Demandes", href: "/demands", icon: ClipboardList },
   { name: "Catégories", href: "/categories", icon: LayoutGrid },
   { name: "Fournisseurs", href: "/suppliers", icon: Users },
   { name: "Employés", href: "/employees", icon: Users },
@@ -96,6 +97,8 @@ export function AppSidebar() {
       if (item.href === "/sales") return permissions.can_make_sales;
       // Purchases only for admins or those who can manage stock
       if (item.href === "/purchases") return permissions.can_manage_stock;
+      // Demands visible to all employees
+      if (item.href === "/demands") return true;
       
       return true;
     });

@@ -10,6 +10,7 @@ import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Sales from "./pages/Sales";
 import Purchases from "./pages/Purchases";
+import Demands from "./pages/Demands";
 import Categories from "./pages/Categories";
 import Suppliers from "./pages/Suppliers";
 import Employees from "./pages/Employees";
@@ -72,6 +73,16 @@ const App = () => (
                     <Purchases />
                   </Layout>
                 </PermissionRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/demands"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Demands />
+                </Layout>
               </ProtectedRoute>
             }
           />

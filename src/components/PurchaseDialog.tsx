@@ -34,11 +34,14 @@ interface Supplier {
 interface PurchaseDialogProps {
   open: boolean;
   onClose: () => void;
+  demandId?: string;
+  prefilledProductId?: string;
+  prefilledQuantity?: number;
 }
 
 
 
-export function PurchaseDialog({ open, onClose }: PurchaseDialogProps) {
+export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, prefilledQuantity }: PurchaseDialogProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [formData, setFormData] = useState({
@@ -53,6 +56,18 @@ export function PurchaseDialog({ open, onClose }: PurchaseDialogProps) {
     loadProducts();
     loadSuppliers();
   }, []);
+
+  useEffect(() => {
+    if (prefilledProductId) {
+      const product = products.find(p => p.id === prefilledProductId);
+      setFormData(prev => ({
+        ...prev,
+        product_id: prefilledProductId,
+        quantity: prefilledQuantity || 1,
+        unit_cost: product?.cost_price || 0,
+      }));
+    }
+  }, [prefilledProductId, prefilledQuantity, products]);
 
   async function loadProducts() {
     const { data } = await supabase.from("products").select("id, name, cost_price").order("name");
@@ -90,6 +105,7 @@ export function PurchaseDialog({ open, onClose }: PurchaseDialogProps) {
       quantity: formData.quantity,
       unit_cost: formData.unit_cost,
       notes: formData.notes || null,
+      demand_id: demandId || null,
     });
 
     if (purchaseError) {

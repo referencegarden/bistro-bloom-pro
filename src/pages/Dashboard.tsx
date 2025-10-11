@@ -1,36 +1,38 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { StatCard } from "@/components/StatCard";
-import { Package, ShoppingCart, TrendingUp, AlertTriangle } from "lucide-react";
+import { Package, ShoppingCart, TrendingUp, AlertTriangle, ClipboardList } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ReportExport } from "@/components/ReportExport";
+import { useNavigate } from "react-router-dom";
 
 interface DashboardStats {
   totalProducts: number;
-  totalStock: number;
-  totalSalesQuantity: number;
-  totalSalesValue: number;
-  totalPurchasesValue: number;
+  totalSales: number;
+  totalPurchases: number;
   totalStockValue: number;
-  lowStockProducts: Array<{
+  lowStockProducts: {
     id: string;
     name: string;
     current_stock: number;
     low_stock_threshold: number;
-  }>;
+  }[];
+  pendingDemands: number;
+  inStockDemands: number;
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
-    totalStock: 0,
-    totalSalesQuantity: 0,
-    totalSalesValue: 0,
-    totalPurchasesValue: 0,
+    totalSales: 0,
+    totalPurchases: 0,
     totalStockValue: 0,
     lowStockProducts: [],
+    pendingDemands: 0,
+    inStockDemands: 0,
   });
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -49,38 +51,49 @@ export default function Dashboard() {
   }, [stats.lowStockProducts.length]);
 
   async function loadDashboardData() {
-    const [productsRes, salesRes, purchasesRes] = await Promise.all([
-      supabase.from("products").select("*"),
-      supabase.from("sales").select("quantity, unit_price, total_price"),
+    const [productsRes, salesRes, purchasesRes, demandsRes] = await Promise.all([
+      supabase.from("products").select("current_stock, sales_price, low_stock_threshold"),
+      supabase.from("sales").select("total_price"),
       supabase.from("purchases").select("total_cost"),
+      supabase.from("product_demands").select("status"),
     ]);
 
-    if (productsRes.data) {
-      const totalStock = productsRes.data.reduce((sum, p) => sum + p.current_stock, 0);
-      const totalStockValue = productsRes.data.reduce(
-        (sum, p) => sum + (p.current_stock * Number(p.cost_price)), 0
-      );
-      const lowStock = productsRes.data.filter(
-        (p) => p.current_stock <= p.low_stock_threshold
-      );
+    const salesTotal =
+      salesRes.data?.reduce((sum, sale: any) => sum + Number(sale.total_price), 0) || 0;
 
-      const totalSalesQty = salesRes.data?.reduce((sum, s) => sum + s.quantity, 0) || 0;
-      const totalSalesValue = salesRes.data?.reduce(
-        (sum, s) => sum + Number(s.total_price || (s.quantity * s.unit_price)), 0
+    const purchasesTotal =
+      purchasesRes.data?.reduce((sum, purchase: any) => sum + Number(purchase.total_cost), 0) ||
+      0;
+
+    const stockValue =
+      productsRes.data?.reduce(
+        (sum, product: any) =>
+          sum + product.current_stock * Number(product.sales_price),
+        0
       ) || 0;
-      const totalPurchases =
-        purchasesRes.data?.reduce((sum, p) => sum + Number(p.total_cost), 0) || 0;
 
-      setStats({
-        totalProducts: productsRes.data.length,
-        totalStock,
-        totalSalesQuantity: totalSalesQty,
-        totalSalesValue,
-        totalPurchasesValue: totalPurchases,
-        totalStockValue,
-        lowStockProducts: lowStock,
-      });
-    }
+    const lowStock = (productsRes.data || []).filter(
+      (p: any) => p.current_stock <= p.low_stock_threshold
+    );
+
+    const lowStockDetails = await supabase
+      .from("products")
+      .select("id, name, current_stock, low_stock_threshold")
+      .filter('current_stock', 'lte', 'low_stock_threshold')
+      .order("current_stock");
+
+    const pendingDemands = (demandsRes.data || []).filter((d: any) => d.status === 'pending').length;
+    const inStockDemands = (demandsRes.data || []).filter((d: any) => d.status === 'in_stock').length;
+
+    setStats({
+      totalProducts: productsRes.data?.length || 0,
+      totalSales: salesTotal,
+      totalPurchases: purchasesTotal,
+      totalStockValue: stockValue,
+      lowStockProducts: lowStockDetails.data || [],
+      pendingDemands,
+      inStockDemands,
+    });
   }
 
   return (
@@ -93,37 +106,61 @@ export default function Dashboard() {
         <ReportExport />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
-          title="Total Produits"
-          value={stats.totalProducts}
+          title="Produits Totaux"
+          value={stats.totalProducts.toString()}
           icon={Package}
         />
         <StatCard
-          title="Total Stock"
-          value={stats.totalStock}
-          icon={Package}
+          title="Sortie de Stock Totales"
+          value={`${stats.totalSales.toFixed(2)} DH`}
+          icon={ShoppingCart}
         />
         <StatCard
-          title="Valeur Totale Stock"
+          title="Achats Totaux"
+          value={`${stats.totalPurchases.toFixed(2)} DH`}
+          icon={TrendingUp}
+        />
+        <StatCard
+          title="Valeur Totale du Stock"
           value={`${stats.totalStockValue.toFixed(2)} DH`}
           icon={Package}
         />
-        <StatCard
-          title="Total Sorties de Stock"
-          value={`${stats.totalSalesQuantity} unités`}
-          icon={ShoppingCart}
-        />
-        <StatCard
-          title="Valeur Sorties de Stock"
-          value={`${stats.totalSalesValue.toFixed(2)} DH`}
-          icon={ShoppingCart}
-        />
-        <StatCard
-          title="Total Achats"
-          value={`${stats.totalPurchasesValue.toFixed(2)} DH`}
-          icon={TrendingUp}
-        />
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card 
+          className="cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={() => navigate("/demands")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Demandes en Attente</CardTitle>
+            <ClipboardList className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.pendingDemands}</div>
+            <p className="text-xs text-muted-foreground">
+              Cliquez pour gérer les demandes
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card 
+          className="cursor-pointer hover:bg-accent/50 transition-colors"
+          onClick={() => navigate("/demands")}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Produits en Stock</CardTitle>
+            <ClipboardList className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.inStockDemands}</div>
+            <p className="text-xs text-muted-foreground">
+              Prêts pour l'achat
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
       {stats.lowStockProducts.length > 0 && (
