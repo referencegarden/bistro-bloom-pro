@@ -35,6 +35,7 @@ interface EmployeePermissions {
   can_view_products: boolean;
   can_view_reports: boolean;
   can_manage_stock: boolean;
+  can_create_demands: boolean;
 }
 
 export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps) {
@@ -53,6 +54,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
     can_view_products: true,
     can_view_reports: false,
     can_manage_stock: false,
+    can_create_demands: true,
   });
 
   useEffect(() => {
@@ -81,6 +83,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
               can_view_products: data.can_view_products,
               can_view_reports: data.can_view_reports,
               can_manage_stock: data.can_manage_stock,
+              can_create_demands: data.can_create_demands ?? true,
             });
           }
         });
@@ -100,6 +103,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         can_view_products: true,
         can_view_reports: false,
         can_manage_stock: false,
+        can_create_demands: true,
       });
     }
   }, [employee, open]);
@@ -191,6 +195,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         can_view_products: permissions.can_view_products,
         can_view_reports: permissions.can_view_reports,
         can_manage_stock: permissions.can_manage_stock,
+        can_create_demands: permissions.can_create_demands,
       }, {
         onConflict: 'employee_id'
       });
@@ -361,6 +366,17 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
                 checked={permissions.can_manage_stock}
                 onCheckedChange={(checked) =>
                   setPermissions({ ...permissions, can_manage_stock: checked })
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="can_create_demands">Peut créer des demandes</Label>
+              <Switch
+                id="can_create_demands"
+                checked={permissions.can_create_demands}
+                onCheckedChange={(checked) =>
+                  setPermissions({ ...permissions, can_create_demands: checked })
                 }
               />
             </div>

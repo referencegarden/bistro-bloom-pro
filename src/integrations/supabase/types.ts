@@ -73,6 +73,7 @@ export type Database = {
       }
       employee_permissions: {
         Row: {
+          can_create_demands: boolean
           can_make_sales: boolean
           can_manage_stock: boolean
           can_view_products: boolean
@@ -83,6 +84,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          can_create_demands?: boolean
           can_make_sales?: boolean
           can_manage_stock?: boolean
           can_view_products?: boolean
@@ -93,6 +95,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          can_create_demands?: boolean
           can_make_sales?: boolean
           can_manage_stock?: boolean
           can_view_products?: boolean

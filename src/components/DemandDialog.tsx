@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
+import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
 
 interface Product {
   id: string;
@@ -27,6 +28,7 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
     notes: "",
   });
   const [loading, setLoading] = useState(false);
+  const { isAdmin, permissions } = useEmployeePermissions();
 
   useEffect(() => {
     if (open) {
@@ -47,6 +49,13 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    // Check permission
+    if (!isAdmin && !permissions.can_create_demands) {
+      toast.error("Vous n'avez pas la permission de créer des demandes");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -64,7 +73,7 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
         .maybeSingle();
 
       if (!employee) {
-        toast.error("Profil employé non trouvé");
+        toast.error("Vous devez avoir un compte employé pour créer une demande");
         return;
       }
 

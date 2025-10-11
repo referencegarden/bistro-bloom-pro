@@ -30,7 +30,7 @@ export default function Demands() {
   const [demandDialogOpen, setDemandDialogOpen] = useState(false);
   const [purchaseDialogOpen, setPurchaseDialogOpen] = useState(false);
   const [selectedDemand, setSelectedDemand] = useState<Demand | null>(null);
-  const { isAdmin } = useEmployeePermissions();
+  const { isAdmin, permissions } = useEmployeePermissions();
 
   useEffect(() => {
     loadDemands();
@@ -95,10 +95,12 @@ export default function Demands() {
     <div className="container mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Demandes de Produits</h1>
-        <Button onClick={() => setDemandDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nouvelle Demande
-        </Button>
+        {(isAdmin || permissions.can_create_demands) && (
+          <Button onClick={() => setDemandDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nouvelle Demande
+          </Button>
+        )}
       </div>
 
       <Card>

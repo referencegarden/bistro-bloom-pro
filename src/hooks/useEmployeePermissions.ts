@@ -6,6 +6,7 @@ interface EmployeePermissions {
   can_view_products: boolean;
   can_view_reports: boolean;
   can_manage_stock: boolean;
+  can_create_demands: boolean;
 }
 
 export function useEmployeePermissions() {
@@ -68,6 +69,7 @@ export function useEmployeePermissions() {
         can_view_products: true,
         can_view_reports: true,
         can_manage_stock: true,
+        can_create_demands: true,
       },
       loading: false,
     };
@@ -82,6 +84,7 @@ export function useEmployeePermissions() {
         can_view_products: false,
         can_view_reports: false,
         can_manage_stock: false,
+        can_create_demands: false,
       },
       loading: isLoading,
     };
@@ -95,6 +98,7 @@ export function useEmployeePermissions() {
       can_view_products: false,
       can_view_reports: false,
       can_manage_stock: false,
+      can_create_demands: false,
     },
     loading: false,
   };

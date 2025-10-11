@@ -52,7 +52,7 @@ export default function Dashboard() {
 
   async function loadDashboardData() {
     const [productsRes, salesRes, purchasesRes, demandsRes] = await Promise.all([
-      supabase.from("products").select("current_stock, sales_price, low_stock_threshold"),
+      supabase.from("products").select("id, name, current_stock, cost_price, low_stock_threshold"),
       supabase.from("sales").select("total_price"),
       supabase.from("purchases").select("total_cost"),
       supabase.from("product_demands").select("status"),
@@ -68,19 +68,19 @@ export default function Dashboard() {
     const stockValue =
       productsRes.data?.reduce(
         (sum, product: any) =>
-          sum + product.current_stock * Number(product.sales_price),
+          sum + product.current_stock * Number(product.cost_price),
         0
       ) || 0;
 
-    const lowStock = (productsRes.data || []).filter(
-      (p: any) => p.current_stock <= p.low_stock_threshold
-    );
-
-    const lowStockDetails = await supabase
-      .from("products")
-      .select("id, name, current_stock, low_stock_threshold")
-      .filter('current_stock', 'lte', 'low_stock_threshold')
-      .order("current_stock");
+    // Filter low stock products client-side (compare column values)
+    const lowStockDetails = (productsRes.data || [])
+      .filter((p: any) => p.current_stock <= p.low_stock_threshold)
+      .map((p: any) => ({
+        id: p.id,
+        name: p.name,
+        current_stock: p.current_stock,
+        low_stock_threshold: p.low_stock_threshold,
+      }));
 
     const pendingDemands = (demandsRes.data || []).filter((d: any) => d.status === 'pending').length;
     const inStockDemands = (demandsRes.data || []).filter((d: any) => d.status === 'in_stock').length;
@@ -90,7 +90,7 @@ export default function Dashboard() {
       totalSales: salesTotal,
       totalPurchases: purchasesTotal,
       totalStockValue: stockValue,
-      lowStockProducts: lowStockDetails.data || [],
+      lowStockProducts: lowStockDetails,
       pendingDemands,
       inStockDemands,
     });
