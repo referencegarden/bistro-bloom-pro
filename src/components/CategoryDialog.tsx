@@ -78,7 +78,7 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>
             {category ? "Modifier Catégorie" : "Ajouter Catégorie"}
@@ -105,11 +105,11 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
               placeholder="Ajouter une description..."
             />
           </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Annuler
             </Button>
-            <Button type="submit">{category ? "Modifier" : "Créer"}</Button>
+            <Button type="submit" className="w-full sm:w-auto">{category ? "Modifier" : "Créer"}</Button>
           </div>
         </form>
       </DialogContent>

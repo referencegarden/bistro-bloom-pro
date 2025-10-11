@@ -93,9 +93,9 @@ export default function Settings() {
         <p className="text-muted-foreground">Chargement...</p>
       </div>;
   }
-  return <div className="space-y-6 pb-24">
+  return <div className="space-y-6 pb-24 px-0">
       <div>
-        <h1 className="text-3xl font-bold">Paramètres de l'Application</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold">Paramètres de l'Application</h1>
         <p className="text-muted-foreground">Personnalisez l'apparence et les informations de votre application</p>
       </div>
 
@@ -164,11 +164,11 @@ export default function Settings() {
 
       {/* Sticky Save Bar */}
       {isDirty && <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
-          <div className="container flex items-center justify-end gap-4 py-4">
-            <Button variant="outline" onClick={handleCancel} disabled={updateMutation.isPending}>
+          <div className="container flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4">
+            <Button variant="outline" onClick={handleCancel} disabled={updateMutation.isPending} className="w-full sm:w-auto">
               Annuler
             </Button>
-            <Button onClick={handleSaveAll} disabled={updateMutation.isPending || !settings}>
+            <Button onClick={handleSaveAll} disabled={updateMutation.isPending || !settings} className="w-full sm:w-auto">
               {updateMutation.isPending ? "Enregistrement..." : "Enregistrer les modifications"}
             </Button>
           </div>

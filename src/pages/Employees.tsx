@@ -81,26 +81,26 @@ export default function Employees() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Employés</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Employés</h1>
           <p className="text-muted-foreground">Gérer les employés</p>
         </div>
-        <Button onClick={handleAdd}>
+        <Button onClick={handleAdd} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Ajouter Employé
         </Button>
       </div>
 
-      <div className="rounded-lg border">
-        <Table>
+      <div className="rounded-lg border overflow-x-auto">
+        <Table className="min-w-[700px]">
           <TableHeader>
             <TableRow>
               <TableHead>Nom</TableHead>
-              <TableHead>Numéro</TableHead>
-              <TableHead>Poste</TableHead>
-              <TableHead>Téléphone</TableHead>
-              <TableHead>Email</TableHead>
+              <TableHead className="hidden sm:table-cell">Numéro</TableHead>
+              <TableHead className="hidden md:table-cell">Poste</TableHead>
+              <TableHead className="hidden md:table-cell">Téléphone</TableHead>
+              <TableHead className="hidden lg:table-cell">Email</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -109,10 +109,10 @@ export default function Employees() {
             {employees.map((employee) => (
               <TableRow key={employee.id}>
                 <TableCell className="font-medium">{employee.name}</TableCell>
-                <TableCell>{employee.employee_number || "-"}</TableCell>
-                <TableCell>{employee.position || "-"}</TableCell>
-                <TableCell>{employee.phone || "-"}</TableCell>
-                <TableCell>{employee.email || "-"}</TableCell>
+                <TableCell className="hidden sm:table-cell">{employee.employee_number || "-"}</TableCell>
+                <TableCell className="hidden md:table-cell">{employee.position || "-"}</TableCell>
+                <TableCell className="hidden md:table-cell">{employee.phone || "-"}</TableCell>
+                <TableCell className="hidden lg:table-cell">{employee.email || "-"}</TableCell>
                 <TableCell>
                   <Badge variant={employee.is_active ? "default" : "secondary"}>
                     {employee.is_active ? "Actif" : "Inactif"}

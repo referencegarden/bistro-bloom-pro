@@ -130,7 +130,7 @@ const unitPrice = typeof product.sales_price === "number" ? product.sales_price 
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
 <DialogHeader>
           <DialogTitle>Enregistrer Sortie</DialogTitle>
           <DialogDescription>Sélectionnez le produit, l’employé et la quantité. Le prix unitaire utilise le prix de vente du produit.</DialogDescription>
@@ -199,11 +199,11 @@ const unitPrice = typeof product.sales_price === "number" ? product.sales_price 
               placeholder="Ajouter des notes sur cette vente..."
             />
           </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Annuler
             </Button>
-            <Button type="submit">Enregistrer Sortie</Button>
+            <Button type="submit" className="w-full sm:w-auto">Enregistrer Sortie</Button>
           </div>
         </form>
       </DialogContent>

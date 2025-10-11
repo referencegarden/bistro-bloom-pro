@@ -213,7 +213,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>
             {employee ? "Modifier Employé" : "Ajouter Employé"}
@@ -382,11 +382,11 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
             </div>
           </div>
 
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Annuler
             </Button>
-            <Button type="submit">
+            <Button type="submit" className="w-full sm:w-auto">
               {employee ? "Mettre à jour" : "Créer"}
             </Button>
           </div>

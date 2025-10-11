@@ -54,28 +54,28 @@ export default function Purchases() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Achats</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Achats</h1>
           <p className="text-muted-foreground">Enregistrer les achats</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
+        <Button onClick={() => setDialogOpen(true)} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Enregistrer Achat
         </Button>
       </div>
 
-      <div className="rounded-lg border">
-        <Table>
+      <div className="rounded-lg border overflow-x-auto">
+        <Table className="min-w-[700px]">
           <TableHeader>
             <TableRow>
               <TableHead>Date</TableHead>
               <TableHead>Produit</TableHead>
-              <TableHead>Fournisseur</TableHead>
+              <TableHead className="hidden sm:table-cell">Fournisseur</TableHead>
               <TableHead>Quantité</TableHead>
-              <TableHead>Coût Unitaire</TableHead>
+              <TableHead className="hidden sm:table-cell">Coût Unitaire</TableHead>
               <TableHead>Total</TableHead>
-              <TableHead>Notes</TableHead>
+              <TableHead className="hidden md:table-cell">Notes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -87,13 +87,13 @@ export default function Purchases() {
                 <TableCell className="font-medium">
                   {purchase.products?.name || "N/A"}
                 </TableCell>
-                <TableCell>{purchase.suppliers?.name || "N/A"}</TableCell>
+                <TableCell className="hidden sm:table-cell">{purchase.suppliers?.name || "N/A"}</TableCell>
                 <TableCell>{purchase.quantity}</TableCell>
-                <TableCell>{purchase.unit_cost.toFixed(2)} DH</TableCell>
+                <TableCell className="hidden sm:table-cell">{purchase.unit_cost.toFixed(2)} DH</TableCell>
                 <TableCell className="font-semibold">
                   {purchase.total_cost.toFixed(2)} DH
                 </TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="text-muted-foreground hidden md:table-cell">
                   {purchase.notes || "-"}
                 </TableCell>
               </TableRow>

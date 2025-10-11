@@ -92,11 +92,11 @@ export default function Demands() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Demandes de Produits</h1>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold">Demandes de Produits</h1>
         {(isAdmin || permissions.can_create_demands) && (
-          <Button onClick={() => setDemandDialogOpen(true)}>
+          <Button onClick={() => setDemandDialogOpen(true)} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Nouvelle Demande
           </Button>
@@ -105,10 +105,10 @@ export default function Demands() {
 
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-center">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
             <CardTitle>Liste des Demandes</CardTitle>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue placeholder="Filtrer par statut" />
               </SelectTrigger>
               <SelectContent>
@@ -121,16 +121,16 @@ export default function Demands() {
             </Select>
           </div>
         </CardHeader>
-        <CardContent>
-          <Table>
+        <CardContent className="overflow-x-auto">
+          <Table className="min-w-[700px]">
             <TableHeader>
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Produit</TableHead>
-                <TableHead>Demandé par</TableHead>
+                <TableHead className="hidden sm:table-cell">Demandé par</TableHead>
                 <TableHead>Quantité</TableHead>
                 <TableHead>Statut</TableHead>
-                <TableHead>Notes</TableHead>
+                <TableHead className="hidden md:table-cell">Notes</TableHead>
                 {isAdmin && <TableHead>Actions</TableHead>}
               </TableRow>
             </TableHeader>
@@ -139,27 +139,29 @@ export default function Demands() {
                 <TableRow key={demand.id}>
                   <TableCell>{format(new Date(demand.requested_at), "dd/MM/yyyy HH:mm")}</TableCell>
                   <TableCell>{demand.products.name}</TableCell>
-                  <TableCell>{demand.employees.name}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{demand.employees.name}</TableCell>
                   <TableCell>{demand.quantity}</TableCell>
                   <TableCell>{getStatusBadge(demand.status)}</TableCell>
-                  <TableCell className="max-w-xs truncate">{demand.notes || "-"}</TableCell>
+                  <TableCell className="max-w-xs truncate hidden md:table-cell">{demand.notes || "-"}</TableCell>
                   {isAdmin && (
                     <TableCell>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         {demand.status === "pending" && (
                           <Button
                             size="sm"
                             variant="outline"
                             onClick={() => updateDemandStatus(demand.id, "in_stock")}
+                            className="w-full sm:w-auto"
                           >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            En Stock
+                            <CheckCircle className="h-4 w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">En Stock</span>
                           </Button>
                         )}
                         {demand.status === "in_stock" && (
                           <Button
                             size="sm"
                             onClick={() => handleRecordPurchase(demand)}
+                            className="w-full sm:w-auto"
                           >
                             Enregistrer Achat
                           </Button>
@@ -169,9 +171,10 @@ export default function Demands() {
                             size="sm"
                             variant="destructive"
                             onClick={() => updateDemandStatus(demand.id, "cancelled")}
+                            className="w-full sm:w-auto"
                           >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Annuler
+                            <XCircle className="h-4 w-4 sm:mr-1" />
+                            <span className="hidden sm:inline">Annuler</span>
                           </Button>
                         )}
                       </div>

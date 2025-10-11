@@ -134,7 +134,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>{product ? "Modifier Produit" : "Ajouter Produit"}</DialogTitle>
         </DialogHeader>
@@ -224,11 +224,11 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
               required
             />
           </div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
               Annuler
             </Button>
-            <Button type="submit">{product ? "Modifier" : "Créer"}</Button>
+            <Button type="submit" className="w-full sm:w-auto">{product ? "Modifier" : "Créer"}</Button>
           </div>
         </form>
       </DialogContent>

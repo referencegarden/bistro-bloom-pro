@@ -138,7 +138,7 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
 
   return (
     <Dialog open={open} onOpenChange={() => { resetForm(); onClose(); }}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Enregistrer Achat</DialogTitle>
         </DialogHeader>
@@ -221,11 +221,11 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
             />
           </div>
           
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={() => { resetForm(); onClose(); }}>
+          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
+            <Button type="button" variant="outline" onClick={() => { resetForm(); onClose(); }} className="w-full sm:w-auto">
               Annuler
             </Button>
-            <Button type="submit">Enregistrer Achat</Button>
+            <Button type="submit" className="w-full sm:w-auto">Enregistrer Achat</Button>
           </div>
         </form>
       </DialogContent>

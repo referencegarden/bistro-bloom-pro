@@ -69,25 +69,25 @@ export default function Suppliers() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Fournisseurs</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Fournisseurs</h1>
           <p className="text-muted-foreground">Gérer vos fournisseurs</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
+        <Button onClick={() => setDialogOpen(true)} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Ajouter Fournisseur
         </Button>
       </div>
 
-      <div className="rounded-lg border">
-        <Table>
+      <div className="rounded-lg border overflow-x-auto">
+        <Table className="min-w-[600px]">
           <TableHeader>
             <TableRow>
               <TableHead>Nom</TableHead>
-              <TableHead>Personne Contact</TableHead>
-              <TableHead>Téléphone</TableHead>
-              <TableHead>Email</TableHead>
+              <TableHead className="hidden sm:table-cell">Personne Contact</TableHead>
+              <TableHead className="hidden md:table-cell">Téléphone</TableHead>
+              <TableHead className="hidden md:table-cell">Email</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -95,24 +95,26 @@ export default function Suppliers() {
             {suppliers.map((supplier) => (
               <TableRow key={supplier.id}>
                 <TableCell className="font-medium">{supplier.name}</TableCell>
-                <TableCell>{supplier.contact || "N/A"}</TableCell>
-                <TableCell>{supplier.phone || "N/A"}</TableCell>
-                <TableCell>{supplier.email || "N/A"}</TableCell>
-                <TableCell className="text-right space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(supplier)}
-                  >
-                    Modifier
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(supplier.id)}
-                  >
-                    Supprimer
-                  </Button>
+                <TableCell className="hidden sm:table-cell">{supplier.contact || "N/A"}</TableCell>
+                <TableCell className="hidden md:table-cell">{supplier.phone || "N/A"}</TableCell>
+                <TableCell className="hidden md:table-cell">{supplier.email || "N/A"}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(supplier)}
+                    >
+                      Modifier
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDelete(supplier.id)}
+                    >
+                      Supprimer
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

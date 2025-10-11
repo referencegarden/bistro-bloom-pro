@@ -83,17 +83,17 @@ export default function Products() {
     loadProducts();
   }
   return <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Produits</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Produits</h1>
           <p className="text-muted-foreground">Gérer votre inventaire</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setImportDialogOpen(true)}>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Button variant="outline" onClick={() => setImportDialogOpen(true)} className="w-full sm:w-auto">
             <Upload className="mr-2 h-4 w-4" />
             Importer Excel
           </Button>
-          <Button onClick={() => setDialogOpen(true)}>
+          <Button onClick={() => setDialogOpen(true)} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Ajouter Produit
           </Button>
@@ -113,42 +113,44 @@ export default function Products() {
           </p>}
       </div>
 
-      <div className="rounded-lg border">
-        <Table>
+      <div className="rounded-lg border overflow-x-auto">
+        <Table className="min-w-[800px]">
           <TableHeader>
             <TableRow>
               <TableHead>Nom</TableHead>
-              <TableHead>Unité</TableHead>
-              <TableHead>Catégorie</TableHead>
-              <TableHead>Fournisseur</TableHead>
+              <TableHead className="hidden sm:table-cell">Unité</TableHead>
+              <TableHead className="hidden md:table-cell">Catégorie</TableHead>
+              <TableHead className="hidden md:table-cell">Fournisseur</TableHead>
               <TableHead>Stock</TableHead>
-              <TableHead>Prix Coût</TableHead>
+              <TableHead className="hidden sm:table-cell">Prix Coût</TableHead>
               <TableHead>Statut</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginatedProducts.length === 0 ? <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+              {paginatedProducts.length === 0 ? <TableRow>
+                <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                   {searchQuery ? "Aucun produit trouvé" : "Aucun produit"}
                 </TableCell>
               </TableRow> : paginatedProducts.map(product => <TableRow key={product.id}>
                   <TableCell className="font-medium">{product.name}</TableCell>
-                  <TableCell>{product.unit_of_measure || "unité"}</TableCell>
-                  <TableCell>{product.categories?.name || "N/A"}</TableCell>
-                  <TableCell>{product.suppliers?.name || "N/A"}</TableCell>
+                  <TableCell className="hidden sm:table-cell">{product.unit_of_measure || "unité"}</TableCell>
+                  <TableCell className="hidden md:table-cell">{product.categories?.name || "N/A"}</TableCell>
+                  <TableCell className="hidden md:table-cell">{product.suppliers?.name || "N/A"}</TableCell>
                   <TableCell>{product.current_stock}</TableCell>
-                  <TableCell>{product.cost_price.toFixed(2)} DH</TableCell>
+                  <TableCell className="hidden sm:table-cell">{product.cost_price.toFixed(2)} DH</TableCell>
                   <TableCell>
                     {product.current_stock <= product.low_stock_threshold ? <Badge variant="destructive">Stock Faible</Badge> : <Badge variant="secondary" className="bg-yellow-400">En Stock</Badge>}
                   </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Button variant="outline" size="sm" onClick={() => handleEdit(product)}>
-                      Modifier
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDelete(product.id)}>
-                      Supprimer
-                    </Button>
+                  <TableCell className="text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handleEdit(product)}>
+                        Modifier
+                      </Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(product.id)}>
+                        Supprimer
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>)}
           </TableBody>

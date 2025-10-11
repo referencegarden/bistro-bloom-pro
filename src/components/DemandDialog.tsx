@@ -110,7 +110,7 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Nouvelle Demande de Produit</DialogTitle>
         </DialogHeader>
@@ -159,11 +159,11 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+          <DialogFooter className="flex flex-col-reverse sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
               Annuler
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
               {loading ? "Création..." : "Créer la Demande"}
             </Button>
           </DialogFooter>

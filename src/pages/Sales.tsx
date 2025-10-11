@@ -54,26 +54,26 @@ export default function Sales() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Sortie de Stock</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Sortie de Stock</h1>
           <p className="text-muted-foreground">Enregistrer les sorties de stock</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
+        <Button onClick={() => setDialogOpen(true)} className="w-full sm:w-auto">
           <Plus className="mr-2 h-4 w-4" />
           Enregistrer Sortie
         </Button>
       </div>
 
-      <div className="rounded-lg border">
-        <Table>
+      <div className="rounded-lg border overflow-x-auto">
+        <Table className="min-w-[600px]">
           <TableHeader>
             <TableRow>
             <TableHead>Date</TableHead>
             <TableHead>Produit</TableHead>
-            <TableHead>Employé</TableHead>
+            <TableHead className="hidden sm:table-cell">Employé</TableHead>
             <TableHead>Quantité</TableHead>
-            <TableHead>Notes</TableHead>
+            <TableHead className="hidden md:table-cell">Notes</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -85,11 +85,11 @@ export default function Sales() {
                 <TableCell className="font-medium">
                   {sale.products?.name || "N/A"}
                 </TableCell>
-                <TableCell>
+                <TableCell className="hidden sm:table-cell">
                   {sale.employees?.name || "-"}
                 </TableCell>
                 <TableCell>{sale.quantity}</TableCell>
-                <TableCell className="text-muted-foreground">
+                <TableCell className="text-muted-foreground hidden md:table-cell">
                   {sale.notes || "-"}
                 </TableCell>
               </TableRow>
