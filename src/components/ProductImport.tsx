@@ -43,46 +43,67 @@ export const ProductImport = ({ open, onClose }: ProductImportProps) => {
     try {
       const data = await selectedFile.arrayBuffer();
       const workbook = XLSX.read(data);
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
+      
+      // Parse all sheets and combine rows
+      let allProducts: ImportProduct[] = [];
+      
+      workbook.SheetNames.forEach(sheetName => {
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
 
-      // Normalize column names (case-insensitive matching)
-      const products: ImportProduct[] = jsonData.map((row: any) => {
-        const normalizedRow: any = {};
-        Object.keys(row).forEach(key => {
-          normalizedRow[key.toLowerCase().trim()] = row[key];
+        const parsedProducts: ImportProduct[] = jsonData.map((row: any) => {
+          const normalizedRow: any = {};
+          Object.keys(row).forEach(key => {
+            normalizedRow[key.toLowerCase().trim()] = row[key];
+          });
+
+          const rawCategory = normalizedRow['category name'] || 
+                              normalizedRow.category || 
+                              normalizedRow.catégorie || 
+                              normalizedRow.categorie ||
+                              normalizedRow.categ_id ||
+                              normalizedRow['categ id'] ||
+                              normalizedRow.categ ||
+                              '';
+          
+          // Extract last part if it's a path like "MATERIEL / MATERIEL BAR"
+          const category_name = rawCategory.includes('/') 
+            ? rawCategory.split('/').pop()?.trim() 
+            : rawCategory;
+
+          return {
+            name: normalizedRow.name || normalizedRow.nom || '',
+            unit_of_measure: normalizedRow['unit of measure'] || normalizedRow['unité de mesure'] || normalizedRow.unit || '',
+            cost: parseFloat(
+              normalizedRow.cost || 
+              normalizedRow.coût || 
+              normalizedRow.prix || 
+              normalizedRow['sales price'] ||
+              normalizedRow['prix de vente'] ||
+              normalizedRow['sale price'] ||
+              0
+            ),
+            category_name,
+          };
         });
 
-        const rawCategory = normalizedRow['category name'] || 
-                            normalizedRow.category || 
-                            normalizedRow.catégorie || 
-                            normalizedRow.categorie ||
-                            normalizedRow.categ_id ||
-                            normalizedRow['categ id'] ||
-                            normalizedRow.categ ||
-                            '';
-        
-        // Extract last part if it's a path like "MATERIEL / MATERIEL BAR"
-        const category_name = rawCategory.includes('/') 
-          ? rawCategory.split('/').pop()?.trim() 
-          : rawCategory;
-
-        return {
-          name: normalizedRow.name || normalizedRow.nom || '',
-          unit_of_measure: normalizedRow['unit of measure'] || normalizedRow['unité de mesure'] || normalizedRow.unit || '',
-          cost: parseFloat(
-            normalizedRow.cost || 
-            normalizedRow.coût || 
-            normalizedRow.prix || 
-            normalizedRow['sales price'] ||
-            normalizedRow['prix de vente'] ||
-            normalizedRow['sale price'] ||
-            0
-          ),
-          category_name,
-        };
+        allProducts = allProducts.concat(parsedProducts);
       });
 
+      // Deduplicate by product name (keep last occurrence with most info)
+      const productMap = new Map<string, ImportProduct>();
+      allProducts.forEach(product => {
+        const key = product.name.toLowerCase().trim();
+        if (key) {
+          const existing = productMap.get(key);
+          // Keep the one with more information
+          if (!existing || (product.unit_of_measure && !isNaN(product.cost))) {
+            productMap.set(key, product);
+          }
+        }
+      });
+
+      const products = Array.from(productMap.values());
       setPreview(products.slice(0, 5)); // Show first 5 rows as preview
       toast.success(`Fichier chargé: ${products.length} produits trouvés`);
     } catch (error) {
@@ -104,45 +125,67 @@ export const ProductImport = ({ open, onClose }: ProductImportProps) => {
     try {
       const data = await file.arrayBuffer();
       const workbook = XLSX.read(data);
-      const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-      const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
+      
+      // Parse all sheets and combine rows
+      let allProducts: ImportProduct[] = [];
+      
+      workbook.SheetNames.forEach(sheetName => {
+        const worksheet = workbook.Sheets[sheetName];
+        const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
 
-      // Normalize data
-      const products: ImportProduct[] = jsonData.map((row: any) => {
-        const normalizedRow: any = {};
-        Object.keys(row).forEach(key => {
-          normalizedRow[key.toLowerCase().trim()] = row[key];
+        const parsedProducts: ImportProduct[] = jsonData.map((row: any) => {
+          const normalizedRow: any = {};
+          Object.keys(row).forEach(key => {
+            normalizedRow[key.toLowerCase().trim()] = row[key];
+          });
+
+          const rawCategory = normalizedRow['category name'] || 
+                              normalizedRow.category || 
+                              normalizedRow.catégorie || 
+                              normalizedRow.categorie ||
+                              normalizedRow.categ_id ||
+                              normalizedRow['categ id'] ||
+                              normalizedRow.categ ||
+                              '';
+          
+          // Extract last part if it's a path like "MATERIEL / MATERIEL BAR"
+          const category_name = rawCategory.includes('/') 
+            ? rawCategory.split('/').pop()?.trim() 
+            : rawCategory;
+
+          return {
+            name: normalizedRow.name || normalizedRow.nom || '',
+            unit_of_measure: normalizedRow['unit of measure'] || normalizedRow['unité de mesure'] || normalizedRow.unit || '',
+            cost: parseFloat(
+              normalizedRow.cost || 
+              normalizedRow.coût || 
+              normalizedRow.prix || 
+              normalizedRow['sales price'] ||
+              normalizedRow['prix de vente'] ||
+              normalizedRow['sale price'] ||
+              0
+            ),
+            category_name,
+          };
         });
 
-        const rawCategory = normalizedRow['category name'] || 
-                            normalizedRow.category || 
-                            normalizedRow.catégorie || 
-                            normalizedRow.categorie ||
-                            normalizedRow.categ_id ||
-                            normalizedRow['categ id'] ||
-                            normalizedRow.categ ||
-                            '';
-        
-        // Extract last part if it's a path like "MATERIEL / MATERIEL BAR"
-        const category_name = rawCategory.includes('/') 
-          ? rawCategory.split('/').pop()?.trim() 
-          : rawCategory;
-
-        return {
-          name: normalizedRow.name || normalizedRow.nom || '',
-          unit_of_measure: normalizedRow['unit of measure'] || normalizedRow['unité de mesure'] || normalizedRow.unit || '',
-          cost: parseFloat(
-            normalizedRow.cost || 
-            normalizedRow.coût || 
-            normalizedRow.prix || 
-            normalizedRow['sales price'] ||
-            normalizedRow['prix de vente'] ||
-            normalizedRow['sale price'] ||
-            0
-          ),
-          category_name,
-        };
+        allProducts = allProducts.concat(parsedProducts);
       });
+
+      // Deduplicate by product name (keep last occurrence with most info)
+      const productMap = new Map<string, ImportProduct>();
+      allProducts.forEach(product => {
+        const key = product.name.toLowerCase().trim();
+        if (key) {
+          const existing = productMap.get(key);
+          // Keep the one with more information
+          if (!existing || (product.unit_of_measure && !isNaN(product.cost))) {
+            productMap.set(key, product);
+          }
+        }
+      });
+
+      const products = Array.from(productMap.values());
 
       const { data: importResult, error } = await supabase.functions.invoke('import-products', {
         body: { products },

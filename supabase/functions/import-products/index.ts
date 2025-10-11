@@ -59,6 +59,42 @@ serve(async (req) => {
       categories?.map(cat => [cat.name.toLowerCase().trim(), cat.id]) || []
     );
 
+    // Extract all unique categories from products and auto-create missing ones
+    const uniqueCategories = new Map<string, string>(); // normalized -> original name
+    products.forEach(product => {
+      if (product.category_name) {
+        const normalized = product.category_name.toLowerCase().trim();
+        if (!categoryMap.has(normalized) && !uniqueCategories.has(normalized)) {
+          uniqueCategories.set(normalized, product.category_name.trim());
+        }
+      }
+    });
+
+    // Create missing categories
+    if (uniqueCategories.size > 0) {
+      const categoriesToCreate = Array.from(uniqueCategories.values()).map(name => ({
+        name,
+        description: null,
+      }));
+
+      console.log(`Creating ${categoriesToCreate.length} missing categories:`, categoriesToCreate.map(c => c.name));
+
+      const { data: newCategories, error: createError } = await supabaseClient
+        .from('categories')
+        .insert(categoriesToCreate)
+        .select('id, name');
+
+      if (createError) {
+        console.error('Error creating categories:', createError);
+      } else if (newCategories) {
+        // Add newly created categories to the map
+        newCategories.forEach(cat => {
+          categoryMap.set(cat.name.toLowerCase().trim(), cat.id);
+        });
+        console.log(`Successfully created ${newCategories.length} categories`);
+      }
+    }
+
     const results = {
       success: 0,
       failed: 0,
@@ -92,19 +128,9 @@ serve(async (req) => {
           continue;
         }
 
-        // Match category
+        // Match category (should now exist after auto-creation)
         const categoryName = product.category_name?.toLowerCase().trim();
         const categoryId = categoryName ? categoryMap.get(categoryName) : null;
-
-        if (product.category_name && !categoryId) {
-          results.failed++;
-          results.errors.push({
-            row: rowNumber,
-            name: product.name,
-            error: `Category not found: ${product.category_name}`,
-          });
-          continue;
-        }
 
         // Parse cost - allow 0 for inventory/equipment items
         const cost = parseFloat(product.cost);
@@ -129,48 +155,24 @@ serve(async (req) => {
           category_id: categoryId,
         };
 
-        // Check if product exists
-        const { data: existingProduct } = await supabaseClient
+        // Upsert product (update if exists, insert if new)
+        const { error: upsertError } = await supabaseClient
           .from('products')
-          .select('id')
-          .eq('name', productData.name)
-          .maybeSingle();
+          .upsert(productData, { 
+            onConflict: 'name',
+            ignoreDuplicates: false 
+          });
 
-        if (existingProduct) {
-          // Update existing product
-          const { error: updateError } = await supabaseClient
-            .from('products')
-            .update(productData)
-            .eq('id', existingProduct.id);
-
-          if (updateError) {
-            console.error(`Error updating product ${productData.name}:`, updateError);
-            results.failed++;
-            results.errors.push({
-              row: rowNumber,
-              name: productData.name,
-              error: updateError.message,
-            });
-          } else {
-            results.success++;
-          }
+        if (upsertError) {
+          console.error(`Error upserting product ${productData.name}:`, upsertError);
+          results.failed++;
+          results.errors.push({
+            row: rowNumber,
+            name: productData.name,
+            error: upsertError.message,
+          });
         } else {
-          // Insert new product
-          const { error: insertError } = await supabaseClient
-            .from('products')
-            .insert(productData);
-
-          if (insertError) {
-            console.error(`Error inserting product ${productData.name}:`, insertError);
-            results.failed++;
-            results.errors.push({
-              row: rowNumber,
-              name: productData.name,
-              error: insertError.message,
-            });
-          } else {
-            results.success++;
-          }
+          results.success++;
         }
       } catch (error) {
         console.error(`Error processing row ${rowNumber}:`, error);
