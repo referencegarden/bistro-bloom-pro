@@ -98,93 +98,78 @@ export default function Demands() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold">Demandes de Produits</h1>
-        {(isAdmin || permissions.can_create_demands) && (
-          <Button onClick={() => setDemandDialogOpen(true)} className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvelle Demande
-          </Button>
-        )}
+    <div className="flex flex-col h-screen overflow-hidden">
+      <div className="flex-none px-4 sm:px-6 py-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Demandes de Produits</h1>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-[180px] h-9">
+              <SelectValue placeholder="Filtrer" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Tous</SelectItem>
+              <SelectItem value="pending">En Attente</SelectItem>
+              <SelectItem value="in_stock">En Stock</SelectItem>
+              <SelectItem value="fulfilled">Complétées</SelectItem>
+              <SelectItem value="cancelled">Annulées</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <CardTitle className="text-lg sm:text-xl lg:text-2xl">Liste des Demandes</CardTitle>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full sm:w-[200px]">
-                <SelectValue placeholder="Filtrer par statut" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Tous</SelectItem>
-                <SelectItem value="pending">En Attente</SelectItem>
-                <SelectItem value="in_stock">En Stock</SelectItem>
-                <SelectItem value="fulfilled">Complétées</SelectItem>
-                <SelectItem value="cancelled">Annulées</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </CardHeader>
-        <CardContent className="overflow-x-auto">
-          <Table className="min-w-[500px]">
-            <TableHeader>
+      <Card className="flex-1 mx-4 sm:mx-6 mb-20 sm:mb-6 overflow-hidden flex flex-col">
+        <CardContent className="flex-1 overflow-auto p-0">
+          <Table className="min-w-full">
+            <TableHeader className="sticky top-0 bg-background z-10">
               <TableRow>
-                <TableHead>Date</TableHead>
+                <TableHead className="w-16 sm:w-24">Date</TableHead>
                 <TableHead>Produit</TableHead>
-                <TableHead className="hidden sm:table-cell">Demandé par</TableHead>
-                <TableHead>Quantité</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead className="hidden md:table-cell">Notes</TableHead>
-                {isAdmin && <TableHead>Actions</TableHead>}
+                <TableHead className="w-12 sm:w-16">Qté</TableHead>
+                <TableHead className="w-20 sm:w-24">Statut</TableHead>
+                {isAdmin && <TableHead className="w-20 sm:w-32">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredDemands.map((demand) => (
                 <TableRow key={demand.id}>
-                  <TableCell>
-                    <span className="hidden sm:inline">{format(new Date(demand.requested_at), "dd/MM/yyyy HH:mm")}</span>
-                    <span className="sm:hidden">{format(new Date(demand.requested_at), "dd/MM")}</span>
+                  <TableCell className="text-xs">
+                    {format(new Date(demand.requested_at), "dd/MM")}
                   </TableCell>
-                  <TableCell className="font-medium">{demand.products.name}</TableCell>
-                  <TableCell className="hidden sm:table-cell">{demand.employees.name}</TableCell>
-                  <TableCell>{demand.quantity}</TableCell>
+                  <TableCell className="font-medium text-xs sm:text-sm">{demand.products.name}</TableCell>
+                  <TableCell className="text-xs sm:text-sm">{demand.quantity}</TableCell>
                   <TableCell>{getStatusBadge(demand.status)}</TableCell>
-                  <TableCell className="max-w-xs truncate hidden md:table-cell">{demand.notes || "-"}</TableCell>
                   {isAdmin && (
                     <TableCell>
-                      <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-2">
+                      <div className="flex flex-col gap-1">
                         {demand.status === "pending" && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateDemandStatus(demand.id, "in_stock")}
-                            className="w-full sm:w-auto px-2 sm:px-4 min-h-[36px]"
-                          >
-                            <CheckCircle className="h-4 w-4" />
-                            <span className="hidden sm:inline ml-1">En Stock</span>
-                          </Button>
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateDemandStatus(demand.id, "in_stock")}
+                              className="w-full h-8 px-2 text-xs"
+                            >
+                              <CheckCircle className="h-3 w-3 mr-1" />
+                              Stock
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => updateDemandStatus(demand.id, "cancelled")}
+                              className="w-full h-8 px-2 text-xs"
+                            >
+                              <XCircle className="h-3 w-3 mr-1" />
+                              Annuler
+                            </Button>
+                          </>
                         )}
                         {demand.status === "in_stock" && (
                           <Button
                             size="sm"
                             onClick={() => handleRecordPurchase(demand)}
-                            className="w-full sm:w-auto text-xs sm:text-sm min-h-[36px]"
+                            className="w-full h-8 px-2 text-xs"
                           >
-                            <span className="hidden sm:inline">Enregistrer Achat</span>
-                            <span className="sm:hidden">Achat</span>
-                          </Button>
-                        )}
-                        {demand.status === "pending" && (
-                          <Button
-                            size="sm"
-                            variant="destructive"
-                            onClick={() => updateDemandStatus(demand.id, "cancelled")}
-                            className="w-full sm:w-auto px-2 sm:px-4 min-h-[36px]"
-                          >
-                            <XCircle className="h-4 w-4" />
-                            <span className="hidden sm:inline ml-1">Annuler</span>
+                            Achat
                           </Button>
                         )}
                       </div>
@@ -194,7 +179,7 @@ export default function Demands() {
               ))}
               {filteredDemands.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={isAdmin ? 5 : 4} className="text-center text-muted-foreground text-sm py-8">
                     Aucune demande trouvée
                   </TableCell>
                 </TableRow>
@@ -203,6 +188,15 @@ export default function Demands() {
           </Table>
         </CardContent>
       </Card>
+
+      {(isAdmin || permissions.can_create_demands) && (
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t shadow-lg sm:static sm:border-0 sm:shadow-none sm:px-6 sm:pb-6">
+          <Button onClick={() => setDemandDialogOpen(true)} className="w-full sm:w-auto h-12 sm:h-10">
+            <Plus className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
+            Nouvelle Demande
+          </Button>
+        </div>
+      )}
 
       <DemandDialog
         open={demandDialogOpen}
