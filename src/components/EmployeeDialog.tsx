@@ -371,7 +371,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
             </div>
 
             <div className="flex items-center justify-between">
-              <Label htmlFor="can_create_demands">Peut créer des demandes</Label>
+              <Label htmlFor="can_create_demands">Peut créer des commandes</Label>
               <Switch
                 id="can_create_demands"
                 checked={permissions.can_create_demands}

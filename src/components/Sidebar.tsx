@@ -24,7 +24,7 @@ const navigation = [{
   href: "/purchases",
   icon: TrendingUp
 }, {
-  name: "Demandes",
+  name: "Commandes",
   href: "/demands",
   icon: ClipboardList
 }, {

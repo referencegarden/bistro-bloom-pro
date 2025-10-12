@@ -56,7 +56,7 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
 
     // Check permission
     if (!isAdmin && !permissions.can_create_demands) {
-      toast.error("Vous n'avez pas la permission de créer des demandes");
+      toast.error("Vous n'avez pas la permission de créer des commandes");
       return;
     }
 
@@ -77,7 +77,7 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
         .maybeSingle();
 
       if (!employee) {
-        toast.error("Vous devez avoir un compte employé pour créer une demande");
+        toast.error("Vous devez avoir un compte employé pour créer une commande");
         return;
       }
 
@@ -92,13 +92,13 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
 
       if (error) throw error;
 
-      toast.success("Demande créée avec succès");
+      toast.success("Commande créée avec succès");
       resetForm();
       onSuccess();
       onOpenChange(false);
     } catch (error) {
       console.error("Error creating demand:", error);
-      toast.error("Erreur lors de la création de la demande");
+      toast.error("Erreur lors de la création de la commande");
     } finally {
       setLoading(false);
     }
