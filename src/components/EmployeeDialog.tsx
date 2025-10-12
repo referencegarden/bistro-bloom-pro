@@ -327,7 +327,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
             <h3 className="font-semibold">Permissions</h3>
 
             <div className="flex items-center justify-between">
-              <Label htmlFor="can_make_sales">Peut faire des ventes</Label>
+              <Label htmlFor="can_make_sales">Peut faire Sortie de Stock</Label>
               <Switch
                 id="can_make_sales"
                 checked={permissions.can_make_sales}
