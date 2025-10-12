@@ -2,18 +2,10 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SaleDialog } from "@/components/SaleDialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
-
 interface Sale {
   id: string;
   quantity: number;
@@ -21,45 +13,43 @@ interface Sale {
   total_price: number;
   sale_date: string;
   notes: string | null;
-  products: { name: string } | null;
-  employees: { name: string } | null;
+  products: {
+    name: string;
+  } | null;
+  employees: {
+    name: string;
+  } | null;
 }
-
 export default function Sales() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
-
   useEffect(() => {
     loadSales();
   }, []);
-
   async function loadSales() {
-    const { data, error } = await supabase
-      .from("sales")
-      .select("*, products(name), employees(name)")
-      .order("sale_date", { ascending: false });
-
+    const {
+      data,
+      error
+    } = await supabase.from("sales").select("*, products(name), employees(name)").order("sale_date", {
+      ascending: false
+    });
     if (error) {
       toast.error("Failed to load sales");
       return;
     }
-
     setSales(data || []);
   }
-
   function handleDialogClose() {
     setDialogOpen(false);
     loadSales();
   }
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Sortie de Stock</h1>
           <p className="text-muted-foreground">Enregistrer les sorties de stock</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="w-full sm:w-auto">
+        <Button onClick={() => setDialogOpen(true)} className="w-full sm:w-auto bg-green-900 hover:bg-green-800 font-semibold">
           <Plus className="mr-2 h-4 w-4" />
           Enregistrer Sortie
         </Button>
@@ -77,8 +67,7 @@ export default function Sales() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sales.map((sale) => (
-              <TableRow key={sale.id}>
+            {sales.map(sale => <TableRow key={sale.id}>
                 <TableCell>
                   {format(new Date(sale.sale_date), "MMM dd, yyyy HH:mm")}
                 </TableCell>
@@ -92,13 +81,11 @@ export default function Sales() {
                 <TableCell className="text-muted-foreground hidden md:table-cell">
                   {sale.notes || "-"}
                 </TableCell>
-              </TableRow>
-            ))}
+              </TableRow>)}
           </TableBody>
         </Table>
       </div>
 
       <SaleDialog open={dialogOpen} onClose={handleDialogClose} />
-    </div>
-  );
+    </div>;
 }
