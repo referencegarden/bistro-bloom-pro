@@ -112,7 +112,7 @@ export default function Demands() {
     setSelectedDemand(demand);
     setPurchaseDialogOpen(true);
   }
-  return <div className="flex flex-col h-screen overflow-hidden">
+  return <div className="min-h-screen flex flex-col pb-24 sm:pb-0">
       <div className="flex-none px-4 sm:px-6 py-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Commandes de Produits</h1>
@@ -131,10 +131,10 @@ export default function Demands() {
         </div>
       </div>
 
-      <Card className="flex-1 mx-4 sm:mx-6 mb-20 sm:mb-6 overflow-hidden flex flex-col">
-        <CardContent className="flex-1 overflow-auto p-0">
+      <Card className="flex-1 mx-4 sm:mx-6 mb-4">
+        <CardContent className="p-0 overflow-x-auto">
           <Table className="min-w-full">
-            <TableHeader className="sticky top-0 bg-background z-10">
+            <TableHeader className="bg-background">
               <TableRow>
                 <TableHead className="w-16 sm:w-24">Date</TableHead>
                 <TableHead>Produit</TableHead>
@@ -179,7 +179,7 @@ export default function Demands() {
         </CardContent>
       </Card>
 
-      {(isAdmin || permissions.can_create_demands) && <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t shadow-lg sm:static sm:border-0 sm:shadow-none sm:px-6 sm:pb-6">
+      {(isAdmin || permissions.can_create_demands) && <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t shadow-lg z-50 sm:static sm:border-0 sm:shadow-none sm:px-6 sm:pb-6 sm:mt-0">
           <Button onClick={() => setDemandDialogOpen(true)} className="w-full sm:w-auto h-12 sm:h-10 text-neutral-100 bg-emerald-800 hover:bg-emerald-700">
             <Plus className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
             Nouvelle Commande
