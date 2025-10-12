@@ -4,10 +4,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { toast } from "sonner";
 import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface Product {
   id: string;
@@ -28,6 +31,7 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
     notes: "",
   });
   const [loading, setLoading] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const { isAdmin, permissions } = useEmployeePermissions();
 
   useEffect(() => {
@@ -106,34 +110,62 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
       quantity: 1,
       notes: "",
     });
+    setSearchOpen(false);
   }
+
+  const selectedProduct = products.find(p => p.id === formData.product_id);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-3 sm:p-4 md:p-6 mx-2">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">Nouvelle Demande de Produit</DialogTitle>
+          <DialogTitle className="text-lg sm:text-xl">Nouvelle Commande de Produit</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-3 sm:space-y-4 py-3 sm:py-4">
             <div className="space-y-2">
-              <Label htmlFor="product">Produit *</Label>
-              <Select
-                value={formData.product_id}
-                onValueChange={(value) => setFormData({ ...formData, product_id: value })}
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un produit" />
-                </SelectTrigger>
-                <SelectContent>
-                  {products.map((product) => (
-                    <SelectItem key={product.id} value={product.id}>
-                      {product.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Produit *</Label>
+              <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={searchOpen}
+                    className="w-full justify-between"
+                  >
+                    {selectedProduct ? selectedProduct.name : "Rechercher un produit..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Rechercher un produit..." />
+                    <CommandList>
+                      <CommandEmpty>Aucun produit trouvé.</CommandEmpty>
+                      <CommandGroup>
+                        {products.map((product) => (
+                          <CommandItem
+                            key={product.id}
+                            value={product.name}
+                            onSelect={() => {
+                              setFormData({ ...formData, product_id: product.id });
+                              setSearchOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                formData.product_id === product.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {product.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="space-y-2">
@@ -164,7 +196,7 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
               Annuler
             </Button>
             <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-              {loading ? "Création..." : "Créer la Demande"}
+              {loading ? "Création..." : "Commander"}
             </Button>
           </DialogFooter>
         </form>

@@ -101,7 +101,7 @@ export default function Demands() {
     <div className="flex flex-col h-screen overflow-hidden">
       <div className="flex-none px-4 sm:px-6 py-4">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Demandes de Produits</h1>
+          <h1 className="text-lg sm:text-xl lg:text-2xl font-bold">Commandes de Produits</h1>
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-[180px] h-9">
               <SelectValue placeholder="Filtrer" />
@@ -180,7 +180,7 @@ export default function Demands() {
               {filteredDemands.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={isAdmin ? 5 : 4} className="text-center text-muted-foreground text-sm py-8">
-                    Aucune demande trouvée
+                    Aucune commande trouvée
                   </TableCell>
                 </TableRow>
               )}
@@ -193,7 +193,7 @@ export default function Demands() {
         <div className="fixed bottom-0 left-0 right-0 p-4 bg-background border-t shadow-lg sm:static sm:border-0 sm:shadow-none sm:px-6 sm:pb-6">
           <Button onClick={() => setDemandDialogOpen(true)} className="w-full sm:w-auto h-12 sm:h-10">
             <Plus className="h-5 w-5 sm:h-4 sm:w-4 mr-2" />
-            Nouvelle Demande
+            Nouvelle Commande
           </Button>
         </div>
       )}
