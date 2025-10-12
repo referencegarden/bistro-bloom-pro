@@ -173,7 +173,7 @@ export default function Auth() {
                   <Label htmlFor="employee-pin">Code PIN</Label>
                   <Input id="employee-pin" type="password" placeholder="Entrez votre code PIN" maxLength={6} value={pin} onChange={e => setPin(e.target.value)} required autoFocus />
                 </div>
-                <Button type="submit" disabled={loading} className="w-full bg-emerald-900 hover:bg-emerald-800">
+                <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Connexion..." : "Se connecter"}
                 </Button>
               </form>
