@@ -1,56 +1,52 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { FileDown, Calendar, BarChart3, TrendingUp } from "lucide-react";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { FileDown, CalendarIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { format, subDays } from "date-fns";
 import { fr } from "date-fns/locale";
-
-type ReportType = "daily" | "weekly" | "monthly";
+import { cn } from "@/lib/utils";
 
 export function ReportExport() {
-  async function generateReport(reportType: ReportType) {
-    try {
-      const now = new Date();
-      let startDate: Date;
-      let endDate: Date;
-      let reportTitle: string;
-      let dateDisplay: string;
-      let periodLabel: string;
-      let fileName: string;
+  const [open, setOpen] = useState(false);
+  const [startDate, setStartDate] = useState<Date>(subDays(new Date(), 30));
+  const [endDate, setEndDate] = useState<Date>(new Date());
 
-      // Calculate date ranges based on report type
-      switch (reportType) {
-        case "daily":
-          startDate = new Date(now.setHours(0, 0, 0, 0));
-          endDate = new Date(now.setHours(23, 59, 59, 999));
-          reportTitle = "Rapport Journalier";
-          dateDisplay = format(startDate, "dd MMMM yyyy", { locale: fr });
-          periodLabel = "Aujourd'hui";
-          fileName = `daily-report-${format(startDate, "yyyy-MM-dd")}.html`;
-          break;
-        case "weekly":
-          startDate = startOfWeek(now, { weekStartsOn: 1 });
-          endDate = endOfWeek(now, { weekStartsOn: 1 });
-          reportTitle = "Rapport Hebdomadaire";
-          dateDisplay = `${format(startDate, "dd MMMM", { locale: fr })} - ${format(endDate, "dd MMMM yyyy", { locale: fr })}`;
-          periodLabel = "Cette Semaine";
-          fileName = `weekly-report-${format(startDate, "yyyy-MM-dd")}-to-${format(endDate, "yyyy-MM-dd")}.html`;
-          break;
-        case "monthly":
-          startDate = startOfMonth(now);
-          endDate = endOfMonth(now);
-          reportTitle = "Rapport Mensuel";
-          dateDisplay = format(startDate, "MMMM yyyy", { locale: fr });
-          periodLabel = "Ce Mois";
-          fileName = `monthly-report-${format(startDate, "yyyy-MM")}.html`;
-          break;
-      }
+  async function generateReport() {
+    // Validate dates
+    if (!startDate || !endDate) {
+      toast.error("Veuillez sélectionner les dates de début et de fin");
+      return;
+    }
+
+    if (startDate > endDate) {
+      toast.error("La date de début doit être antérieure à la date de fin");
+      return;
+    }
+
+    try {
+      const reportTitle = "Rapport Personnalisé";
+      const dateDisplay = `${format(startDate, "dd MMMM yyyy", { locale: fr })} - ${format(endDate, "dd MMMM yyyy", { locale: fr })}`;
+      const periodLabel = `Du ${format(startDate, "dd/MM/yyyy", { locale: fr })} au ${format(endDate, "dd/MM/yyyy", { locale: fr })}`;
+      const fileName = `custom-report-${format(startDate, "yyyy-MM-dd")}-to-${format(endDate, "yyyy-MM-dd")}.html`;
+
+      // Set time boundaries for accurate querying
+      const queryStartDate = new Date(startDate.setHours(0, 0, 0, 0));
+      const queryEndDate = new Date(endDate.setHours(23, 59, 59, 999));
 
       // Fetch all data for the period
       const [productsRes, salesRes, purchasesRes] = await Promise.all([
@@ -58,13 +54,13 @@ export function ReportExport() {
         supabase
           .from("sales")
           .select("*, products(name), employees(name)")
-          .gte("sale_date", startDate.toISOString())
-          .lte("sale_date", endDate.toISOString()),
+          .gte("sale_date", queryStartDate.toISOString())
+          .lte("sale_date", queryEndDate.toISOString()),
         supabase
           .from("purchases")
           .select("*, products(name), suppliers(name)")
-          .gte("purchase_date", startDate.toISOString())
-          .lte("purchase_date", endDate.toISOString()),
+          .gte("purchase_date", queryStartDate.toISOString())
+          .lte("purchase_date", queryEndDate.toISOString()),
       ]);
 
       if (productsRes.error || salesRes.error || purchasesRes.error) {
@@ -257,34 +253,155 @@ export function ReportExport() {
       URL.revokeObjectURL(url);
 
       toast.success("Rapport exporté avec succès");
+      setOpen(false);
     } catch (error) {
       console.error("Error generating report:", error);
       toast.error("Échec de génération du rapport");
     }
   }
 
+  const handleQuickSelect = (days: number) => {
+    setEndDate(new Date());
+    setStartDate(subDays(new Date(), days));
+  };
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <Button variant="outline">
           <FileDown className="mr-2 h-4 w-4" />
           Exporter Rapport
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuItem onClick={() => generateReport("daily")}>
-          <Calendar className="mr-2 h-4 w-4" />
-          Rapport Journalier
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => generateReport("weekly")}>
-          <BarChart3 className="mr-2 h-4 w-4" />
-          Rapport Hebdomadaire
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => generateReport("monthly")}>
-          <TrendingUp className="mr-2 h-4 w-4" />
-          Rapport Mensuel
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>Exporter un Rapport Personnalisé</DialogTitle>
+          <DialogDescription>
+            Sélectionnez la période pour générer votre rapport
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-6">
+          {/* Quick Select Buttons */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Sélection rapide</label>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const today = new Date();
+                  setStartDate(new Date(today.setHours(0, 0, 0, 0)));
+                  setEndDate(new Date());
+                }}
+              >
+                Aujourd'hui
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleQuickSelect(7)}
+              >
+                7 derniers jours
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleQuickSelect(30)}
+              >
+                30 derniers jours
+              </Button>
+            </div>
+          </div>
+
+          {/* Date Pickers */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            {/* Start Date */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Date de début</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !startDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? (
+                      format(startDate, "dd MMMM yyyy", { locale: fr })
+                    ) : (
+                      <span>Sélectionner</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={(date) => date && setStartDate(date)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+
+            {/* End Date */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Date de fin</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !endDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? (
+                      format(endDate, "dd MMMM yyyy", { locale: fr })
+                    ) : (
+                      <span>Sélectionner</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={(date) => date && setEndDate(date)}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {/* Selected Range Display */}
+          {startDate && endDate && (
+            <div className="rounded-lg bg-muted p-3 text-sm">
+              <p className="font-medium">Période sélectionnée:</p>
+              <p className="text-muted-foreground">
+                Du {format(startDate, "dd MMMM yyyy", { locale: fr })} au{" "}
+                {format(endDate, "dd MMMM yyyy", { locale: fr })}
+              </p>
+            </div>
+          )}
+
+          {/* Generate Button */}
+          <Button onClick={generateReport} className="w-full">
+            <FileDown className="mr-2 h-4 w-4" />
+            Générer le Rapport
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
