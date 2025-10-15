@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Package } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { ProductDialog } from "@/components/ProductDialog";
 import { ProductImport } from "@/components/ProductImport";
+import { StockAdjustmentDialog } from "@/components/StockAdjustmentDialog";
 import { toast } from "sonner";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Upload } from "lucide-react";
@@ -31,7 +32,9 @@ export default function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [stockAdjustmentOpen, setStockAdjustmentOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -80,6 +83,17 @@ export default function Products() {
   function handleDialogClose() {
     setDialogOpen(false);
     setEditingProduct(null);
+    loadProducts();
+  }
+
+  function handleAdjustStock(product: Product) {
+    setAdjustingProduct(product);
+    setStockAdjustmentOpen(true);
+  }
+
+  function handleStockAdjustmentClose() {
+    setStockAdjustmentOpen(false);
+    setAdjustingProduct(null);
     loadProducts();
   }
   return <div className="space-y-6">
@@ -144,6 +158,10 @@ export default function Products() {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
+                      <Button variant="outline" size="sm" onClick={() => handleAdjustStock(product)}>
+                        <Package className="h-4 w-4 mr-1" />
+                        Stock
+                      </Button>
                       <Button variant="outline" size="sm" onClick={() => handleEdit(product)}>
                         Modifier
                       </Button>
@@ -182,5 +200,10 @@ export default function Products() {
 
       <ProductDialog open={dialogOpen} onClose={handleDialogClose} product={editingProduct} />
       <ProductImport open={importDialogOpen} onClose={() => setImportDialogOpen(false)} />
+      <StockAdjustmentDialog 
+        open={stockAdjustmentOpen} 
+        onClose={handleStockAdjustmentClose} 
+        product={adjustingProduct} 
+      />
     </div>;
 }
