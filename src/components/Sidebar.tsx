@@ -116,12 +116,19 @@ export function AppSidebar() {
     });
   }, [isAdmin, permissions]);
   async function handleSignOut() {
-    const {
-      error
-    } = await supabase.auth.signOut();
-    if (error) {
-      toast.error("Échec de déconnexion");
-    } else {
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
+        console.error("Logout error:", error);
+        // Clear local session even if server logout fails
+        localStorage.clear();
+      }
+      toast.success("Déconnecté avec succès");
+      navigate("/auth");
+    } catch (error) {
+      console.error("Logout error:", error);
+      // Force navigation even on error
+      localStorage.clear();
       toast.success("Déconnecté avec succès");
       navigate("/auth");
     }

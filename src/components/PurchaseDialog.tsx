@@ -31,17 +31,27 @@ interface Supplier {
   name: string;
 }
 
+interface Purchase {
+  id: string;
+  product_id: string;
+  supplier_id: string | null;
+  quantity: number;
+  unit_cost: number;
+  notes: string | null;
+}
+
 interface PurchaseDialogProps {
   open: boolean;
   onClose: () => void;
   demandId?: string;
   prefilledProductId?: string;
   prefilledQuantity?: number;
+  purchase?: Purchase;
 }
 
 
 
-export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, prefilledQuantity }: PurchaseDialogProps) {
+export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, prefilledQuantity, purchase }: PurchaseDialogProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [formData, setFormData] = useState({
@@ -58,7 +68,17 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
   }, []);
 
   useEffect(() => {
-    if (prefilledProductId) {
+    if (purchase) {
+      // Editing existing purchase
+      setFormData({
+        product_id: purchase.product_id,
+        supplier_id: purchase.supplier_id || "",
+        quantity: purchase.quantity,
+        unit_cost: purchase.unit_cost,
+        notes: purchase.notes || "",
+      });
+    } else if (prefilledProductId) {
+      // New purchase with prefilled product
       const product = products.find(p => p.id === prefilledProductId);
       setFormData(prev => ({
         ...prev,
@@ -67,7 +87,7 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
         unit_cost: product?.cost_price || 0,
       }));
     }
-  }, [prefilledProductId, prefilledQuantity, products]);
+  }, [purchase, prefilledProductId, prefilledQuantity, products]);
 
   async function loadProducts() {
     const { data } = await supabase.from("products").select("id, name, cost_price").order("name");
@@ -98,19 +118,42 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
       return;
     }
 
-    // Insert the purchase
-    const { error: purchaseError } = await supabase.from("purchases").insert({
-      product_id: formData.product_id,
-      supplier_id: formData.supplier_id || null,
-      quantity: formData.quantity,
-      unit_cost: formData.unit_cost,
-      notes: formData.notes || null,
-      demand_id: demandId || null,
-    });
+    if (purchase) {
+      // Update existing purchase
+      const { error: purchaseError } = await supabase
+        .from("purchases")
+        .update({
+          product_id: formData.product_id,
+          supplier_id: formData.supplier_id || null,
+          quantity: formData.quantity,
+          unit_cost: formData.unit_cost,
+          notes: formData.notes || null,
+        })
+        .eq("id", purchase.id);
 
-    if (purchaseError) {
-      toast.error("Échec d'enregistrement de l'achat");
-      return;
+      if (purchaseError) {
+        toast.error("Échec de modification de l'achat");
+        return;
+      }
+
+      toast.success("Achat modifié avec succès");
+    } else {
+      // Insert new purchase
+      const { error: purchaseError } = await supabase.from("purchases").insert({
+        product_id: formData.product_id,
+        supplier_id: formData.supplier_id || null,
+        quantity: formData.quantity,
+        unit_cost: formData.unit_cost,
+        notes: formData.notes || null,
+        demand_id: demandId || null,
+      });
+
+      if (purchaseError) {
+        toast.error("Échec d'enregistrement de l'achat");
+        return;
+      }
+
+      toast.success("Achat enregistré avec succès");
     }
 
     // Update product's cost_price and supplier_id
@@ -127,7 +170,6 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
       return;
     }
 
-    toast.success("Achat enregistré avec succès");
     resetForm();
     onClose();
   }
@@ -140,7 +182,7 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
     <Dialog open={open} onOpenChange={() => { resetForm(); onClose(); }}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
-          <DialogTitle>Enregistrer Achat</DialogTitle>
+          <DialogTitle>{purchase ? "Modifier Achat" : "Enregistrer Achat"}</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -225,7 +267,9 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
             <Button type="button" variant="outline" onClick={() => { resetForm(); onClose(); }} className="w-full sm:w-auto">
               Annuler
             </Button>
-            <Button type="submit" className="w-full sm:w-auto">Enregistrer Achat</Button>
+            <Button type="submit" className="w-full sm:w-auto">
+              {purchase ? "Modifier Achat" : "Enregistrer Achat"}
+            </Button>
           </div>
         </form>
       </DialogContent>

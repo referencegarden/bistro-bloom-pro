@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -21,6 +21,8 @@ interface Purchase {
   total_cost: number;
   purchase_date: string;
   notes: string | null;
+  product_id: string;
+  supplier_id: string | null;
   products: { name: string } | null;
   suppliers: { name: string } | null;
 }
@@ -28,6 +30,7 @@ interface Purchase {
 export default function Purchases() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingPurchase, setEditingPurchase] = useState<Purchase | undefined>(undefined);
 
   useEffect(() => {
     loadPurchases();
@@ -49,7 +52,13 @@ export default function Purchases() {
 
   function handleDialogClose() {
     setDialogOpen(false);
+    setEditingPurchase(undefined);
     loadPurchases();
+  }
+
+  function handleEdit(purchase: Purchase) {
+    setEditingPurchase(purchase);
+    setDialogOpen(true);
   }
 
   return (
@@ -76,6 +85,7 @@ export default function Purchases() {
               <TableHead className="hidden sm:table-cell">Coût Unitaire</TableHead>
               <TableHead>Total</TableHead>
               <TableHead className="hidden md:table-cell">Notes</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -96,13 +106,26 @@ export default function Purchases() {
                 <TableCell className="text-muted-foreground hidden md:table-cell">
                   {purchase.notes || "-"}
                 </TableCell>
+                <TableCell className="text-right">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleEdit(purchase)}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
 
-      <PurchaseDialog open={dialogOpen} onClose={handleDialogClose} />
+      <PurchaseDialog 
+        open={dialogOpen} 
+        onClose={handleDialogClose} 
+        purchase={editingPurchase}
+      />
     </div>
   );
 }

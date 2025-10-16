@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { ProductDialog } from "@/components/ProductDialog";
 import { ProductImport } from "@/components/ProductImport";
 import { StockAdjustmentDialog } from "@/components/StockAdjustmentDialog";
+import { DemandDialog } from "@/components/DemandDialog";
 import { toast } from "sonner";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { Upload } from "lucide-react";
@@ -35,6 +36,8 @@ export default function Products() {
   const [stockAdjustmentOpen, setStockAdjustmentOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [adjustingProduct, setAdjustingProduct] = useState<Product | null>(null);
+  const [demandDialogOpen, setDemandDialogOpen] = useState(false);
+  const [demandProduct, setDemandProduct] = useState<Product | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -96,6 +99,16 @@ export default function Products() {
     setAdjustingProduct(null);
     loadProducts();
   }
+
+  function handleDemand(product: Product) {
+    setDemandProduct(product);
+    setDemandDialogOpen(true);
+  }
+
+  function handleDemandClose() {
+    setDemandDialogOpen(false);
+    setDemandProduct(null);
+  }
   return <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -156,11 +169,14 @@ export default function Products() {
                   <TableCell>
                     {product.current_stock <= product.low_stock_threshold ? <Badge variant="destructive">Stock Faible</Badge> : <Badge variant="secondary" className="bg-yellow-400">En Stock</Badge>}
                   </TableCell>
-                  <TableCell className="text-right">
+                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="outline" size="sm" onClick={() => handleAdjustStock(product)}>
                         <Package className="h-4 w-4 mr-1" />
                         Stock
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDemand(product)}>
+                        Commander
                       </Button>
                       <Button variant="outline" size="sm" onClick={() => handleEdit(product)}>
                         Modifier
@@ -204,6 +220,11 @@ export default function Products() {
         open={stockAdjustmentOpen} 
         onClose={handleStockAdjustmentClose} 
         product={adjustingProduct} 
+      />
+      <DemandDialog
+        open={demandDialogOpen}
+        onOpenChange={setDemandDialogOpen}
+        onSuccess={handleDemandClose}
       />
     </div>;
 }
