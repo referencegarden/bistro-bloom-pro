@@ -44,7 +44,7 @@ export function StockAdjustmentDialog({ open, onClose, product }: StockAdjustmen
       let finalStock: number;
 
       if (adjustmentType === "set") {
-        const stockValue = parseInt(newStock);
+        const stockValue = parseFloat(newStock);
         if (isNaN(stockValue) || stockValue < 0) {
           toast.error("Veuillez entrer une quantité valide");
           setLoading(false);
@@ -52,7 +52,7 @@ export function StockAdjustmentDialog({ open, onClose, product }: StockAdjustmen
         }
         finalStock = stockValue;
       } else {
-        const adjustment = parseInt(adjustmentAmount);
+        const adjustment = parseFloat(adjustmentAmount);
         if (isNaN(adjustment)) {
           toast.error("Veuillez entrer un ajustement valide");
           setLoading(false);
@@ -87,8 +87,8 @@ export function StockAdjustmentDialog({ open, onClose, product }: StockAdjustmen
   if (!product) return null;
 
   const previewStock = adjustmentType === "set" 
-    ? parseInt(newStock) || 0
-    : product.current_stock + (parseInt(adjustmentAmount) || 0);
+    ? parseFloat(newStock) || 0
+    : product.current_stock + (parseFloat(adjustmentAmount) || 0);
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -121,14 +121,15 @@ export function StockAdjustmentDialog({ open, onClose, product }: StockAdjustmen
               <TabsContent value="adjust" className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="adjustment">Ajustement (+/-)</Label>
-                  <Input
-                    id="adjustment"
-                    type="number"
-                    placeholder="Ex: +10 ou -5"
-                    value={adjustmentAmount}
-                    onChange={(e) => setAdjustmentAmount(e.target.value)}
-                    required
-                  />
+              <Input
+                id="adjustment"
+                type="number"
+                step="0.01"
+                placeholder="Ex: +10 ou -5"
+                value={adjustmentAmount}
+                onChange={(e) => setAdjustmentAmount(e.target.value)}
+                required
+              />
                   <p className="text-xs text-muted-foreground">
                     Entrez un nombre positif pour ajouter ou négatif pour retirer
                   </p>
@@ -142,6 +143,7 @@ export function StockAdjustmentDialog({ open, onClose, product }: StockAdjustmen
                     id="newStock"
                     type="number"
                     min="0"
+                    step="0.01"
                     placeholder="Nouvelle quantité"
                     value={newStock}
                     onChange={(e) => setNewStock(e.target.value)}
@@ -172,7 +174,7 @@ export function StockAdjustmentDialog({ open, onClose, product }: StockAdjustmen
                 </div>
                 {adjustmentType === "adjust" && (
                   <p className="text-xs text-muted-foreground mt-1">
-                    {parseInt(adjustmentAmount) > 0 ? "+" : ""}
+                    {parseFloat(adjustmentAmount) > 0 ? "+" : ""}
                     {adjustmentAmount} {product.unit_of_measure || "unité"}
                   </p>
                 )}

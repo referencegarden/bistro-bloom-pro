@@ -216,11 +216,12 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
               id="threshold"
               type="number"
               min="0"
+              step="0.01"
               value={formData.low_stock_threshold}
               onChange={(e) =>
                 setFormData({
                   ...formData,
-                  low_stock_threshold: Number(e.target.value),
+                  low_stock_threshold: parseFloat(e.target.value) || 0,
                 })
               }
               required

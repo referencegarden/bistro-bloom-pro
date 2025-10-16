@@ -244,10 +244,11 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
             <Input
               id="quantity"
               type="number"
-              min="1"
+              min="0.01"
+              step="0.01"
               value={formData.quantity}
               onChange={(e) =>
-                setFormData({ ...formData, quantity: Number(e.target.value) })
+                setFormData({ ...formData, quantity: parseFloat(e.target.value) || 0 })
               }
               required
             />

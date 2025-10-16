@@ -173,9 +173,10 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
               <Input
                 id="quantity"
                 type="number"
-                min="1"
+                min="0.01"
+                step="0.01"
                 value={formData.quantity}
-                onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) })}
+                onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) || 0 })}
                 required
               />
             </div>
