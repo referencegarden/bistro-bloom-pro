@@ -57,7 +57,6 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
     supplier_id: "",
     low_stock_threshold: 10,
     unit_of_measure: "unité",
-    sales_price: 0,
     cost_price: 0,
   });
 
@@ -74,7 +73,6 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
         supplier_id: product.supplier_id || "",
         low_stock_threshold: product.low_stock_threshold,
         unit_of_measure: product.unit_of_measure || "unité",
-        sales_price: product.sales_price,
         cost_price: product.cost_price,
       });
     } else {
@@ -84,7 +82,6 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
         supplier_id: "",
         low_stock_threshold: 10,
         unit_of_measure: "unité",
-        sales_price: 0,
         cost_price: 0,
       });
     }
@@ -124,6 +121,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
       const { error } = await supabase.from("products").insert({
         ...data,
         current_stock: 0,
+        sales_price: 0,
       });
 
       if (error) {
@@ -228,41 +226,22 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
               required
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="cost_price">Prix Coût (DH)</Label>
-              <Input
-                id="cost_price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.cost_price}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    cost_price: Number(e.target.value),
-                  })
-                }
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="sales_price">Prix Vente (DH)</Label>
-              <Input
-                id="sales_price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.sales_price}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    sales_price: Number(e.target.value),
-                  })
-                }
-                required
-              />
-            </div>
+          <div>
+            <Label htmlFor="cost_price">Prix Coût (DH)</Label>
+            <Input
+              id="cost_price"
+              type="number"
+              min="0"
+              step="0.01"
+              value={formData.cost_price}
+              onChange={(e) =>
+                setFormData({
+                  ...formData,
+                  cost_price: Number(e.target.value),
+                })
+              }
+              required
+            />
           </div>
           <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
             <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
