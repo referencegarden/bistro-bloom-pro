@@ -21,9 +21,10 @@ interface DemandDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
+  prefilledProductId?: string;
 }
 
-export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProps) {
+export function DemandDialog({ open, onOpenChange, onSuccess, prefilledProductId }: DemandDialogProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [formData, setFormData] = useState({
     product_id: "",
@@ -37,8 +38,11 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
   useEffect(() => {
     if (open) {
       loadProducts();
+      if (prefilledProductId) {
+        setFormData(prev => ({ ...prev, product_id: prefilledProductId }));
+      }
     }
-  }, [open]);
+  }, [open, prefilledProductId]);
 
   async function loadProducts() {
     const { data } = await supabase
@@ -123,50 +127,58 @@ export function DemandDialog({ open, onOpenChange, onSuccess }: DemandDialogProp
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="space-y-3 sm:space-y-4 py-3 sm:py-4">
-            <div className="space-y-2">
-              <Label>Produit *</Label>
-              <Popover open={searchOpen} onOpenChange={setSearchOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={searchOpen}
-                    className="w-full justify-between"
-                  >
-                    {selectedProduct ? selectedProduct.name : "Rechercher un produit..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-full p-0" align="start">
-                  <Command>
-                    <CommandInput placeholder="Rechercher un produit..." />
-                    <CommandList>
-                      <CommandEmpty>Aucun produit trouvé.</CommandEmpty>
-                      <CommandGroup>
-                        {products.map((product) => (
-                          <CommandItem
-                            key={product.id}
-                            value={product.name}
-                            onSelect={() => {
-                              setFormData({ ...formData, product_id: product.id });
-                              setSearchOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                formData.product_id === product.id ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {product.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-            </div>
+            {!prefilledProductId && (
+              <div className="space-y-2">
+                <Label>Produit *</Label>
+                <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={searchOpen}
+                      className="w-full justify-between"
+                    >
+                      {selectedProduct ? selectedProduct.name : "Rechercher un produit..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Rechercher un produit..." />
+                      <CommandList>
+                        <CommandEmpty>Aucun produit trouvé.</CommandEmpty>
+                        <CommandGroup>
+                          {products.map((product) => (
+                            <CommandItem
+                              key={product.id}
+                              value={product.name}
+                              onSelect={() => {
+                                setFormData({ ...formData, product_id: product.id });
+                                setSearchOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  formData.product_id === product.id ? "opacity-100" : "opacity-0"
+                                )}
+                              />
+                              {product.name}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
+            {prefilledProductId && (
+              <div className="space-y-2">
+                <Label>Produit</Label>
+                <Input value={selectedProduct?.name || ""} disabled />
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label htmlFor="quantity">Quantité *</Label>

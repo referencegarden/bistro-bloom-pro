@@ -18,6 +18,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 interface Product {
@@ -41,6 +45,7 @@ interface SaleDialogProps {
 export function SaleDialog({ open, onClose }: SaleDialogProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [productSearchOpen, setProductSearchOpen] = useState(false);
   const [formData, setFormData] = useState({
     product_id: "",
     employee_id: "",
@@ -89,7 +94,10 @@ const { data } = await supabase
       ...formData,
       product_id: productId,
     });
+    setProductSearchOpen(false);
   }
+
+  const selectedProduct = products.find(p => p.id === formData.product_id);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -138,21 +146,44 @@ const unitPrice = typeof product.sales_price === "number" ? product.sales_price 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="product">Produit</Label>
-            <Select
-              value={formData.product_id}
-              onValueChange={handleProductChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner produit" />
-              </SelectTrigger>
-              <SelectContent>
-                {products.map((product) => (
-                  <SelectItem key={product.id} value={product.id}>
-                    {product.name} (Stock: {product.current_stock})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={productSearchOpen} onOpenChange={setProductSearchOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={productSearchOpen}
+                  className="w-full justify-between"
+                >
+                  {selectedProduct ? `${selectedProduct.name} (Stock: ${selectedProduct.current_stock})` : "Rechercher un produit..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Rechercher un produit..." />
+                  <CommandList>
+                    <CommandEmpty>Aucun produit trouvé.</CommandEmpty>
+                    <CommandGroup>
+                      {products.map((product) => (
+                        <CommandItem
+                          key={product.id}
+                          value={product.name}
+                          onSelect={() => handleProductChange(product.id)}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.product_id === product.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {product.name} (Stock: {product.current_stock})
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
 
           <div>

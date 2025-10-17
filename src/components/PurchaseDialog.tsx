@@ -17,6 +17,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 
@@ -54,6 +58,7 @@ interface PurchaseDialogProps {
 export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, prefilledQuantity, purchase }: PurchaseDialogProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [productSearchOpen, setProductSearchOpen] = useState(false);
   const [formData, setFormData] = useState({
     product_id: "",
     supplier_id: "",
@@ -107,8 +112,11 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
         product_id: productId,
         unit_cost: product.cost_price,
       });
+      setProductSearchOpen(false);
     }
   }
+
+  const selectedProduct = products.find(p => p.id === formData.product_id);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -188,21 +196,44 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="product">Produit</Label>
-            <Select
-              value={formData.product_id}
-              onValueChange={handleProductChange}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner produit" />
-              </SelectTrigger>
-              <SelectContent>
-                {products.map((product) => (
-                  <SelectItem key={product.id} value={product.id}>
-                    {product.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Popover open={productSearchOpen} onOpenChange={setProductSearchOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={productSearchOpen}
+                  className="w-full justify-between"
+                >
+                  {selectedProduct ? selectedProduct.name : "Rechercher un produit..."}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput placeholder="Rechercher un produit..." />
+                  <CommandList>
+                    <CommandEmpty>Aucun produit trouvé.</CommandEmpty>
+                    <CommandGroup>
+                      {products.map((product) => (
+                        <CommandItem
+                          key={product.id}
+                          value={product.name}
+                          onSelect={() => handleProductChange(product.id)}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.product_id === product.id ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {product.name}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
           </div>
           <div>
             <Label htmlFor="supplier">Fournisseur</Label>

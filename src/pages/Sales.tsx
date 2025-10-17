@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -47,6 +47,23 @@ export default function Sales() {
     setSales(data || []);
   }
 
+  async function handleDelete(saleId: string) {
+    if (!confirm("Êtes-vous sûr de vouloir annuler cette sortie?")) return;
+
+    const { error } = await supabase
+      .from("sales")
+      .delete()
+      .eq("id", saleId);
+
+    if (error) {
+      toast.error("Échec de l'annulation de la sortie");
+      return;
+    }
+
+    toast.success("Sortie annulée avec succès");
+    loadSales();
+  }
+
   function handleDialogClose() {
     setDialogOpen(false);
     loadSales();
@@ -74,6 +91,7 @@ export default function Sales() {
             <TableHead className="hidden sm:table-cell">Employé</TableHead>
             <TableHead>Quantité</TableHead>
             <TableHead className="hidden md:table-cell">Notes</TableHead>
+            <TableHead className="w-[60px]">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -91,6 +109,15 @@ export default function Sales() {
                 <TableCell>{sale.quantity}</TableCell>
                 <TableCell className="text-muted-foreground hidden md:table-cell">
                   {sale.notes || "-"}
+                </TableCell>
+                <TableCell>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(sale.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
