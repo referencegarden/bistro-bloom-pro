@@ -35,6 +35,7 @@ interface EmployeePermissions {
   can_view_products: boolean;
   can_view_reports: boolean;
   can_manage_stock: boolean;
+  can_manage_suppliers: boolean;
   can_create_demands: boolean;
 }
 
@@ -54,6 +55,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
     can_view_products: true,
     can_view_reports: false,
     can_manage_stock: false,
+    can_manage_suppliers: false,
     can_create_demands: true,
   });
 
@@ -83,6 +85,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
               can_view_products: data.can_view_products,
               can_view_reports: data.can_view_reports,
               can_manage_stock: data.can_manage_stock,
+              can_manage_suppliers: data.can_manage_suppliers ?? false,
               can_create_demands: data.can_create_demands ?? true,
             });
           }
@@ -103,6 +106,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         can_view_products: true,
         can_view_reports: false,
         can_manage_stock: false,
+        can_manage_suppliers: false,
         can_create_demands: true,
       });
     }
@@ -195,6 +199,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         can_view_products: permissions.can_view_products,
         can_view_reports: permissions.can_view_reports,
         can_manage_stock: permissions.can_manage_stock,
+        can_manage_suppliers: permissions.can_manage_suppliers,
         can_create_demands: permissions.can_create_demands,
       }, {
         onConflict: 'employee_id'
@@ -366,6 +371,17 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
                 checked={permissions.can_manage_stock}
                 onCheckedChange={(checked) =>
                   setPermissions({ ...permissions, can_manage_stock: checked })
+                }
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <Label htmlFor="can_manage_suppliers">Peut gérer les fournisseurs</Label>
+              <Switch
+                id="can_manage_suppliers"
+                checked={permissions.can_manage_suppliers}
+                onCheckedChange={(checked) =>
+                  setPermissions({ ...permissions, can_manage_suppliers: checked })
                 }
               />
             </div>

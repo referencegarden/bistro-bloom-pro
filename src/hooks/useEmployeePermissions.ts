@@ -6,6 +6,7 @@ interface EmployeePermissions {
   can_view_products: boolean;
   can_view_reports: boolean;
   can_manage_stock: boolean;
+  can_manage_suppliers: boolean;
   can_create_demands: boolean;
 }
 
@@ -65,11 +66,12 @@ export function useEmployeePermissions() {
       isAdmin: true,
       isEmployee: false,
       permissions: {
-        can_make_sales: true,
-        can_view_products: true,
-        can_view_reports: true,
-        can_manage_stock: true,
-        can_create_demands: true,
+      can_make_sales: true,
+      can_view_products: true,
+      can_view_reports: true,
+      can_manage_stock: true,
+      can_manage_suppliers: true,
+      can_create_demands: true,
       },
       loading: false,
     };
@@ -98,6 +100,7 @@ export function useEmployeePermissions() {
       can_view_products: false,
       can_view_reports: false,
       can_manage_stock: false,
+      can_manage_suppliers: false,
       can_create_demands: false,
     },
     loading: false,

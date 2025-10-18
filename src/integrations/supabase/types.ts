@@ -76,6 +76,7 @@ export type Database = {
           can_create_demands: boolean
           can_make_sales: boolean
           can_manage_stock: boolean
+          can_manage_suppliers: boolean
           can_view_products: boolean
           can_view_reports: boolean
           created_at: string
@@ -87,6 +88,7 @@ export type Database = {
           can_create_demands?: boolean
           can_make_sales?: boolean
           can_manage_stock?: boolean
+          can_manage_suppliers?: boolean
           can_view_products?: boolean
           can_view_reports?: boolean
           created_at?: string
@@ -98,6 +100,7 @@ export type Database = {
           can_create_demands?: boolean
           can_make_sales?: boolean
           can_manage_stock?: boolean
+          can_manage_suppliers?: boolean
           can_view_products?: boolean
           can_view_reports?: boolean
           created_at?: string
