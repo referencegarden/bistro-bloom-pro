@@ -117,19 +117,15 @@ export function AppSidebar() {
   }, [isAdmin, permissions]);
   async function handleSignOut() {
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) {
-        console.error("Logout error:", error);
-        // Clear local session even if server logout fails
-        localStorage.clear();
-      }
+      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      if (error) throw error;
       toast.success("Déconnecté avec succès");
       navigate("/auth");
     } catch (error) {
       console.error("Logout error:", error);
-      // Force navigation even on error
+      // Force clear and navigation on error
       localStorage.clear();
-      toast.success("Déconnecté avec succès");
+      toast.success("Déconnecté");
       navigate("/auth");
     }
   }

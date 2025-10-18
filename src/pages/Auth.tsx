@@ -29,6 +29,15 @@ export default function Auth() {
     }
   });
   useEffect(() => {
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (session) {
+          navigate("/");
+        }
+      }
+    );
+
     // Check if there's already a session
     supabase.auth.getSession().then(({
       data: {
@@ -39,6 +48,8 @@ export default function Auth() {
         navigate("/");
       }
     });
+
+    return () => subscription.unsubscribe();
   }, [navigate]);
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();

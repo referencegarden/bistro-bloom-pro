@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -10,6 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+} from "@/components/ui/pagination";
 import { PurchaseDialog } from "@/components/PurchaseDialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -27,20 +33,28 @@ interface Purchase {
   suppliers: { name: string } | null;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function Purchases() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingPurchase, setEditingPurchase] = useState<Purchase | undefined>(undefined);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     loadPurchases();
-  }, []);
+  }, [currentPage]);
 
   async function loadPurchases() {
-    const { data, error } = await supabase
+    const from = (currentPage - 1) * ITEMS_PER_PAGE;
+    const to = from + ITEMS_PER_PAGE - 1;
+
+    const { data, error, count } = await supabase
       .from("purchases")
-      .select("*, products(name), suppliers(name)")
-      .order("purchase_date", { ascending: false });
+      .select("*, products(name), suppliers(name)", { count: 'exact' })
+      .order("purchase_date", { ascending: false })
+      .range(from, to);
 
     if (error) {
       toast.error("Failed to load purchases");
@@ -48,6 +62,24 @@ export default function Purchases() {
     }
 
     setPurchases(data || []);
+    setTotalCount(count || 0);
+  }
+
+  async function handleDelete(purchaseId: string) {
+    if (!confirm("Êtes-vous sûr de vouloir supprimer cet achat?")) return;
+
+    const { error } = await supabase
+      .from("purchases")
+      .delete()
+      .eq("id", purchaseId);
+
+    if (error) {
+      toast.error("Échec de la suppression de l'achat");
+      return;
+    }
+
+    toast.success("Achat supprimé avec succès");
+    loadPurchases();
   }
 
   function handleDialogClose() {
@@ -107,19 +139,94 @@ export default function Purchases() {
                   {purchase.notes || "-"}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleEdit(purchase)}
-                  >
-                    <Pencil className="h-4 w-4" />
-                  </Button>
+                  <div className="flex justify-end gap-1">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(purchase)}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(purchase.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
+      {totalCount > ITEMS_PER_PAGE && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Affichage {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} sur {totalCount} achats
+          </p>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Précédent
+                </Button>
+              </PaginationItem>
+              {Array.from({ length: Math.ceil(totalCount / ITEMS_PER_PAGE) }, (_, i) => i + 1)
+                .filter(page => {
+                  const distance = Math.abs(page - currentPage);
+                  return distance === 0 || distance === 1 || page === 1 || page === Math.ceil(totalCount / ITEMS_PER_PAGE);
+                })
+                .map((page, idx, arr) => {
+                  if (idx > 0 && page - arr[idx - 1] > 1) {
+                    return [
+                      <PaginationItem key={`ellipsis-${page}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>,
+                      <PaginationItem key={page}>
+                        <Button
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </Button>
+                      </PaginationItem>
+                    ];
+                  }
+                  return (
+                    <PaginationItem key={page}>
+                      <Button
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </Button>
+                    </PaginationItem>
+                  );
+                })}
+              <PaginationItem>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / ITEMS_PER_PAGE), p + 1))}
+                  disabled={currentPage >= Math.ceil(totalCount / ITEMS_PER_PAGE)}
+                >
+                  Suivant
+                </Button>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       <PurchaseDialog 
         open={dialogOpen} 

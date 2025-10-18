@@ -10,6 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+} from "@/components/ui/pagination";
 import { SaleDialog } from "@/components/SaleDialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -25,19 +31,27 @@ interface Sale {
   employees: { name: string } | null;
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function Sales() {
   const [sales, setSales] = useState<Sale[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
 
   useEffect(() => {
     loadSales();
-  }, []);
+  }, [currentPage]);
 
   async function loadSales() {
-    const { data, error } = await supabase
+    const from = (currentPage - 1) * ITEMS_PER_PAGE;
+    const to = from + ITEMS_PER_PAGE - 1;
+
+    const { data, error, count } = await supabase
       .from("sales")
-      .select("*, products(name), employees(name)")
-      .order("sale_date", { ascending: false });
+      .select("*, products(name), employees(name)", { count: 'exact' })
+      .order("sale_date", { ascending: false })
+      .range(from, to);
 
     if (error) {
       toast.error("Failed to load sales");
@@ -45,6 +59,7 @@ export default function Sales() {
     }
 
     setSales(data || []);
+    setTotalCount(count || 0);
   }
 
   async function handleDelete(saleId: string) {
@@ -124,6 +139,72 @@ export default function Sales() {
           </TableBody>
         </Table>
       </div>
+
+      {totalCount > ITEMS_PER_PAGE && (
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground">
+            Affichage {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, totalCount)} sur {totalCount} sorties
+          </p>
+          <Pagination>
+            <PaginationContent>
+              <PaginationItem>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                >
+                  Précédent
+                </Button>
+              </PaginationItem>
+              {Array.from({ length: Math.ceil(totalCount / ITEMS_PER_PAGE) }, (_, i) => i + 1)
+                .filter(page => {
+                  const distance = Math.abs(page - currentPage);
+                  return distance === 0 || distance === 1 || page === 1 || page === Math.ceil(totalCount / ITEMS_PER_PAGE);
+                })
+                .map((page, idx, arr) => {
+                  if (idx > 0 && page - arr[idx - 1] > 1) {
+                    return [
+                      <PaginationItem key={`ellipsis-${page}`}>
+                        <PaginationEllipsis />
+                      </PaginationItem>,
+                      <PaginationItem key={page}>
+                        <Button
+                          variant={currentPage === page ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => setCurrentPage(page)}
+                        >
+                          {page}
+                        </Button>
+                      </PaginationItem>
+                    ];
+                  }
+                  return (
+                    <PaginationItem key={page}>
+                      <Button
+                        variant={currentPage === page ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => setCurrentPage(page)}
+                      >
+                        {page}
+                      </Button>
+                    </PaginationItem>
+                  );
+                })}
+              <PaginationItem>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / ITEMS_PER_PAGE), p + 1))}
+                  disabled={currentPage >= Math.ceil(totalCount / ITEMS_PER_PAGE)}
+                >
+                  Suivant
+                </Button>
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
 
       <SaleDialog open={dialogOpen} onClose={handleDialogClose} />
     </div>
