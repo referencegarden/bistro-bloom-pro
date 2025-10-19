@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList } from "lucide-react";
+import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList, UtensilsCrossed } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -15,6 +15,10 @@ const navigation = [{
   name: "Produits",
   href: "/products",
   icon: Package
+}, {
+  name: "Menu / Recettes",
+  href: "/menu-items",
+  icon: UtensilsCrossed
 }, {
   name: "Sortie de Stock",
   href: "/sales",
@@ -106,6 +110,8 @@ export function AppSidebar() {
       if (["/categories", "/suppliers", "/employees"].includes(item.href)) return false;
       // Products visibility
       if (item.href === "/products") return permissions.can_view_products;
+      // Menu items visibility (same as sales)
+      if (item.href === "/menu-items") return permissions.can_make_sales;
       // Sales visibility
       if (item.href === "/sales") return permissions.can_make_sales;
       // Purchases only for admins or those who can manage stock

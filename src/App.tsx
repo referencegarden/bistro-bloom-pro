@@ -15,6 +15,7 @@ import Categories from "./pages/Categories";
 import Suppliers from "./pages/Suppliers";
 import Employees from "./pages/Employees";
 import Settings from "./pages/Settings";
+import MenuItems from "./pages/MenuItems";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -113,6 +114,18 @@ const App = () => (
                 <Layout>
                   <Employees />
                 </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/menu-items"
+            element={
+              <ProtectedRoute>
+                <PermissionRoute permission="can_make_sales">
+                  <Layout>
+                    <MenuItems />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />

@@ -163,6 +163,132 @@ export type Database = {
         }
         Relationships: []
       }
+      menu_item_ingredients: {
+        Row: {
+          created_at: string | null
+          id: string
+          menu_item_id: string
+          product_id: string
+          quantity_per_unit: number
+          unit_of_measure: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          menu_item_id: string
+          product_id: string
+          quantity_per_unit: number
+          unit_of_measure?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          menu_item_id?: string
+          product_id?: string
+          quantity_per_unit?: number
+          unit_of_measure?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_item_ingredients_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_item_ingredients_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_item_sales: {
+        Row: {
+          created_at: string | null
+          employee_id: string | null
+          id: string
+          menu_item_id: string
+          notes: string | null
+          quantity: number
+          sale_date: string | null
+          total_price: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          menu_item_id: string
+          notes?: string | null
+          quantity: number
+          sale_date?: string | null
+          total_price?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          employee_id?: string | null
+          id?: string
+          menu_item_id?: string
+          notes?: string | null
+          quantity?: number
+          sale_date?: string | null
+          total_price?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_item_sales_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "menu_item_sales_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      menu_items: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean
+          name: string
+          selling_price: number
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name: string
+          selling_price?: number
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean
+          name?: string
+          selling_price?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       product_demands: {
         Row: {
           fulfilled_at: string | null
@@ -433,6 +559,16 @@ export type Database = {
       bootstrap_admin: {
         Args: { target_email: string }
         Returns: Json
+      }
+      calculate_ingredient_usage: {
+        Args: { _menu_item_id: string; _quantity: number }
+        Returns: {
+          available_stock: number
+          product_id: string
+          product_name: string
+          quantity_needed: number
+          unit_of_measure: string
+        }[]
       }
       has_employee_permission: {
         Args: { _permission: string; _user_id: string }
