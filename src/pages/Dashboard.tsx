@@ -12,6 +12,7 @@ interface DashboardStats {
   totalProducts: number;
   totalSales: number;
   totalPurchases: number;
+  dailyPurchases: number;
   totalStockValue: number;
   lowStockProducts: {
     id: string;
@@ -29,6 +30,7 @@ export default function Dashboard() {
     totalProducts: 0,
     totalSales: 0,
     totalPurchases: 0,
+    dailyPurchases: 0,
     totalStockValue: 0,
     lowStockProducts: [],
     pendingDemands: 0,
@@ -51,10 +53,20 @@ export default function Dashboard() {
   }, [stats.lowStockProducts.length]);
 
   async function loadDashboardData() {
-    const [productsRes, salesRes, purchasesRes, demandsRes] = await Promise.all([
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const [productsRes, salesRes, purchasesRes, dailyPurchasesRes, demandsRes] = await Promise.all([
       supabase.from("products").select("id, name, current_stock, cost_price, low_stock_threshold"),
       supabase.from("sales").select("total_price"),
       supabase.from("purchases").select("total_cost"),
+      supabase
+        .from("purchases")
+        .select("total_cost")
+        .gte("purchase_date", today.toISOString())
+        .lt("purchase_date", tomorrow.toISOString()),
       supabase.from("product_demands").select("status"),
     ]);
 
@@ -63,6 +75,10 @@ export default function Dashboard() {
 
     const purchasesTotal =
       purchasesRes.data?.reduce((sum, purchase: any) => sum + Number(purchase.total_cost), 0) ||
+      0;
+
+    const dailyPurchasesTotal =
+      dailyPurchasesRes.data?.reduce((sum, purchase: any) => sum + Number(purchase.total_cost), 0) ||
       0;
 
     const stockValue =
@@ -89,6 +105,7 @@ export default function Dashboard() {
       totalProducts: productsRes.data?.length || 0,
       totalSales: salesTotal,
       totalPurchases: purchasesTotal,
+      dailyPurchases: dailyPurchasesTotal,
       totalStockValue: stockValue,
       lowStockProducts: lowStockDetails,
       pendingDemands,
@@ -106,7 +123,7 @@ export default function Dashboard() {
         <ReportExport />
       </div>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
         <StatCard
           title="Produits Totaux"
           value={stats.totalProducts.toString()}
@@ -120,6 +137,11 @@ export default function Dashboard() {
         <StatCard
           title="Achats Totaux"
           value={`${stats.totalPurchases.toFixed(2)} DH`}
+          icon={TrendingUp}
+        />
+        <StatCard
+          title="Achats du Jour"
+          value={`${stats.dailyPurchases.toFixed(2)} DH`}
           icon={TrendingUp}
         />
         <StatCard

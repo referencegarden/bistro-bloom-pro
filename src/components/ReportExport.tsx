@@ -49,7 +49,7 @@ export function ReportExport() {
       const queryEndDate = new Date(endDate.setHours(23, 59, 59, 999));
 
       // Fetch all data for the period
-      const [productsRes, salesRes, purchasesRes] = await Promise.all([
+      const [productsRes, salesRes, purchasesRes, menuSalesRes] = await Promise.all([
         supabase.from("products").select("*, categories(name), suppliers(name)"),
         supabase
           .from("sales")
@@ -61,9 +61,14 @@ export function ReportExport() {
           .select("*, products(name), suppliers(name)")
           .gte("purchase_date", queryStartDate.toISOString())
           .lte("purchase_date", queryEndDate.toISOString()),
+        supabase
+          .from("menu_item_sales")
+          .select("*, menu_items(name), employees(name)")
+          .gte("sale_date", queryStartDate.toISOString())
+          .lte("sale_date", queryEndDate.toISOString()),
       ]);
 
-      if (productsRes.error || salesRes.error || purchasesRes.error) {
+      if (productsRes.error || salesRes.error || purchasesRes.error || menuSalesRes.error) {
         toast.error("Échec de récupération des données");
         return;
       }
@@ -71,6 +76,7 @@ export function ReportExport() {
       const products = productsRes.data || [];
       const sales = salesRes.data || [];
       const purchases = purchasesRes.data || [];
+      const menuSales = menuSalesRes.data || [];
 
       // Calculate metrics
       const inventoryValue = products.reduce(
@@ -88,6 +94,21 @@ export function ReportExport() {
         0
       );
 
+      const totalMenuSales = menuSales.reduce(
+        (sum, ms: any) => sum + Number(ms.total_price || 0),
+        0
+      );
+
+      // Group products by category
+      const productsByCategory = products.reduce((acc: any, product: any) => {
+        const categoryName = product.categories?.name || "Sans Catégorie";
+        if (!acc[categoryName]) {
+          acc[categoryName] = [];
+        }
+        acc[categoryName].push(product);
+        return acc;
+      }, {});
+
       // Create HTML content
       const htmlContent = `
         <!DOCTYPE html>
@@ -99,6 +120,8 @@ export function ReportExport() {
             body { font-family: Arial, sans-serif; margin: 20px; }
             h1 { color: #ea580c; text-align: center; }
             h2 { color: #0891b2; margin-top: 30px; }
+            h3 { color: #666; margin-top: 20px; cursor: pointer; padding: 10px; background: #f5f5f5; border-radius: 5px; }
+            h3:hover { background: #e0e0e0; }
             table { width: 100%; border-collapse: collapse; margin-top: 10px; }
             th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
             th { background-color: #f97316; color: white; }
@@ -106,6 +129,11 @@ export function ReportExport() {
             .summary-item { display: flex; justify-content: space-between; margin: 10px 0; }
             .summary-label { font-weight: bold; }
             .summary-value { color: #0891b2; font-size: 1.1em; }
+            .category-section { margin-bottom: 30px; border: 1px solid #ddd; border-radius: 5px; overflow: hidden; }
+            .category-header { background: #f97316; color: white; padding: 12px; cursor: pointer; font-weight: bold; }
+            .category-header:hover { background: #ea580c; }
+            .category-content { display: none; padding: 15px; }
+            .category-content.active { display: block; }
           </style>
         </head>
         <body>
@@ -131,40 +159,63 @@ export function ReportExport() {
               <span class="summary-value">${totalPurchases.toFixed(2)} DH</span>
             </div>
             <div class="summary-item">
+              <span class="summary-label">Total Ventes Menu (${periodLabel}):</span>
+              <span class="summary-value">${totalMenuSales.toFixed(2)} DH</span>
+            </div>
+            <div class="summary-item">
               <span class="summary-label">Total Produits:</span>
               <span class="summary-value">${products.length}</span>
             </div>
           </div>
 
-          <h2>Inventaire Actuel</h2>
-          <table>
-            <thead>
-              <tr>
-                <th>Produit</th>
-                <th>Catégorie</th>
-                <th>Stock</th>
-                <th>Prix de Revient</th>
-                <th>Prix de Vente</th>
-                <th>Valeur Inventaire</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${products
-                .map(
-                  (p) => `
-                <tr>
-                  <td>${p.name}</td>
-                  <td>${p.categories?.name || "N/A"}</td>
-                  <td>${p.current_stock}</td>
-                  <td>${p.cost_price.toFixed(2)} DH</td>
-                  <td>${p.sales_price.toFixed(2)} DH</td>
-                  <td>${(p.current_stock * p.cost_price).toFixed(2)} DH</td>
-                </tr>
-              `
-                )
-                .join("")}
-            </tbody>
-          </table>
+          <script>
+            function toggleCategory(categoryId) {
+              const content = document.getElementById(categoryId);
+              content.classList.toggle('active');
+            }
+          </script>
+
+          <h2>Inventaire Actuel par Catégorie</h2>
+          ${Object.entries(productsByCategory)
+            .map(([categoryName, categoryProducts]: [string, any]) => {
+              const categoryId = categoryName.replace(/\s/g, '_');
+              return `
+              <div class="category-section">
+                <div class="category-header" onclick="toggleCategory('${categoryId}')">
+                  📁 ${categoryName} (${categoryProducts.length} produits)
+                </div>
+                <div id="${categoryId}" class="category-content">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Produit</th>
+                        <th>Stock</th>
+                        <th>Prix de Revient</th>
+                        <th>Prix de Vente</th>
+                        <th>Valeur Inventaire</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      ${categoryProducts
+                        .map(
+                          (p: any) => `
+                        <tr>
+                          <td>${p.name}</td>
+                          <td>${p.current_stock}</td>
+                          <td>${p.cost_price.toFixed(2)} DH</td>
+                          <td>${p.sales_price.toFixed(2)} DH</td>
+                          <td>${(p.current_stock * p.cost_price).toFixed(2)} DH</td>
+                        </tr>
+                      `
+                        )
+                        .join("")}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            `;
+            })
+            .join("")}
 
           ${
             sales.length > 0
@@ -228,6 +279,40 @@ export function ReportExport() {
                   <td>${p.quantity}</td>
                   <td>${p.unit_cost.toFixed(2)} DH</td>
                   <td>${p.total_cost?.toFixed(2) || "0.00"} DH</td>
+                </tr>
+              `
+                )
+                .join("")}
+            </tbody>
+          </table>
+          `
+              : ""
+          }
+
+          ${
+            menuSales.length > 0
+              ? `
+          <h2>Ventes Menu - ${periodLabel}</h2>
+          <table>
+            <thead>
+              <tr>
+                <th>Date/Heure</th>
+                <th>Item Menu</th>
+                <th>Employé</th>
+                <th>Quantité</th>
+                <th>Prix Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${menuSales
+                .map(
+                  (ms: any) => `
+                <tr>
+                  <td>${format(new Date(ms.sale_date), "dd/MM/yyyy HH:mm", { locale: fr })}</td>
+                  <td>${ms.menu_items?.name || "N/A"}</td>
+                  <td>${ms.employees?.name || "-"}</td>
+                  <td>${ms.quantity}</td>
+                  <td>${Number(ms.total_price || 0).toFixed(2)} DH</td>
                 </tr>
               `
                 )
