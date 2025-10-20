@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -194,8 +194,8 @@ export default function MenuItems() {
               const profit = item.selling_price - totalCost;
 
               return (
-                <>
-                  <TableRow key={item.id}>
+                <React.Fragment key={item.id}>
+                  <TableRow>
                     <TableCell>
                       <Button
                         variant="ghost"
@@ -240,10 +240,10 @@ export default function MenuItems() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </TableCell>
-                  </TableRow>
-                  {isExpanded && (
-                    <TableRow>
-                      <TableCell colSpan={6} className="bg-muted/50">
+                    </TableRow>
+                    {isExpanded && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="bg-muted/50">
                         <div className="p-4 space-y-3">
                           <h4 className="font-semibold">Ingrédients:</h4>
                           {itemIngredients.length === 0 ? (
@@ -281,7 +281,7 @@ export default function MenuItems() {
                       </TableCell>
                     </TableRow>
                   )}
-                </>
+                </React.Fragment>
               );
             })}
           </TableBody>

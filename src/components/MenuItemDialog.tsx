@@ -123,6 +123,8 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
         throw new Error("Veuillez remplir tous les champs requis");
       }
 
+      console.log("Submitting menu item with ingredients:", ingredients);
+
       const menuItemData = {
         name,
         description: description || null,
@@ -159,25 +161,37 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
       }
 
       // Insert ingredients
-      if (ingredients.length > 0) {
-        const validIngredients = ingredients.filter(
-          (ing) => ing.product_id && ing.quantity_per_unit > 0
-        );
+      const validIngredients = ingredients.filter(
+        (ing) => ing.product_id && ing.quantity_per_unit > 0
+      );
 
-        if (validIngredients.length > 0) {
-          const ingredientsData = validIngredients.map((ing) => ({
-            menu_item_id: menuItemId,
-            product_id: ing.product_id,
-            quantity_per_unit: ing.quantity_per_unit,
-            unit_of_measure: ing.unit_of_measure,
-          }));
+      console.log("Valid ingredients to insert:", validIngredients);
 
-          const { error } = await supabase
-            .from("menu_item_ingredients")
-            .insert(ingredientsData);
+      if (validIngredients.length > 0) {
+        const ingredientsData = validIngredients.map((ing) => ({
+          menu_item_id: menuItemId,
+          product_id: ing.product_id,
+          quantity_per_unit: ing.quantity_per_unit,
+          unit_of_measure: ing.unit_of_measure || "unité",
+        }));
 
-          if (error) throw error;
+        console.log("Inserting ingredients data:", ingredientsData);
+
+        const { data: insertedData, error: ingredientsError } = await supabase
+          .from("menu_item_ingredients")
+          .insert(ingredientsData)
+          .select();
+
+        if (ingredientsError) {
+          console.error("Error inserting ingredients:", ingredientsError);
+          throw new Error(`Erreur lors de l'insertion des ingrédients: ${ingredientsError.message}`);
         }
+
+        console.log("Successfully inserted ingredients:", insertedData);
+      } else if (ingredients.length > 0) {
+        // User added ingredients but didn't fill them properly
+        console.warn("Ingredients array has items but none are valid:", ingredients);
+        throw new Error("Veuillez remplir tous les champs des ingrédients ou les supprimer");
       }
 
       toast({
