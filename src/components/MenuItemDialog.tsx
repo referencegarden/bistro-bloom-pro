@@ -36,15 +36,17 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
   const { toast } = useToast();
 
   useEffect(() => {
-    if (editingItem) {
-      setName(editingItem.name);
-      setDescription(editingItem.description || "");
-      setCategory(editingItem.category || "");
-      setSellingPrice(editingItem.selling_price.toString());
-      setIsActive(editingItem.is_active);
-      loadIngredients(editingItem.id);
-    } else {
-      resetForm();
+    if (open) {
+      if (editingItem) {
+        setName(editingItem.name);
+        setDescription(editingItem.description || "");
+        setCategory(editingItem.category || "");
+        setSellingPrice(editingItem.selling_price.toString());
+        setIsActive(editingItem.is_active);
+        loadIngredients(editingItem.id);
+      } else {
+        resetForm();
+      }
     }
   }, [editingItem, open]);
 
