@@ -119,17 +119,18 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
     setLoading(true);
 
     try {
-      if (!name || !sellingPrice) {
+      const numericSellingPrice = parseFloat(String(sellingPrice).replace(',', '.'));
+      if (!name.trim() || Number.isNaN(numericSellingPrice)) {
         throw new Error("Veuillez remplir tous les champs requis");
       }
 
       console.log("Submitting menu item with ingredients:", ingredients);
 
       const menuItemData = {
-        name,
-        description: description || null,
-        category: category || null,
-        selling_price: parseFloat(sellingPrice),
+        name: name.trim(),
+        description: description?.trim() || null,
+        category: category?.trim() || null,
+        selling_price: numericSellingPrice,
         is_active: isActive,
       };
 
@@ -173,7 +174,10 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
       if (ingredients.length > 0 && validIngredients.length === 0) {
         // No valid ingredient at all
         console.warn("All ingredients are incomplete:", ingredients);
-        throw new Error("Veuillez remplir tous les champs des ingrédients ou les supprimer");
+        toast({
+          title: "Information",
+          description: "Aucun ingrédient valide. Les lignes incomplètes ont été ignorées.",
+        });
       }
 
       if (validIngredients.length > 0) {
