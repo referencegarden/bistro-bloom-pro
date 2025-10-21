@@ -48,6 +48,20 @@ export function MenuItemIngredientRow({ ingredient, onUpdate, onRemove }: MenuIt
     }
   }, [ingredient.product_id, products]);
 
+  // Auto-select the first product to avoid empty product_id when adding a new row
+  useEffect(() => {
+    if (!ingredient.product_id && products.length > 0 && !selectedProduct) {
+      const first = products[0];
+      setSelectedProduct(first);
+      onUpdate("product_id", first.id);
+      onUpdate("cost_price", first.cost_price);
+      onUpdate("product_name", first.name);
+      if (!ingredient.unit_of_measure || ingredient.unit_of_measure === "unité") {
+        onUpdate("unit_of_measure", first.unit_of_measure);
+      }
+    }
+  }, [products]);
+
   const loadProducts = async () => {
     try {
       const { data, error } = await supabase
