@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -92,7 +92,7 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
       ...ingredients,
       {
         product_id: "",
-        quantity_per_unit: 0,
+        quantity_per_unit: 1,
         unit_of_measure: "unité",
       },
     ]);
@@ -164,10 +164,27 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
       const validIngredients = ingredients.filter(
         (ing) => ing.product_id && ing.quantity_per_unit > 0
       );
+      const incompleteIngredients = ingredients.filter(
+        (ing) => !ing.product_id || !(ing.quantity_per_unit > 0)
+      );
 
       console.log("Valid ingredients to insert:", validIngredients);
 
+      if (ingredients.length > 0 && validIngredients.length === 0) {
+        // No valid ingredient at all
+        console.warn("All ingredients are incomplete:", ingredients);
+        throw new Error("Veuillez remplir tous les champs des ingrédients ou les supprimer");
+      }
+
       if (validIngredients.length > 0) {
+        // Inform user that incomplete rows will be ignored (non-blocking)
+        if (incompleteIngredients.length > 0) {
+          toast({
+            title: "Information",
+            description: `${incompleteIngredients.length} ingrédient(s) incomplet(s) ont été ignoré(s).`,
+          });
+        }
+
         const ingredientsData = validIngredients.map((ing) => ({
           menu_item_id: menuItemId,
           product_id: ing.product_id,
@@ -188,10 +205,6 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
         }
 
         console.log("Successfully inserted ingredients:", insertedData);
-      } else if (ingredients.length > 0) {
-        // User added ingredients but didn't fill them properly
-        console.warn("Ingredients array has items but none are valid:", ingredients);
-        throw new Error("Veuillez remplir tous les champs des ingrédients ou les supprimer");
       }
 
       toast({
@@ -224,6 +237,9 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
           <DialogTitle>
             {editingItem ? "Modifier" : "Créer"} Item du Menu
           </DialogTitle>
+          <DialogDescription className="sr-only">
+            Renseignez les détails de l'item et ses ingrédients puis enregistrez.
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">

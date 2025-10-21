@@ -135,6 +135,7 @@ export function MenuItemIngredientRow({ ingredient, onUpdate, onRemove }: MenuIt
         <Input
           type="number"
           step="0.01"
+          min="0"
           placeholder="Quantité"
           value={ingredient.quantity_per_unit || ""}
           onChange={(e) => onUpdate("quantity_per_unit", parseFloat(e.target.value) || 0)}
