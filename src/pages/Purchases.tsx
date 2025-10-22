@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash2 } from "lucide-react";
+import { Plus, Pencil, Trash2, ShoppingCart } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -17,6 +17,7 @@ import {
   PaginationItem,
 } from "@/components/ui/pagination";
 import { PurchaseDialog } from "@/components/PurchaseDialog";
+import { PurchaseMultiDialog } from "@/components/PurchaseMultiDialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -38,6 +39,7 @@ const ITEMS_PER_PAGE = 10;
 export default function Purchases() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [multiDialogOpen, setMultiDialogOpen] = useState(false);
   const [editingPurchase, setEditingPurchase] = useState<Purchase | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
@@ -88,6 +90,11 @@ export default function Purchases() {
     loadPurchases();
   }
 
+  function handleMultiDialogClose() {
+    setMultiDialogOpen(false);
+    loadPurchases();
+  }
+
   function handleEdit(purchase: Purchase) {
     setEditingPurchase(purchase);
     setDialogOpen(true);
@@ -100,10 +107,16 @@ export default function Purchases() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Achats</h1>
           <p className="text-muted-foreground">Enregistrer les achats</p>
         </div>
-        <Button onClick={() => setDialogOpen(true)} className="w-full sm:w-auto">
-          <Plus className="mr-2 h-4 w-4" />
-          Enregistrer Achat
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setDialogOpen(true)} className="w-full sm:w-auto">
+            <Plus className="mr-2 h-4 w-4" />
+            Enregistrer Achat
+          </Button>
+          <Button onClick={() => setMultiDialogOpen(true)} variant="outline" className="w-full sm:w-auto">
+            <ShoppingCart className="mr-2 h-4 w-4" />
+            Achats Multiples
+          </Button>
+        </div>
       </div>
 
       <div className="rounded-lg border overflow-x-auto">
@@ -232,6 +245,11 @@ export default function Purchases() {
         open={dialogOpen} 
         onClose={handleDialogClose} 
         purchase={editingPurchase}
+      />
+
+      <PurchaseMultiDialog
+        open={multiDialogOpen}
+        onClose={handleMultiDialogClose}
       />
     </div>
   );

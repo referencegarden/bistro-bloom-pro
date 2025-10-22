@@ -220,11 +220,20 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
 
       onClose();
     } catch (error: any) {
+      console.error("Error saving menu item:", error);
+      const errorMessage = error.message || "Erreur lors de l'enregistrement du menu";
       toast({
         variant: "destructive",
         title: "Erreur",
-        description: error.message,
+        description: errorMessage,
       });
+      if (error.message?.includes("row-level security")) {
+        toast({
+          variant: "destructive",
+          title: "Erreur de permissions",
+          description: "Vous n'avez pas les permissions nécessaires pour cette action",
+        });
+      }
     } finally {
       setLoading(false);
     }

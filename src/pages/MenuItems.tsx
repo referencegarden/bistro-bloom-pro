@@ -9,6 +9,7 @@ import { Plus, ChevronDown, ChevronRight, Trash2, Edit } from "lucide-react";
 import { MenuItemDialog } from "@/components/MenuItemDialog";
 import { MenuSaleDialog } from "@/components/MenuSaleDialog";
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
+import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
 
 interface MenuItem {
   id: string;
@@ -44,6 +45,10 @@ export default function MenuItems() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
   const { toast } = useToast();
+  const { isAdmin, permissions, loading: permissionsLoading } = useEmployeePermissions();
+  
+  const canManageMenu = isAdmin || permissions.can_manage_stock;
+  const canMakeSales = isAdmin || permissions.can_make_sales;
 
   useEffect(() => {
     loadMenuItems();
@@ -157,13 +162,17 @@ export default function MenuItems() {
           <p className="text-muted-foreground">Gérez vos items de menu et leurs recettes</p>
         </div>
         <div className="flex gap-2">
-          <Button onClick={() => setSaleDialogOpen(true)}>
-            Enregistrer Vente
-          </Button>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Ajouter Menu
-          </Button>
+          {canMakeSales && (
+            <Button onClick={() => setSaleDialogOpen(true)}>
+              Enregistrer Vente
+            </Button>
+          )}
+          {canManageMenu && (
+            <Button onClick={() => setDialogOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Ajouter Menu
+            </Button>
+          )}
         </div>
       </div>
 
@@ -225,20 +234,24 @@ export default function MenuItems() {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleEdit(item)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleDelete(item.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {canManageMenu && (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(item)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(item.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                     </TableCell>
                     </TableRow>
                     {isExpanded && (

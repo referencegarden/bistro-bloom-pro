@@ -570,6 +570,10 @@ export type Database = {
           unit_of_measure: string
         }[]
       }
+      get_unit_conversion_factor: {
+        Args: { from_unit: string; to_unit: string }
+        Returns: number
+      }
       has_employee_permission: {
         Args: { _permission: string; _user_id: string }
         Returns: boolean
