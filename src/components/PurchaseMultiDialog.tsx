@@ -150,7 +150,6 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
         supplier_id: supplierId || null,
         unit_cost: line.unit_cost,
         quantity: line.quantity,
-        total_cost: line.unit_cost * line.quantity,
         purchase_date: purchaseDate,
         notes: notes || null,
       }));
