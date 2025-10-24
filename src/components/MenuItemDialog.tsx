@@ -19,12 +19,14 @@ interface MenuItemDialogProps {
 interface Product {
   id: string;
   name: string;
+  current_stock: number;
   cost_price: number;
   unit_of_measure: string;
 }
 
 interface Ingredient {
   id?: string;
+  tempId?: string;
   product_id: string;
   quantity_per_unit: number;
   unit_of_measure: string;
@@ -63,7 +65,7 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
     try {
       const { data, error } = await supabase
         .from("products")
-        .select("id, name, cost_price, unit_of_measure")
+        .select("id, name, current_stock, cost_price, unit_of_measure")
         .order("name");
 
       if (error) throw error;
@@ -125,15 +127,15 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
       return;
     }
 
-    const firstProduct = products[0];
     setIngredients([
       ...ingredients,
       {
-        product_id: firstProduct.id,
+        tempId: crypto.randomUUID(),
+        product_id: "",
         quantity_per_unit: 1,
-        unit_of_measure: firstProduct.unit_of_measure,
-        product_name: firstProduct.name,
-        cost_price: firstProduct.cost_price,
+        unit_of_measure: "unité",
+        product_name: "",
+        cost_price: 0,
       },
     ]);
   };
@@ -142,6 +144,32 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
     const updated = [...ingredients];
     updated[index] = { ...updated[index], [field]: value };
     setIngredients(updated);
+  };
+
+  const handleProductSelect = (index: number, productId: string) => {
+    // Check for duplicates
+    const isDuplicate = ingredients.some((ing, idx) => idx !== index && ing.product_id === productId);
+    if (isDuplicate) {
+      toast({
+        variant: "destructive",
+        title: "Produit déjà ajouté",
+        description: "Ce produit est déjà ajouté. Modifiez la quantité plutôt que de le dupliquer.",
+      });
+      return;
+    }
+
+    const product = products.find((p) => p.id === productId);
+    if (product) {
+      const updated = [...ingredients];
+      updated[index] = {
+        ...updated[index],
+        product_id: productId,
+        product_name: product.name,
+        cost_price: product.cost_price,
+        unit_of_measure: product.unit_of_measure,
+      };
+      setIngredients(updated);
+    }
   };
 
   const removeIngredient = (index: number) => {
@@ -174,6 +202,19 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
             variant: "destructive",
             title: "Erreur de validation",
             description: "Veuillez sélectionner un produit et une quantité > 0 pour chaque ligne d'ingrédient.",
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Check for duplicate products
+        const productIds = ingredients.map((ing) => ing.product_id);
+        const duplicates = productIds.filter((id, index) => productIds.indexOf(id) !== index);
+        if (duplicates.length > 0) {
+          toast({
+            variant: "destructive",
+            title: "Produits en double",
+            description: "Chaque produit ne peut être ajouté qu'une seule fois. Ajustez la quantité si nécessaire.",
           });
           setLoading(false);
           return;
@@ -358,9 +399,11 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
               <div className="space-y-2 border rounded-lg p-4">
                 {ingredients.map((ingredient, index) => (
                   <MenuItemIngredientRow
-                    key={index}
+                    key={ingredient.tempId || ingredient.id || index}
                     ingredient={ingredient}
+                    products={products}
                     onUpdate={(field, value) => updateIngredient(index, field, value)}
+                    onSelectProduct={(productId) => handleProductSelect(index, productId)}
                     onRemove={() => removeIngredient(index)}
                   />
                 ))}
@@ -391,7 +434,10 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
             <Button type="button" variant="outline" onClick={onClose}>
               Annuler
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button 
+              type="submit" 
+              disabled={loading || (ingredients.length > 0 && ingredients.some(ing => !ing.product_id || ing.quantity_per_unit <= 0))}
+            >
               {loading ? "Enregistrement..." : "Enregistrer"}
             </Button>
           </div>

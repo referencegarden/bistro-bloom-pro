@@ -24,53 +24,19 @@ interface MenuItemIngredientRowProps {
     product_name?: string;
     cost_price?: number;
   };
+  products: Product[];
   onUpdate: (field: string, value: any) => void;
+  onSelectProduct: (productId: string) => void;
   onRemove: () => void;
 }
 
-export function MenuItemIngredientRow({ ingredient, onUpdate, onRemove }: MenuItemIngredientRowProps) {
-  const [products, setProducts] = useState<Product[]>([]);
+export function MenuItemIngredientRow({ ingredient, products, onUpdate, onSelectProduct, onRemove }: MenuItemIngredientRowProps) {
   const [open, setOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
-
-  useEffect(() => {
-    if (ingredient.product_id && products.length > 0) {
-      const product = products.find((p) => p.id === ingredient.product_id);
-      if (product) {
-        setSelectedProduct(product);
-      }
-    }
-  }, [ingredient.product_id, products]);
-
-
-  const loadProducts = async () => {
-    try {
-      const { data, error } = await supabase
-        .from("products")
-        .select("id, name, current_stock, cost_price, unit_of_measure")
-        .order("name");
-
-      if (error) throw error;
-      setProducts(data || []);
-    } catch (error) {
-      console.error("Error loading products:", error);
-    }
-  };
+  const selectedProduct = products.find((p) => p.id === ingredient.product_id) || null;
 
   const handleProductSelect = (productId: string) => {
-    const product = products.find((p) => p.id === productId);
-    if (product) {
-      setSelectedProduct(product);
-      onUpdate("product_id", productId);
-      onUpdate("cost_price", product.cost_price);
-      onUpdate("product_name", product.name);
-      // Always set unit to product's unit when selecting a product
-      onUpdate("unit_of_measure", product.unit_of_measure);
-    }
+    onSelectProduct(productId);
     setOpen(false);
   };
 
