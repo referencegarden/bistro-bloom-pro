@@ -93,7 +93,7 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
       {
         product_id: "",
         quantity_per_unit: 1,
-        unit_of_measure: "",
+        unit_of_measure: "unité",
       },
     ]);
   };
@@ -193,7 +193,7 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
           menu_item_id: menuItemId,
           product_id: ing.product_id,
           quantity_per_unit: ing.quantity_per_unit,
-          unit_of_measure: ing.unit_of_measure && ing.unit_of_measure !== 'unité' ? ing.unit_of_measure : null,
+          unit_of_measure: ing.unit_of_measure || "unité",
         }));
 
         console.log("Inserting ingredients data:", ingredientsData);

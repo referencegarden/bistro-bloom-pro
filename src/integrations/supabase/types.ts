@@ -556,7 +556,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      bootstrap_admin: { Args: { target_email: string }; Returns: Json }
+      bootstrap_admin: {
+        Args: { target_email: string }
+        Returns: Json
+      }
       calculate_ingredient_usage: {
         Args: { _menu_item_id: string; _quantity: number }
         Returns: {

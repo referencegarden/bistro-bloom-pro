@@ -50,10 +50,6 @@ export default function MenuItems() {
   const canManageMenu = isAdmin || permissions.can_manage_stock;
   const canMakeSales = isAdmin || permissions.can_make_sales;
 
-  // Inline editing state for ingredients by id
-  const [editingIngredients, setEditingIngredients] = useState<Record<string, { quantity_per_unit: number; unit_of_measure: string | null }>>({});
-  const units = ["unité", "g", "kg", "ml", "L", "pcs", "gramme"];
-
   useEffect(() => {
     loadMenuItems();
   }, [currentPage]);
@@ -81,8 +77,8 @@ export default function MenuItems() {
     }
   };
 
-  const loadIngredients = async (menuItemId: string, force = false) => {
-    if (!force && ingredients[menuItemId]) return;
+  const loadIngredients = async (menuItemId: string) => {
+    if (ingredients[menuItemId]) return;
 
     try {
       const { data, error } = await supabase
@@ -100,6 +96,7 @@ export default function MenuItems() {
       });
     }
   };
+
   const toggleExpand = (itemId: string) => {
     const newExpanded = new Set(expandedItems);
     if (newExpanded.has(itemId)) {
@@ -109,67 +106,6 @@ export default function MenuItems() {
       loadIngredients(itemId);
     }
     setExpandedItems(newExpanded);
-  };
-
-  // Inline editing helpers for ingredients
-  const startEditIngredient = (ing: Ingredient) => {
-    setEditingIngredients(prev => ({
-      ...prev,
-      [ing.id]: { quantity_per_unit: ing.quantity_per_unit, unit_of_measure: ing.unit_of_measure }
-    }));
-  };
-
-  const cancelEditIngredient = (id: string) => {
-    setEditingIngredients(prev => {
-      const copy = { ...prev };
-      delete copy[id];
-      return copy;
-    });
-  };
-
-  const updateEditingField = (
-    id: string,
-    field: "quantity_per_unit" | "unit_of_measure",
-    value: any
-  ) => {
-    setEditingIngredients(prev => ({
-      ...prev,
-      [id]: { ...prev[id], [field]: value }
-    }));
-  };
-
-  const saveIngredient = async (menuItemId: string, ingId: string) => {
-    try {
-      const payload = editingIngredients[ingId];
-      const { error } = await supabase
-        .from("menu_item_ingredients")
-        .update({
-          quantity_per_unit: payload.quantity_per_unit,
-          unit_of_measure: payload.unit_of_measure,
-        })
-        .eq("id", ingId);
-      if (error) throw error;
-      toast({ title: "Ingrédient mis à jour" });
-      cancelEditIngredient(ingId);
-      await loadIngredients(menuItemId, true);
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Erreur", description: error.message });
-    }
-  };
-
-  const deleteIngredient = async (menuItemId: string, ingId: string) => {
-    if (!confirm("Supprimer cet ingrédient de la recette ?")) return;
-    try {
-      const { error } = await supabase
-        .from("menu_item_ingredients")
-        .delete()
-        .eq("id", ingId);
-      if (error) throw error;
-      toast({ title: "Ingrédient supprimé" });
-      await loadIngredients(menuItemId, true);
-    } catch (error: any) {
-      toast({ variant: "destructive", title: "Erreur", description: error.message });
-    }
   };
 
   const handleDelete = async (id: string) => {

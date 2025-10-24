@@ -90,7 +90,7 @@ export function MenuItemIngredientRow({ ingredient, onUpdate, onRemove }: MenuIt
     setOpen(false);
   };
 
-  const units = ["unité", "g", "kg", "ml", "L", "pcs", "gramme"];
+  const units = ["unité", "g", "kg", "ml", "L", "pcs"];
 
   return (
     <div className="flex gap-2 items-start border-b pb-2">

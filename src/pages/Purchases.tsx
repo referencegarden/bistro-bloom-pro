@@ -146,7 +146,7 @@ export default function Purchases() {
                 <TableCell>{purchase.quantity}</TableCell>
                 <TableCell className="hidden sm:table-cell">{purchase.unit_cost.toFixed(2)} DH</TableCell>
                 <TableCell className="font-semibold">
-                  {Number(purchase.total_cost ?? (purchase.unit_cost * purchase.quantity)).toFixed(2)} DH
+                  {purchase.total_cost.toFixed(2)} DH
                 </TableCell>
                 <TableCell className="text-muted-foreground hidden md:table-cell">
                   {purchase.notes || "-"}
