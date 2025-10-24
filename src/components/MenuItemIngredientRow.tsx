@@ -96,14 +96,17 @@ export function MenuItemIngredientRow({ ingredient, products, onUpdate, onSelect
       </div>
 
       <div className="w-32">
-        <Input
-          type="number"
-          step="0.01"
-          min="0"
-          placeholder="Quantité"
-          value={ingredient.quantity_per_unit || ""}
-          onChange={(e) => onUpdate("quantity_per_unit", parseFloat(e.target.value) || 0)}
-        />
+        <div className="space-y-1">
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            placeholder="Quantité"
+            value={ingredient.quantity_per_unit || ""}
+            onChange={(e) => onUpdate("quantity_per_unit", parseFloat(e.target.value) || 0)}
+          />
+          <p className="text-xs text-muted-foreground">Par unité vendue</p>
+        </div>
       </div>
 
       <div className="w-28">
