@@ -123,7 +123,11 @@ export function AppSidebar() {
   }, [isAdmin, permissions]);
   async function handleSignOut() {
     try {
-      const { error } = await supabase.auth.signOut({ scope: 'local' });
+      const {
+        error
+      } = await supabase.auth.signOut({
+        scope: 'local'
+      });
       if (error) throw error;
       toast.success("Déconnecté avec succès");
       navigate("/auth");
@@ -148,14 +152,14 @@ export function AppSidebar() {
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="rounded-none">
               {filteredNavigation.map(item => <SidebarMenuItem key={item.name}>
                   <SidebarMenuButton asChild>
                     <NavLink to={item.href} end className={({
                   isActive
                 }) => isActive ? "bg-primary text-primary-foreground" : ""}>
                       <item.icon className="h-5 w-5" />
-                      <span>{item.name}</span>
+                      <span className="text-lg font-semibold text-slate-800">{item.name}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>)}
