@@ -16,6 +16,13 @@ interface MenuItemDialogProps {
   editingItem?: any;
 }
 
+interface Product {
+  id: string;
+  name: string;
+  cost_price: number;
+  unit_of_measure: string;
+}
+
 interface Ingredient {
   id?: string;
   product_id: string;
@@ -32,11 +39,13 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
   const [sellingPrice, setSellingPrice] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
+      loadProducts();
       if (editingItem) {
         setName(editingItem.name);
         setDescription(editingItem.description || "");
@@ -49,6 +58,25 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
       }
     }
   }, [editingItem, open]);
+
+  const loadProducts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("products")
+        .select("id, name, cost_price, unit_of_measure")
+        .order("name");
+
+      if (error) throw error;
+      setProducts(data || []);
+    } catch (error: any) {
+      console.error("Error loading products:", error);
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Impossible de charger les produits",
+      });
+    }
+  };
 
   const loadIngredients = async (menuItemId: string) => {
     try {
@@ -88,12 +116,24 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
   };
 
   const addIngredient = () => {
+    if (products.length === 0) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Aucun produit disponible. Veuillez d'abord créer des produits.",
+      });
+      return;
+    }
+
+    const firstProduct = products[0];
     setIngredients([
       ...ingredients,
       {
-        product_id: "",
+        product_id: firstProduct.id,
         quantity_per_unit: 1,
-        unit_of_measure: "unité",
+        unit_of_measure: firstProduct.unit_of_measure,
+        product_name: firstProduct.name,
+        cost_price: firstProduct.cost_price,
       },
     ]);
   };
@@ -122,6 +162,22 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
       const numericSellingPrice = parseFloat(String(sellingPrice).replace(',', '.'));
       if (!name.trim() || Number.isNaN(numericSellingPrice)) {
         throw new Error("Veuillez remplir tous les champs requis");
+      }
+
+      // Validate ingredients if any exist
+      if (ingredients.length > 0) {
+        const incomplete = ingredients.filter(
+          (ing) => !ing.product_id || !(ing.quantity_per_unit > 0)
+        );
+        if (incomplete.length > 0) {
+          toast({
+            variant: "destructive",
+            title: "Erreur de validation",
+            description: "Veuillez sélectionner un produit et une quantité > 0 pour chaque ligne d'ingrédient.",
+          });
+          setLoading(false);
+          return;
+        }
       }
 
       console.log("Submitting menu item with ingredients:", ingredients);
@@ -161,42 +217,16 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
         menuItemId = data.id;
       }
 
-      // Insert ingredients
-      const validIngredients = ingredients.filter(
-        (ing) => ing.product_id && ing.quantity_per_unit > 0
-      );
-      const incompleteIngredients = ingredients.filter(
-        (ing) => !ing.product_id || !(ing.quantity_per_unit > 0)
-      );
-
-      console.log("Valid ingredients to insert:", validIngredients);
-
-      if (ingredients.length > 0 && validIngredients.length === 0) {
-        // No valid ingredient at all
-        console.warn("All ingredients are incomplete:", ingredients);
-        toast({
-          title: "Information",
-          description: "Aucun ingrédient valide. Les lignes incomplètes ont été ignorées.",
-        });
-      }
-
-      if (validIngredients.length > 0) {
-        // Inform user that incomplete rows will be ignored (non-blocking)
-        if (incompleteIngredients.length > 0) {
-          toast({
-            title: "Information",
-            description: `${incompleteIngredients.length} ingrédient(s) incomplet(s) ont été ignoré(s).`,
-          });
-        }
-
-        const ingredientsData = validIngredients.map((ing) => ({
+      // Insert ingredients (all validated at this point)
+      if (ingredients.length > 0) {
+        const ingredientsData = ingredients.map((ing) => ({
           menu_item_id: menuItemId,
           product_id: ing.product_id,
           quantity_per_unit: ing.quantity_per_unit,
           unit_of_measure: ing.unit_of_measure && ing.unit_of_measure !== 'unité' ? ing.unit_of_measure : null,
         }));
 
-        console.log("Inserting ingredients data:", ingredientsData);
+        console.log(`Inserting ${ingredientsData.length} ingredients:`, ingredientsData);
 
         const { data: insertedData, error: ingredientsError } = await supabase
           .from("menu_item_ingredients")
@@ -208,7 +238,7 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
           throw new Error(`Erreur lors de l'insertion des ingrédients: ${ingredientsError.message}`);
         }
 
-        console.log("Successfully inserted ingredients:", insertedData);
+        console.log(`Successfully inserted ${insertedData?.length || 0} ingredients`);
       }
 
       toast({
