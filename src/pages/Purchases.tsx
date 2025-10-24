@@ -56,6 +56,7 @@ export default function Purchases() {
       .from("purchases")
       .select("*, products(name), suppliers(name)", { count: 'exact' })
       .order("purchase_date", { ascending: false })
+      .order("id", { ascending: false })
       .range(from, to);
 
     if (error) {

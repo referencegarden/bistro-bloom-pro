@@ -144,13 +144,16 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
         return;
       }
 
-      // Prepare purchase records
+      // Prepare purchase records with current time to show at top of list
+      const purchaseDateWithTime = new Date(purchaseDate + 'T' + new Date().toTimeString().split(' ')[0]).toISOString();
+      
       const purchaseRecords = validLines.map(line => ({
         product_id: line.product_id,
         supplier_id: supplierId || null,
         unit_cost: line.unit_cost,
         quantity: line.quantity,
-        purchase_date: purchaseDate,
+        purchase_date: purchaseDateWithTime,
+        total_cost: line.unit_cost * line.quantity,
         notes: notes || null,
       }));
 
