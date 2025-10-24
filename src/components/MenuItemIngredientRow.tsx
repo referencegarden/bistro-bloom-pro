@@ -42,17 +42,7 @@ export function MenuItemIngredientRow({ ingredient, onUpdate, onRemove }: MenuIt
       const product = products.find((p) => p.id === ingredient.product_id);
       if (product) {
         setSelectedProduct(product);
-        onUpdate("cost_price", product.cost_price);
-        onUpdate("product_name", product.name);
       }
-    } else if (!ingredient.product_id && products.length > 0) {
-      // Auto-select first product if no product is selected
-      const first = products[0];
-      setSelectedProduct(first);
-      onUpdate("product_id", first.id);
-      onUpdate("cost_price", first.cost_price);
-      onUpdate("product_name", first.name);
-      onUpdate("unit_of_measure", first.unit_of_measure);
     }
   }, [ingredient.product_id, products]);
 
