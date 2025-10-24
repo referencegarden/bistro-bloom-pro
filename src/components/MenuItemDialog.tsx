@@ -93,7 +93,7 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
       {
         product_id: "",
         quantity_per_unit: 1,
-        unit_of_measure: "",
+        unit_of_measure: "unité",
       },
     ]);
   };

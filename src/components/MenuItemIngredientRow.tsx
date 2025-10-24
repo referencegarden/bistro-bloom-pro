@@ -56,9 +56,7 @@ export function MenuItemIngredientRow({ ingredient, onUpdate, onRemove }: MenuIt
       onUpdate("product_id", first.id);
       onUpdate("cost_price", first.cost_price);
       onUpdate("product_name", first.name);
-      if (!ingredient.unit_of_measure || ingredient.unit_of_measure === "unité") {
-        onUpdate("unit_of_measure", first.unit_of_measure);
-      }
+      onUpdate("unit_of_measure", first.unit_of_measure);
     }
   }, [products]);
 
@@ -83,14 +81,13 @@ export function MenuItemIngredientRow({ ingredient, onUpdate, onRemove }: MenuIt
       onUpdate("product_id", productId);
       onUpdate("cost_price", product.cost_price);
       onUpdate("product_name", product.name);
-      if (!ingredient.unit_of_measure || ingredient.unit_of_measure === "unité") {
-        onUpdate("unit_of_measure", product.unit_of_measure);
-      }
+      // Always set unit to product's unit when selecting a product
+      onUpdate("unit_of_measure", product.unit_of_measure);
     }
     setOpen(false);
   };
 
-  const units = ["unité", "g", "kg", "ml", "L", "pcs"];
+  const units = ["unité", "g", "kg", "ml", "L", "pcs", "gramme"];
 
   return (
     <div className="flex gap-2 items-start border-b pb-2">
