@@ -153,7 +153,6 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
         unit_cost: line.unit_cost,
         quantity: line.quantity,
         purchase_date: purchaseDateWithTime,
-        total_cost: line.unit_cost * line.quantity,
         notes: notes || null,
       }));
 
