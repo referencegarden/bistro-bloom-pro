@@ -58,7 +58,7 @@ export default function Dashboard() {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    const [productsRes, salesRes, purchasesRes, dailyPurchasesRes, demandsRes] = await Promise.all([
+    const [productsRes, salesRes, purchasesRes, dailyPurchasesRes, demandsRes, menuSalesRes] = await Promise.all([
       supabase.from("products").select("id, name, current_stock, cost_price, low_stock_threshold"),
       supabase.from("sales").select("total_price"),
       supabase.from("purchases").select("total_cost"),
@@ -68,10 +68,16 @@ export default function Dashboard() {
         .gte("purchase_date", today.toISOString())
         .lt("purchase_date", tomorrow.toISOString()),
       supabase.from("product_demands").select("status"),
+      supabase.from("menu_item_sales").select("total_price"),
     ]);
 
-    const salesTotal =
+    const productSalesTotal =
       salesRes.data?.reduce((sum, sale: any) => sum + Number(sale.total_price), 0) || 0;
+    
+    const menuSalesTotal =
+      menuSalesRes.data?.reduce((sum, sale: any) => sum + Number(sale.total_price), 0) || 0;
+    
+    const salesTotal = productSalesTotal + menuSalesTotal;
 
     const purchasesTotal =
       purchasesRes.data?.reduce((sum, purchase: any) => sum + Number(purchase.total_cost), 0) ||

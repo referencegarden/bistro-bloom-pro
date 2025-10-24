@@ -85,17 +85,18 @@ export function ReportExport() {
       );
 
       const totalSalesQuantity = sales.reduce((sum, s) => sum + s.quantity, 0);
-      const totalSalesValue = sales.reduce(
+      const totalProductSalesValue = sales.reduce(
         (sum, s) => sum + Number(s.total_price || (s.quantity * s.unit_price)),
         0
       );
-      const totalPurchases = purchases.reduce(
-        (sum, p) => sum + Number(p.total_cost || 0),
+      const totalMenuSalesValue = menuSales.reduce(
+        (sum, ms: any) => sum + Number(ms.total_price || 0),
         0
       );
-
-      const totalMenuSales = menuSales.reduce(
-        (sum, ms: any) => sum + Number(ms.total_price || 0),
+      const totalSalesValue = totalProductSalesValue + totalMenuSalesValue;
+      
+      const totalPurchases = purchases.reduce(
+        (sum, p) => sum + Number(p.total_cost || 0),
         0
       );
 
@@ -159,8 +160,12 @@ export function ReportExport() {
               <span class="summary-value">${totalPurchases.toFixed(2)} DH</span>
             </div>
             <div class="summary-item">
-              <span class="summary-label">Total Ventes Menu (${periodLabel}):</span>
-              <span class="summary-value">${totalMenuSales.toFixed(2)} DH</span>
+              <span class="summary-label">Ventes Produits (${periodLabel}):</span>
+              <span class="summary-value">${totalProductSalesValue.toFixed(2)} DH</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Ventes Menu (${periodLabel}):</span>
+              <span class="summary-value">${totalMenuSalesValue.toFixed(2)} DH</span>
             </div>
             <div class="summary-item">
               <span class="summary-label">Total Produits:</span>
