@@ -98,25 +98,61 @@ serve(async (req) => {
         console.error('Failed to assign employee role:', roleError);
       }
     } else {
-      // Update existing user's password only (avoid email collision)
-      console.log('Updating existing auth user password');
+      // Check if auth user exists
+      console.log('Checking existing auth user');
       const { data: userData, error: fetchError } = await supabaseClient.auth.admin.getUserById(userId);
       
-      if (fetchError) {
-        console.error('Failed to fetch existing user:', fetchError);
-      } else if (userData?.user?.email) {
-        signInEmail = userData.user.email;
-        console.log('Current auth email:', signInEmail);
-      }
+      if (fetchError || !userData?.user) {
+        // Auth user doesn't exist (might have been deleted), create a new one
+        console.log('Auth user not found, creating new one');
+        const { data: authData, error: authError } = await supabaseClient.auth.admin.createUser({
+          email: uniqueEmail,
+          password: employeePassword,
+          email_confirm: true,
+        });
 
-      const { error: pwError } = await supabaseClient.auth.admin.updateUserById(userId, {
-        password: employeePassword,
-      });
+        if (authError || !authData.user) {
+          console.error('Auth creation error:', authError);
+          return new Response(
+            JSON.stringify({ error: 'Failed to create employee account' }),
+            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
 
-      if (pwError) {
-        console.error('Failed to update password:', pwError);
+        userId = authData.user.id;
+
+        // Update employee with new user_id
+        const { error: updateError } = await supabaseClient
+          .from('employees')
+          .update({ user_id: userId })
+          .eq('id', employee.id);
+
+        if (updateError) {
+          console.error('Failed to update employee user_id:', updateError);
+        }
+
+        // Assign employee role
+        const { error: roleError } = await supabaseClient
+          .from('user_roles')
+          .insert({ user_id: userId, role: 'employee' });
+
+        if (roleError) {
+          console.error('Failed to assign employee role:', roleError);
+        }
       } else {
-        console.log('Password updated successfully');
+        // Update existing user's password
+        signInEmail = userData.user.email ?? uniqueEmail;
+        console.log('Current auth email:', signInEmail);
+
+        const { error: pwError } = await supabaseClient.auth.admin.updateUserById(userId, {
+          password: employeePassword,
+        });
+
+        if (pwError) {
+          console.error('Failed to update password:', pwError);
+        } else {
+          console.log('Password updated successfully');
+        }
       }
     }
 
