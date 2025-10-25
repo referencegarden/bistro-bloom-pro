@@ -129,16 +129,11 @@ export default function Dashboard() {
         <ReportExport />
       </div>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Produits Totaux"
           value={stats.totalProducts.toString()}
           icon={Package}
-        />
-        <StatCard
-          title="Sortie de Stock Totales"
-          value={`${stats.totalSales.toFixed(2)} DH`}
-          icon={ShoppingCart}
         />
         <StatCard
           title="Achats Totaux"
