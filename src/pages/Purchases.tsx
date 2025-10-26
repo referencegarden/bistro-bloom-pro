@@ -33,6 +33,7 @@ interface Purchase {
   employee_id: string | null;
   products: { name: string } | null;
   suppliers: { name: string } | null;
+  employees: { name: string } | null;
 }
 
 const ITEMS_PER_PAGE = 10;
@@ -55,7 +56,7 @@ export default function Purchases() {
 
     const { data, error, count } = await supabase
       .from("purchases")
-      .select("*, products(name), suppliers(name)", { count: 'exact' })
+      .select("*, products(name), suppliers(name), employees(name)", { count: 'exact' })
       .order("purchase_date", { ascending: false })
       .order("id", { ascending: false })
       .range(from, to);
@@ -128,6 +129,7 @@ export default function Purchases() {
               <TableHead>Date</TableHead>
               <TableHead>Produit</TableHead>
               <TableHead className="hidden sm:table-cell">Fournisseur</TableHead>
+              <TableHead className="hidden lg:table-cell">Employé</TableHead>
               <TableHead>Quantité</TableHead>
               <TableHead className="hidden sm:table-cell">Coût Unitaire</TableHead>
               <TableHead>Total</TableHead>
@@ -145,6 +147,7 @@ export default function Purchases() {
                   {purchase.products?.name || "N/A"}
                 </TableCell>
                 <TableCell className="hidden sm:table-cell">{purchase.suppliers?.name || "N/A"}</TableCell>
+                <TableCell className="hidden lg:table-cell">{purchase.employees?.name || "N/A"}</TableCell>
                 <TableCell>{purchase.quantity}</TableCell>
                 <TableCell className="hidden sm:table-cell">{purchase.unit_cost.toFixed(2)} DH</TableCell>
                 <TableCell className="font-semibold">

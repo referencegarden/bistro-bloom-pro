@@ -65,6 +65,8 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [currentEmployeeId, setCurrentEmployeeId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [productSearchOpen, setProductSearchOpen] = useState(false);
   const [formData, setFormData] = useState({
     product_id: "",
@@ -79,6 +81,7 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
     loadProducts();
     loadSuppliers();
     loadEmployees();
+    loadCurrentUser();
   }, []);
 
   useEffect(() => {
@@ -117,6 +120,33 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
   async function loadEmployees() {
     const { data } = await supabase.from("employees").select("id, name").eq("is_active", true).order("name");
     setEmployees(data || []);
+  }
+
+  async function loadCurrentUser() {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Check if user is admin
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    setIsAdmin(roleData?.role === "admin");
+
+    // Get employee ID for current user
+    const { data: empData } = await supabase
+      .from("employees")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .single();
+
+    if (empData) {
+      setCurrentEmployeeId(empData.id);
+      setFormData(prev => ({ ...prev, employee_id: empData.id }));
+    }
   }
 
   function handleProductChange(productId: string) {
@@ -280,6 +310,7 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
               onValueChange={(value) =>
                 setFormData({ ...formData, employee_id: value })
               }
+              disabled={!isAdmin && !!currentEmployeeId}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner employé (optionnel)" />

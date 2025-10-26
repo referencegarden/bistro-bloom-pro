@@ -47,6 +47,8 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [currentEmployeeId, setCurrentEmployeeId] = useState<string | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [supplierId, setSupplierId] = useState<string>("");
   const [employeeId, setEmployeeId] = useState<string>("");
   const [purchaseDate, setPurchaseDate] = useState<string>(
@@ -64,6 +66,7 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
       loadProducts();
       loadSuppliers();
       loadEmployees();
+      loadCurrentUser();
     }
   }, [open]);
 
@@ -110,6 +113,33 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
     } catch (error) {
       console.error("Error loading employees:", error);
       toast.error("Erreur lors du chargement des employés");
+    }
+  };
+
+  const loadCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    // Check if user is admin
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+
+    setIsAdmin(roleData?.role === "admin");
+
+    // Get employee ID for current user
+    const { data: empData } = await supabase
+      .from("employees")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("is_active", true)
+      .single();
+
+    if (empData) {
+      setCurrentEmployeeId(empData.id);
+      setEmployeeId(empData.id);
     }
   };
 
@@ -252,7 +282,11 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
 
             <div className="space-y-2">
               <Label>Employé</Label>
-              <Select value={employeeId} onValueChange={setEmployeeId}>
+              <Select 
+                value={employeeId} 
+                onValueChange={setEmployeeId}
+                disabled={!isAdmin && !!currentEmployeeId}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner un employé (optionnel)" />
                 </SelectTrigger>
