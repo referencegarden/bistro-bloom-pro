@@ -35,10 +35,16 @@ interface Supplier {
   name: string;
 }
 
+interface Employee {
+  id: string;
+  name: string;
+}
+
 interface Purchase {
   id: string;
   product_id: string;
   supplier_id: string | null;
+  employee_id: string | null;
   quantity: number;
   unit_cost: number;
   notes: string | null;
@@ -58,10 +64,12 @@ interface PurchaseDialogProps {
 export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, prefilledQuantity, purchase }: PurchaseDialogProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [productSearchOpen, setProductSearchOpen] = useState(false);
   const [formData, setFormData] = useState({
     product_id: "",
     supplier_id: "",
+    employee_id: "",
     quantity: 1,
     unit_cost: 0,
     notes: "",
@@ -70,6 +78,7 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
   useEffect(() => {
     loadProducts();
     loadSuppliers();
+    loadEmployees();
   }, []);
 
   useEffect(() => {
@@ -78,6 +87,7 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
       setFormData({
         product_id: purchase.product_id,
         supplier_id: purchase.supplier_id || "",
+        employee_id: purchase.employee_id || "",
         quantity: purchase.quantity,
         unit_cost: purchase.unit_cost,
         notes: purchase.notes || "",
@@ -102,6 +112,11 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
   async function loadSuppliers() {
     const { data } = await supabase.from("suppliers").select("*").order("name");
     setSuppliers(data || []);
+  }
+
+  async function loadEmployees() {
+    const { data } = await supabase.from("employees").select("id, name").eq("is_active", true).order("name");
+    setEmployees(data || []);
   }
 
   function handleProductChange(productId: string) {
@@ -133,6 +148,7 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
         .update({
           product_id: formData.product_id,
           supplier_id: formData.supplier_id || null,
+          employee_id: formData.employee_id || null,
           quantity: formData.quantity,
           unit_cost: formData.unit_cost,
           notes: formData.notes || null,
@@ -150,6 +166,7 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
       const { error: purchaseError } = await supabase.from("purchases").insert({
         product_id: formData.product_id,
         supplier_id: formData.supplier_id || null,
+        employee_id: formData.employee_id || null,
         quantity: formData.quantity,
         unit_cost: formData.unit_cost,
         notes: formData.notes || null,
@@ -183,7 +200,7 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
   }
 
   function resetForm() {
-    setFormData({ product_id: "", supplier_id: "", quantity: 1, unit_cost: 0, notes: "" });
+    setFormData({ product_id: "", supplier_id: "", employee_id: "", quantity: 1, unit_cost: 0, notes: "" });
   }
 
   return (
@@ -255,13 +272,37 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
               </SelectContent>
             </Select>
           </div>
+          
+          <div>
+            <Label htmlFor="employee">Employé</Label>
+            <Select
+              value={formData.employee_id}
+              onValueChange={(value) =>
+                setFormData({ ...formData, employee_id: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionner employé (optionnel)" />
+              </SelectTrigger>
+              <SelectContent>
+                {employees.map((employee) => (
+                  <SelectItem key={employee.id} value={employee.id}>
+                    {employee.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          
           <div>
             <Label htmlFor="unit_cost">Coût Unitaire (DH)</Label>
             <Input
               id="unit_cost"
               type="number"
+              inputMode="decimal"
               step="0.01"
               min="0"
+              placeholder="0.00"
               value={formData.unit_cost}
               onChange={(e) =>
                 setFormData({ ...formData, unit_cost: Number(e.target.value) })
@@ -275,8 +316,10 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
             <Input
               id="quantity"
               type="number"
+              inputMode="decimal"
               min="0.01"
               step="0.01"
+              placeholder="1"
               value={formData.quantity}
               onChange={(e) =>
                 setFormData({ ...formData, quantity: parseFloat(e.target.value) || 0 })

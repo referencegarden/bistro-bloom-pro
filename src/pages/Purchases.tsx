@@ -30,6 +30,7 @@ interface Purchase {
   notes: string | null;
   product_id: string;
   supplier_id: string | null;
+  employee_id: string | null;
   products: { name: string } | null;
   suppliers: { name: string } | null;
 }

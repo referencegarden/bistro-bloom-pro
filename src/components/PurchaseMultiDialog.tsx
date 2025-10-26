@@ -25,6 +25,11 @@ interface Supplier {
   name: string;
 }
 
+interface Employee {
+  id: string;
+  name: string;
+}
+
 interface PurchaseLine {
   id: string;
   product_id: string;
@@ -41,7 +46,9 @@ interface PurchaseMultiDialogProps {
 export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [supplierId, setSupplierId] = useState<string>("");
+  const [employeeId, setEmployeeId] = useState<string>("");
   const [purchaseDate, setPurchaseDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -56,6 +63,7 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
     if (open) {
       loadProducts();
       loadSuppliers();
+      loadEmployees();
     }
   }, [open]);
 
@@ -86,6 +94,22 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
     } catch (error) {
       console.error("Error loading suppliers:", error);
       toast.error("Erreur lors du chargement des fournisseurs");
+    }
+  };
+
+  const loadEmployees = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("employees")
+        .select("id, name")
+        .eq("is_active", true)
+        .order("name");
+
+      if (error) throw error;
+      setEmployees(data || []);
+    } catch (error) {
+      console.error("Error loading employees:", error);
+      toast.error("Erreur lors du chargement des employés");
     }
   };
 
@@ -150,6 +174,7 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
       const purchaseRecords = validLines.map(line => ({
         product_id: line.product_id,
         supplier_id: supplierId || null,
+        employee_id: employeeId || null,
         unit_cost: line.unit_cost,
         quantity: line.quantity,
         purchase_date: purchaseDateWithTime,
@@ -191,6 +216,7 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
 
   const resetForm = () => {
     setSupplierId("");
+    setEmployeeId("");
     setPurchaseDate(new Date().toISOString().split("T")[0]);
     setNotes("");
     setLines([
@@ -207,7 +233,7 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
             <div className="space-y-2">
               <Label>Fournisseur</Label>
               <Select value={supplierId} onValueChange={setSupplierId}>
@@ -218,6 +244,22 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
                   {suppliers.map((supplier) => (
                     <SelectItem key={supplier.id} value={supplier.id}>
                       {supplier.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Employé</Label>
+              <Select value={employeeId} onValueChange={setEmployeeId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un employé (optionnel)" />
+                </SelectTrigger>
+                <SelectContent>
+                  {employees.map((employee) => (
+                    <SelectItem key={employee.id} value={employee.id}>
+                      {employee.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -293,6 +335,7 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
                     {index === 0 && <Label className="text-xs mb-1 block">Coût unitaire (DH)</Label>}
                     <Input
                       type="number"
+                      inputMode="decimal"
                       step="0.01"
                       min="0"
                       value={line.unit_cost || ""}
@@ -305,11 +348,12 @@ export function PurchaseMultiDialog({ open, onClose }: PurchaseMultiDialogProps)
                     {index === 0 && <Label className="text-xs mb-1 block">Quantité</Label>}
                     <Input
                       type="number"
+                      inputMode="decimal"
                       step="0.01"
                       min="0"
                       value={line.quantity || ""}
                       onChange={(e) => updateLine(line.id, "quantity", parseFloat(e.target.value) || 0)}
-                      placeholder="0"
+                      placeholder="1"
                     />
                   </div>
 

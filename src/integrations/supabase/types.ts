@@ -400,6 +400,7 @@ export type Database = {
       purchases: {
         Row: {
           demand_id: string | null
+          employee_id: string | null
           id: string
           notes: string | null
           product_id: string
@@ -411,6 +412,7 @@ export type Database = {
         }
         Insert: {
           demand_id?: string | null
+          employee_id?: string | null
           id?: string
           notes?: string | null
           product_id: string
@@ -422,6 +424,7 @@ export type Database = {
         }
         Update: {
           demand_id?: string | null
+          employee_id?: string | null
           id?: string
           notes?: string | null
           product_id?: string
@@ -437,6 +440,13 @@ export type Database = {
             columns: ["demand_id"]
             isOneToOne: false
             referencedRelation: "product_demands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "purchases_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
             referencedColumns: ["id"]
           },
           {

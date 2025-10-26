@@ -99,6 +99,7 @@ export function MenuItemIngredientRow({ ingredient, products, onUpdate, onSelect
         <div className="space-y-1">
           <Input
             type="number"
+            inputMode="decimal"
             step="0.01"
             min="0"
             placeholder="Quantité"
