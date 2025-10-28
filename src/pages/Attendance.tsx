@@ -66,7 +66,41 @@ export default function Attendance() {
 
   const checkWifiStatus = async () => {
     const status = await detectWifiConnection();
-    setWifiStatus(status);
+    
+    // Validate IP address with server
+    if (status.ipAddress) {
+      try {
+        const { data, error } = await supabase.functions.invoke('wifi-validation', {
+          body: { ipAddress: status.ipAddress }
+        });
+        
+        if (error) {
+          console.error('Wi-Fi validation error:', error);
+          setWifiStatus({
+            ...status,
+            isConnected: false,
+            error: "Erreur de validation du réseau"
+          });
+          return;
+        }
+        
+        // Update status based on server validation
+        setWifiStatus({
+          ...status,
+          isConnected: data.valid,
+          error: data.valid ? undefined : "Vous devez être connecté au Wi-Fi ReferenceGarden"
+        });
+      } catch (err) {
+        console.error('Wi-Fi validation exception:', err);
+        setWifiStatus({
+          ...status,
+          isConnected: false,
+          error: "Erreur de validation du réseau"
+        });
+      }
+    } else {
+      setWifiStatus(status);
+    }
   };
 
   const loadTodayAttendance = async () => {
