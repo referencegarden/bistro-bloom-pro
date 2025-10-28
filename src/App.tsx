@@ -16,6 +16,8 @@ import Suppliers from "./pages/Suppliers";
 import Employees from "./pages/Employees";
 import Settings from "./pages/Settings";
 import MenuItems from "./pages/MenuItems";
+import Attendance from "./pages/Attendance";
+import AttendanceAdmin from "./pages/AttendanceAdmin";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -136,6 +138,28 @@ const App = () => (
                 <Layout>
                   <Settings />
                 </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/attendance"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <Attendance />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/attendance-admin"
+            element={
+              <ProtectedRoute>
+                <PermissionRoute>
+                  <Layout>
+                    <AttendanceAdmin />
+                  </Layout>
+                </PermissionRoute>
               </ProtectedRoute>
             }
           />

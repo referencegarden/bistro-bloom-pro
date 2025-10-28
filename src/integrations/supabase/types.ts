@@ -50,6 +50,59 @@ export type Database = {
         }
         Relationships: []
       }
+      attendance: {
+        Row: {
+          check_in_time: string | null
+          check_out_time: string | null
+          confirmed: boolean | null
+          created_at: string | null
+          date: string
+          employee_id: string
+          id: string
+          ip_address: string | null
+          notes: string | null
+          status: string | null
+          updated_at: string | null
+          wifi_ssid: string | null
+        }
+        Insert: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          confirmed?: boolean | null
+          created_at?: string | null
+          date: string
+          employee_id: string
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          status?: string | null
+          updated_at?: string | null
+          wifi_ssid?: string | null
+        }
+        Update: {
+          check_in_time?: string | null
+          check_out_time?: string | null
+          confirmed?: boolean | null
+          created_at?: string | null
+          date?: string
+          employee_id?: string
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          status?: string | null
+          updated_at?: string | null
+          wifi_ssid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string | null
@@ -75,6 +128,7 @@ export type Database = {
         Row: {
           can_create_demands: boolean
           can_make_sales: boolean
+          can_manage_attendance: boolean
           can_manage_stock: boolean
           can_manage_suppliers: boolean
           can_view_products: boolean
@@ -87,6 +141,7 @@ export type Database = {
         Insert: {
           can_create_demands?: boolean
           can_make_sales?: boolean
+          can_manage_attendance?: boolean
           can_manage_stock?: boolean
           can_manage_suppliers?: boolean
           can_view_products?: boolean
@@ -99,6 +154,7 @@ export type Database = {
         Update: {
           can_create_demands?: boolean
           can_make_sales?: boolean
+          can_manage_attendance?: boolean
           can_manage_stock?: boolean
           can_manage_suppliers?: boolean
           can_view_products?: boolean
@@ -577,6 +633,13 @@ export type Database = {
           unit_of_measure: string
         }[]
       }
+      calculate_work_hours: {
+        Args: { _date_from: string; _date_to: string; _employee_id: string }
+        Returns: {
+          days_present: number
+          total_hours: number
+        }[]
+      }
       get_unit_conversion_factor: {
         Args: { from_unit: string; to_unit: string }
         Returns: number
@@ -592,6 +655,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      validate_wifi_ssid: { Args: { _ssid: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user" | "employee"

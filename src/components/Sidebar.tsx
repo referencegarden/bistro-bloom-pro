@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList, UtensilsCrossed } from "lucide-react";
+import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList, UtensilsCrossed, ClipboardCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -39,6 +39,10 @@ const navigation = [{
   name: "Fournisseurs",
   href: "/suppliers",
   icon: Users
+}, {
+  name: "Présence",
+  href: "/attendance",
+  icon: ClipboardCheck
 }, {
   name: "Employés",
   href: "/employees",
