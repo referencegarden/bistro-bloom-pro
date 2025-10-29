@@ -43,13 +43,21 @@ async function detectIPAddress(): Promise<string | null> {
     });
 
     pc.createDataChannel("");
-    
-    pc.createOffer()
-      .then(offer => pc.setLocalDescription(offer))
-      .catch(() => resolve(null));
+
+    const ips: string[] = [];
+    const pickBestIp = () => {
+      const privateIp = ips.find((ip) =>
+        ip.startsWith("192.168.") ||
+        ip.startsWith("10.") ||
+        /^172\.(1[6-9]|2[0-9]|3[0-1])\./.test(ip)
+      );
+      return privateIp ?? ips[0] ?? null;
+    };
 
     pc.onicecandidate = (event) => {
       if (!event || !event.candidate) {
+        // end of candidates, resolve best option
+        resolve(pickBestIp());
         pc.close();
         return;
       }
@@ -59,15 +67,20 @@ async function detectIPAddress(): Promise<string | null> {
       const match = candidate.match(ipRegex);
 
       if (match) {
-        resolve(match[1]);
-        pc.close();
+        const ip = match[1];
+        if (!ips.includes(ip)) ips.push(ip);
       }
     };
 
+    pc.createOffer()
+      .then((offer) => pc.setLocalDescription(offer))
+      .catch(() => resolve(null));
+
     // Timeout after 5 seconds
     setTimeout(() => {
+      const best = pickBestIp();
       pc.close();
-      resolve(null);
+      resolve(best);
     }, 5000);
   });
 }
