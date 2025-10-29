@@ -66,11 +66,11 @@ function validateIPRange(ip: string): boolean {
     return false;
   }
 
-  // ReferenceGarden restaurant Wi-Fi local network range: 10.0.0.x
+  // ReferenceGarden restaurant Wi-Fi local network range: 192.168.11.x
   // This is the private network range assigned by the restaurant router
-  const isRestaurantRange = (octets[0] === 10 && octets[1] === 0 && octets[2] === 0);
+  const isRestaurantRange = (octets[0] === 192 && octets[1] === 168 && octets[2] === 11);
 
-  console.log(`IP ${ip} validation: ${isRestaurantRange ? 'VALID' : 'INVALID'} (Expected: 10.0.0.x)`);
+  console.log(`IP ${ip} validation: ${isRestaurantRange ? 'VALID' : 'INVALID'} (Expected: 192.168.11.x)`);
   
   return isRestaurantRange;
 }
