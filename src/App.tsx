@@ -155,7 +155,7 @@ const App = () => (
             path="/attendance-admin"
             element={
               <ProtectedRoute>
-                <PermissionRoute>
+                <PermissionRoute permission="can_manage_attendance">
                   <Layout>
                     <AttendanceAdmin />
                   </Layout>

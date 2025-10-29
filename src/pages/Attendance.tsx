@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +9,7 @@ import { format, startOfWeek, endOfWeek } from "date-fns";
 import { fr } from "date-fns/locale";
 import { detectWifiConnection, WifiStatus } from "@/lib/wifiDetection";
 import { AttendanceConfirmDialog } from "@/components/AttendanceConfirmDialog";
+import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
 interface TodayAttendance {
   id: string;
   check_in_time: string | null;
@@ -23,6 +25,8 @@ interface WeeklyAttendance {
   status: string;
 }
 export default function Attendance() {
+  const navigate = useNavigate();
+  const { isAdmin, loading: permissionsLoading } = useEmployeePermissions();
   const [todayAttendance, setTodayAttendance] = useState<TodayAttendance | null>(null);
   const [weeklyAttendance, setWeeklyAttendance] = useState<WeeklyAttendance[]>([]);
   const [wifiStatus, setWifiStatus] = useState<WifiStatus>({
@@ -37,6 +41,14 @@ export default function Attendance() {
   const {
     toast
   } = useToast();
+
+  // Redirect admins to admin view
+  useEffect(() => {
+    if (!permissionsLoading && isAdmin) {
+      navigate('/attendance-admin', { replace: true });
+    }
+  }, [isAdmin, permissionsLoading, navigate]);
+
   useEffect(() => {
     loadEmployeeData();
     checkWifiStatus();

@@ -8,6 +8,7 @@ interface EmployeePermissions {
   can_manage_stock: boolean;
   can_manage_suppliers: boolean;
   can_create_demands: boolean;
+  can_manage_attendance: boolean;
 }
 
 export function useEmployeePermissions() {
@@ -72,6 +73,7 @@ export function useEmployeePermissions() {
       can_manage_stock: true,
       can_manage_suppliers: true,
       can_create_demands: true,
+      can_manage_attendance: true,
       },
       loading: false,
     };
@@ -86,7 +88,9 @@ export function useEmployeePermissions() {
         can_view_products: false,
         can_view_reports: false,
         can_manage_stock: false,
+        can_manage_suppliers: false,
         can_create_demands: false,
+        can_manage_attendance: false,
       },
       loading: isLoading,
     };
@@ -102,6 +106,7 @@ export function useEmployeePermissions() {
       can_manage_stock: false,
       can_manage_suppliers: false,
       can_create_demands: false,
+      can_manage_attendance: false,
     },
     loading: false,
   };
