@@ -9,6 +9,11 @@ interface EmployeePermissions {
   can_manage_suppliers: boolean;
   can_create_demands: boolean;
   can_manage_attendance: boolean;
+  can_use_pos: boolean;
+  can_manage_orders: boolean;
+  can_process_payments: boolean;
+  can_view_kitchen_display: boolean;
+  can_access_pos_reports: boolean;
 }
 
 export function useEmployeePermissions() {
@@ -53,7 +58,7 @@ export function useEmployeePermissions() {
       // Get permissions
       const { data } = await supabase
         .from("employee_permissions")
-        .select("*")
+        .select("can_make_sales, can_view_products, can_view_reports, can_manage_stock, can_manage_suppliers, can_create_demands, can_manage_attendance, can_use_pos, can_manage_orders, can_process_payments, can_view_kitchen_display, can_access_pos_reports")
         .eq("employee_id", employee.id)
         .maybeSingle();
       
@@ -74,6 +79,11 @@ export function useEmployeePermissions() {
       can_manage_suppliers: true,
       can_create_demands: true,
       can_manage_attendance: true,
+      can_use_pos: true,
+      can_manage_orders: true,
+      can_process_payments: true,
+      can_view_kitchen_display: true,
+      can_access_pos_reports: true,
       },
       loading: false,
     };
@@ -91,6 +101,11 @@ export function useEmployeePermissions() {
         can_manage_suppliers: false,
         can_create_demands: false,
         can_manage_attendance: false,
+        can_use_pos: false,
+        can_manage_orders: false,
+        can_process_payments: false,
+        can_view_kitchen_display: false,
+        can_access_pos_reports: false,
       },
       loading: isLoading,
     };
@@ -107,6 +122,11 @@ export function useEmployeePermissions() {
       can_manage_suppliers: false,
       can_create_demands: false,
       can_manage_attendance: false,
+      can_use_pos: false,
+      can_manage_orders: false,
+      can_process_payments: false,
+      can_view_kitchen_display: false,
+      can_access_pos_reports: false,
     },
     loading: false,
   };
