@@ -16,16 +16,14 @@ import { useNavigate } from "react-router-dom";
 interface MenuItem {
   id: string;
   name: string;
-  price: number;
-  category_id: string;
+  selling_price: number;
+  category: string;
   is_active: boolean;
-  categories: { name: string; color: string };
 }
 
 interface Category {
   id: string;
   name: string;
-  color: string;
 }
 
 interface Table {
@@ -100,7 +98,7 @@ export default function POS() {
     // Load menu items
     const { data: items } = await supabase
       .from("menu_items")
-      .select("*, categories(name, color)")
+      .select("*")
       .eq("is_active", true)
       .order("name");
     if (items) setMenuItems(items);
@@ -115,14 +113,15 @@ export default function POS() {
     // Load tax rate
     const { data: settings } = await supabase
       .from("app_settings")
-      .select("value")
-      .eq("key", "tax_rate")
+      .select("tax_rate")
       .single();
-    if (settings) setTaxRate(Number(settings.value));
+    if (settings && settings.tax_rate) {
+      setTaxRate(Number(settings.tax_rate) || 10);
+    }
   };
 
   const filteredMenuItems = menuItems.filter((item) => {
-    const matchesCategory = selectedCategory === "all" || item.category_id === selectedCategory;
+    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
     const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
@@ -147,8 +146,8 @@ export default function POS() {
             menu_item_id: menuItem.id,
             menu_item_name: menuItem.name,
             quantity: 1,
-            unit_price: menuItem.price,
-            subtotal: menuItem.price,
+            unit_price: menuItem.selling_price,
+            subtotal: menuItem.selling_price,
           },
         ],
       });
@@ -202,19 +201,21 @@ export default function POS() {
     try {
       const { subtotal, taxAmount, total } = calculateTotals();
 
+      // Generate order number
+      const orderNumber = `ORD-${Date.now()}`;
+
       // Create order
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
+          order_number: orderNumber,
           order_type: currentOrder.order_type,
           table_id: currentOrder.table_id || null,
           customer_name: currentOrder.customer_name,
           customer_phone: currentOrder.customer_phone,
           notes: currentOrder.notes,
           employee_id: employeeId,
-          status: "pending",
-          subtotal,
-          tax_amount: taxAmount,
+          status: "draft",
           total_amount: total,
         })
         .select()
@@ -228,8 +229,8 @@ export default function POS() {
         menu_item_id: item.menu_item_id,
         quantity: item.quantity,
         unit_price: item.unit_price,
-        subtotal: item.subtotal,
-        special_instructions: item.special_instructions,
+        total_price: item.subtotal,
+        special_instructions: item.special_instructions || "",
       }));
 
       const { error: itemsError } = await supabase
@@ -279,10 +280,14 @@ export default function POS() {
     try {
       const { subtotal, taxAmount, total } = calculateTotals();
 
+      // Generate order number
+      const orderNumber = `ORD-${Date.now()}`;
+
       // Create order
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
+          order_number: orderNumber,
           order_type: currentOrder.order_type,
           table_id: currentOrder.table_id || null,
           customer_name: currentOrder.customer_name,
@@ -290,8 +295,6 @@ export default function POS() {
           notes: currentOrder.notes,
           employee_id: employeeId,
           status: "pending",
-          subtotal,
-          tax_amount: taxAmount,
           total_amount: total,
         })
         .select()
@@ -305,8 +308,8 @@ export default function POS() {
         menu_item_id: item.menu_item_id,
         quantity: item.quantity,
         unit_price: item.unit_price,
-        subtotal: item.subtotal,
-        special_instructions: item.special_instructions,
+        total_price: item.subtotal,
+        special_instructions: item.special_instructions || "",
       }));
 
       const { error: itemsError } = await supabase
@@ -354,7 +357,7 @@ export default function POS() {
                 <TabsList className="inline-flex w-max">
                   <TabsTrigger value="all">Tous</TabsTrigger>
                   {categories.map((cat) => (
-                    <TabsTrigger key={cat.id} value={cat.id}>
+                    <TabsTrigger key={cat.id} value={cat.name}>
                       {cat.name}
                     </TabsTrigger>
                   ))}
@@ -373,17 +376,11 @@ export default function POS() {
                   >
                     <CardContent className="p-4">
                       <div className="flex flex-col gap-2">
-                        <Badge
-                          style={{
-                            backgroundColor: item.categories.color,
-                            color: "white",
-                          }}
-                          className="w-fit text-xs"
-                        >
-                          {item.categories.name}
+                        <Badge variant="secondary" className="w-fit text-xs">
+                          {item.category}
                         </Badge>
                         <h3 className="font-semibold text-sm line-clamp-2">{item.name}</h3>
-                        <p className="text-lg font-bold text-primary">{item.price} DH</p>
+                        <p className="text-lg font-bold text-primary">{item.selling_price} DH</p>
                       </div>
                     </CardContent>
                   </Card>

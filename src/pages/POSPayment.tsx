@@ -108,8 +108,7 @@ export default function POSPayment() {
         .insert({
           order_id: order.id,
           payment_method: paymentMethod,
-          amount: order.total_amount,
-          received_amount: paymentMethod === "cash" ? parseFloat(receivedAmount) : null,
+          amount_paid: paymentMethod === "cash" ? parseFloat(receivedAmount) : order.total_amount,
           change_amount: changeAmount,
           employee_id: employeeId,
         });
@@ -119,7 +118,7 @@ export default function POSPayment() {
       // Update order status to completed
       const { error: orderError } = await supabase
         .from("orders")
-        .update({ status: "completed", completed_at: new Date().toISOString() })
+        .update({ status: "completed" })
         .eq("id", order.id);
 
       if (orderError) throw orderError;

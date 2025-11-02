@@ -24,6 +24,7 @@ export type Database = {
           primary_color: string
           restaurant_name: string
           secondary_color: string
+          tax_rate: number
           updated_at: string
         }
         Insert: {
@@ -35,6 +36,7 @@ export type Database = {
           primary_color?: string
           restaurant_name?: string
           secondary_color?: string
+          tax_rate?: number
           updated_at?: string
         }
         Update: {
@@ -46,6 +48,7 @@ export type Database = {
           primary_color?: string
           restaurant_name?: string
           secondary_color?: string
+          tax_rate?: number
           updated_at?: string
         }
         Relationships: []
@@ -126,11 +129,16 @@ export type Database = {
       }
       employee_permissions: {
         Row: {
+          can_access_pos_reports: boolean
           can_create_demands: boolean
           can_make_sales: boolean
           can_manage_attendance: boolean
+          can_manage_orders: boolean
           can_manage_stock: boolean
           can_manage_suppliers: boolean
+          can_process_payments: boolean
+          can_use_pos: boolean
+          can_view_kitchen_display: boolean
           can_view_products: boolean
           can_view_reports: boolean
           created_at: string
@@ -139,11 +147,16 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          can_access_pos_reports?: boolean
           can_create_demands?: boolean
           can_make_sales?: boolean
           can_manage_attendance?: boolean
+          can_manage_orders?: boolean
           can_manage_stock?: boolean
           can_manage_suppliers?: boolean
+          can_process_payments?: boolean
+          can_use_pos?: boolean
+          can_view_kitchen_display?: boolean
           can_view_products?: boolean
           can_view_reports?: boolean
           created_at?: string
@@ -152,11 +165,16 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          can_access_pos_reports?: boolean
           can_create_demands?: boolean
           can_make_sales?: boolean
           can_manage_attendance?: boolean
+          can_manage_orders?: boolean
           can_manage_stock?: boolean
           can_manage_suppliers?: boolean
+          can_process_payments?: boolean
+          can_use_pos?: boolean
+          can_view_kitchen_display?: boolean
           can_view_products?: boolean
           can_view_reports?: boolean
           created_at?: string
@@ -344,6 +362,191 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          id: string
+          menu_item_id: string
+          order_id: string
+          quantity: number
+          special_instructions: string | null
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          menu_item_id: string
+          order_id: string
+          quantity: number
+          special_instructions?: string | null
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          menu_item_id?: string
+          order_id?: string
+          quantity?: number
+          special_instructions?: string | null
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_menu_item_id_fkey"
+            columns: ["menu_item_id"]
+            isOneToOne: false
+            referencedRelation: "menu_items"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          created_at: string
+          customer_name: string | null
+          customer_phone: string | null
+          employee_id: string | null
+          id: string
+          notes: string | null
+          order_number: string
+          order_type: string
+          status: string
+          table_id: string | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          employee_id?: string | null
+          id?: string
+          notes?: string | null
+          order_number: string
+          order_type: string
+          status?: string
+          table_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_name?: string | null
+          customer_phone?: string | null
+          employee_id?: string | null
+          id?: string
+          notes?: string | null
+          order_number?: string
+          order_type?: string
+          status?: string
+          table_id?: string | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_splits: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          payment_id: string
+          payment_method: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          payment_id: string
+          payment_method: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          payment_id?: string
+          payment_method?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_splits_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payments: {
+        Row: {
+          amount_paid: number
+          change_amount: number
+          created_at: string
+          employee_id: string | null
+          id: string
+          order_id: string
+          payment_method: string
+        }
+        Insert: {
+          amount_paid: number
+          change_amount?: number
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          order_id: string
+          payment_method: string
+        }
+        Update: {
+          amount_paid?: number
+          change_amount?: number
+          created_at?: string
+          employee_id?: string | null
+          id?: string
+          order_id?: string
+          payment_method?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payments_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_demands: {
         Row: {
@@ -596,6 +799,33 @@ export type Database = {
         }
         Relationships: []
       }
+      tables: {
+        Row: {
+          created_at: string
+          id: string
+          seating_capacity: number
+          status: string
+          table_number: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          seating_capacity?: number
+          status?: string
+          table_number: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          seating_capacity?: number
+          status?: string
+          table_number?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -640,6 +870,8 @@ export type Database = {
           total_hours: number
         }[]
       }
+      cancel_order: { Args: { _order_id: string }; Returns: Json }
+      confirm_order: { Args: { _order_id: string }; Returns: Json }
       get_unit_conversion_factor: {
         Args: { from_unit: string; to_unit: string }
         Returns: number
