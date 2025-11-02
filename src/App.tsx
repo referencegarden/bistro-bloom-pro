@@ -18,6 +18,10 @@ import Settings from "./pages/Settings";
 import MenuItems from "./pages/MenuItems";
 import Attendance from "./pages/Attendance";
 import AttendanceAdmin from "./pages/AttendanceAdmin";
+import POS from "./pages/POS";
+import POSOrders from "./pages/POSOrders";
+import POSPayment from "./pages/POSPayment";
+import KitchenDisplay from "./pages/KitchenDisplay";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -158,6 +162,54 @@ const App = () => (
                 <PermissionRoute permission="can_manage_attendance">
                   <Layout>
                     <AttendanceAdmin />
+                  </Layout>
+                </PermissionRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pos"
+            element={
+              <ProtectedRoute>
+                <PermissionRoute permission="can_use_pos">
+                  <Layout>
+                    <POS />
+                  </Layout>
+                </PermissionRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pos/orders"
+            element={
+              <ProtectedRoute>
+                <PermissionRoute permission="can_manage_orders">
+                  <Layout>
+                    <POSOrders />
+                  </Layout>
+                </PermissionRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pos/payment/:orderId"
+            element={
+              <ProtectedRoute>
+                <PermissionRoute permission="can_process_payments">
+                  <Layout>
+                    <POSPayment />
+                  </Layout>
+                </PermissionRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pos/kitchen"
+            element={
+              <ProtectedRoute>
+                <PermissionRoute permission="can_view_kitchen_display">
+                  <Layout>
+                    <KitchenDisplay />
                   </Layout>
                 </PermissionRoute>
               </ProtectedRoute>

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList, UtensilsCrossed, ClipboardCheck } from "lucide-react";
+import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList, UtensilsCrossed, ClipboardCheck, ShoppingBag, ChefHat } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -47,6 +47,18 @@ const navigation = [{
   name: "Employés",
   href: "/employees",
   icon: Users
+}, {
+  name: "Point de Vente",
+  href: "/pos",
+  icon: ShoppingBag
+}, {
+  name: "Commandes POS",
+  href: "/pos/orders",
+  icon: ClipboardList
+}, {
+  name: "Affichage Cuisine",
+  href: "/pos/kitchen",
+  icon: ChefHat
 }, {
   name: "Paramètres",
   href: "/settings",
@@ -122,6 +134,10 @@ export function AppSidebar() {
       if (item.href === "/purchases") return permissions.can_manage_stock;
       // Demands visible to all employees
       if (item.href === "/demands") return true;
+      // POS permissions
+      if (item.href === "/pos") return permissions.can_use_pos;
+      if (item.href === "/pos/orders") return permissions.can_manage_orders;
+      if (item.href === "/pos/kitchen") return permissions.can_view_kitchen_display;
       return true;
     });
   }, [isAdmin, permissions]);
