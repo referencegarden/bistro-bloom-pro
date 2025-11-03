@@ -5,12 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Minus, X, Search, ShoppingCart, Save, CreditCard } from "lucide-react";
+import { Plus, Minus, X, Search, ShoppingCart, Save, CreditCard, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface MenuItem {
@@ -18,18 +17,20 @@ interface MenuItem {
   name: string;
   selling_price: number;
   category: string;
+  pos_category_id: string | null;
+  image_url: string | null;
   is_active: boolean;
 }
 
-interface Category {
+interface POSCategory {
   id: string;
   name: string;
+  color: string;
 }
 
 interface Table {
   id: string;
   table_number: string;
-  seating_capacity: number;
   status: string;
 }
 
@@ -56,7 +57,7 @@ export default function POS() {
   const { toast } = useToast();
   
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [posCategories, setPosCategories] = useState<POSCategory[]>([]);
   const [tables, setTables] = useState<Table[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -88,149 +89,154 @@ export default function POS() {
   };
 
   const loadData = async () => {
-    // Load categories
+    // Load POS categories
     const { data: cats } = await supabase
-      .from("categories")
+      .from("pos_categories")
       .select("*")
-      .order("name");
-    if (cats) setCategories(cats);
+      .eq("is_active", true)
+      .order("display_order");
+    if (cats) setPosCategories(cats);
 
-    // Load menu items
+    // Load menu items with POS category info
     const { data: items } = await supabase
       .from("menu_items")
       .select("*")
       .eq("is_active", true)
-      .order("name");
+      .order("display_order");
     if (items) setMenuItems(items);
 
     // Load tables
-    const { data: tbls } = await supabase
+    const { data: tablesData } = await supabase
       .from("tables")
       .select("*")
       .order("table_number");
-    if (tbls) setTables(tbls);
+    if (tablesData) setTables(tablesData);
 
     // Load tax rate
     const { data: settings } = await supabase
       .from("app_settings")
       .select("tax_rate")
       .single();
-    if (settings && settings.tax_rate) {
-      setTaxRate(Number(settings.tax_rate) || 10);
-    }
+    if (settings) setTaxRate(settings.tax_rate);
   };
 
   const filteredMenuItems = menuItems.filter((item) => {
-    const matchesCategory = selectedCategory === "all" || item.category === selectedCategory;
-    const matchesSearch = item.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory =
+      selectedCategory === "all" || item.pos_category_id === selectedCategory;
+    const matchesSearch = item.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
     return matchesCategory && matchesSearch;
   });
 
-  const addItemToOrder = (menuItem: MenuItem) => {
-    const existingItemIndex = currentOrder.items.findIndex(
-      (item) => item.menu_item_id === menuItem.id
+  const addItemToOrder = (item: MenuItem) => {
+    const existingItem = currentOrder.items.find(
+      (orderItem) => orderItem.menu_item_id === item.id
     );
 
-    if (existingItemIndex >= 0) {
-      const updatedItems = [...currentOrder.items];
-      updatedItems[existingItemIndex].quantity += 1;
-      updatedItems[existingItemIndex].subtotal =
-        updatedItems[existingItemIndex].quantity * updatedItems[existingItemIndex].unit_price;
-      setCurrentOrder({ ...currentOrder, items: updatedItems });
+    if (existingItem) {
+      setCurrentOrder({
+        ...currentOrder,
+        items: currentOrder.items.map((orderItem) =>
+          orderItem.menu_item_id === item.id
+            ? { ...orderItem, quantity: orderItem.quantity + 1, subtotal: (orderItem.quantity + 1) * orderItem.unit_price }
+            : orderItem
+        ),
+      });
     } else {
       setCurrentOrder({
         ...currentOrder,
         items: [
           ...currentOrder.items,
           {
-            menu_item_id: menuItem.id,
-            menu_item_name: menuItem.name,
+            menu_item_id: item.id,
+            menu_item_name: item.name,
             quantity: 1,
-            unit_price: menuItem.selling_price,
-            subtotal: menuItem.selling_price,
+            unit_price: item.selling_price,
+            subtotal: item.selling_price,
           },
         ],
       });
     }
   };
 
-  const updateItemQuantity = (index: number, delta: number) => {
-    const updatedItems = [...currentOrder.items];
-    updatedItems[index].quantity = Math.max(1, updatedItems[index].quantity + delta);
-    updatedItems[index].subtotal = updatedItems[index].quantity * updatedItems[index].unit_price;
-    setCurrentOrder({ ...currentOrder, items: updatedItems });
+  const updateItemQuantity = (menuItemId: string, change: number) => {
+    setCurrentOrder({
+      ...currentOrder,
+      items: currentOrder.items
+        .map((item) => {
+          if (item.menu_item_id === menuItemId) {
+            const newQuantity = item.quantity + change;
+            return newQuantity > 0
+              ? { ...item, quantity: newQuantity, subtotal: newQuantity * item.unit_price }
+              : null;
+          }
+          return item;
+        })
+        .filter((item): item is OrderItem => item !== null),
+    });
   };
 
-  const removeItem = (index: number) => {
-    const updatedItems = currentOrder.items.filter((_, i) => i !== index);
-    setCurrentOrder({ ...currentOrder, items: updatedItems });
+  const removeItem = (menuItemId: string) => {
+    setCurrentOrder({
+      ...currentOrder,
+      items: currentOrder.items.filter((item) => item.menu_item_id !== menuItemId),
+    });
   };
 
-  const updateInstructions = (index: number, instructions: string) => {
-    const updatedItems = [...currentOrder.items];
-    updatedItems[index].special_instructions = instructions;
-    setCurrentOrder({ ...currentOrder, items: updatedItems });
+  const updateInstructions = (menuItemId: string, instructions: string) => {
+    setCurrentOrder({
+      ...currentOrder,
+      items: currentOrder.items.map((item) =>
+        item.menu_item_id === menuItemId
+          ? { ...item, special_instructions: instructions }
+          : item
+      ),
+    });
   };
 
   const calculateTotals = () => {
     const subtotal = currentOrder.items.reduce((sum, item) => sum + item.subtotal, 0);
-    const taxAmount = (subtotal * taxRate) / 100;
+    const taxAmount = subtotal * (taxRate / 100);
     const total = subtotal + taxAmount;
     return { subtotal, taxAmount, total };
   };
 
   const handleSaveDraft = async () => {
     if (currentOrder.items.length === 0) {
-      toast({
-        title: "Erreur",
-        description: "Ajoutez au moins un article à la commande",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (currentOrder.order_type === "dine_in" && !currentOrder.table_id) {
-      toast({
-        title: "Erreur",
-        description: "Sélectionnez une table pour les commandes sur place",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Ajoutez au moins un article", variant: "destructive" });
       return;
     }
 
     try {
       const { subtotal, taxAmount, total } = calculateTotals();
+      const orderNumber = `POS-${Date.now()}`;
 
-      // Generate order number
-      const orderNumber = `ORD-${Date.now()}`;
-
-      // Create order
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
           order_number: orderNumber,
           order_type: currentOrder.order_type,
           table_id: currentOrder.table_id || null,
-          customer_name: currentOrder.customer_name,
-          customer_phone: currentOrder.customer_phone,
-          notes: currentOrder.notes,
-          employee_id: employeeId,
-          status: "draft",
+          customer_name: currentOrder.customer_name || null,
+          customer_phone: currentOrder.customer_phone || null,
+          notes: currentOrder.notes || null,
           total_amount: total,
+          status: "draft",
+          employee_id: employeeId || null,
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
-      // Create order items
       const orderItems = currentOrder.items.map((item) => ({
         order_id: order.id,
         menu_item_id: item.menu_item_id,
         quantity: item.quantity,
         unit_price: item.unit_price,
         total_price: item.subtotal,
-        special_instructions: item.special_instructions || "",
+        special_instructions: item.special_instructions || null,
       }));
 
       const { error: itemsError } = await supabase
@@ -239,77 +245,53 @@ export default function POS() {
 
       if (itemsError) throw itemsError;
 
-      toast({
-        title: "Commande enregistrée",
-        description: `Commande ${order.order_number} enregistrée avec succès`,
-      });
-
-      // Reset order
-      setCurrentOrder({
-        order_type: "dine_in",
-        items: [],
-      });
+      toast({ title: "Succès", description: "Commande enregistrée en brouillon" });
+      setCurrentOrder({ order_type: "dine_in", items: [] });
     } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
     }
   };
 
   const handleProcessPayment = async () => {
     if (currentOrder.items.length === 0) {
-      toast({
-        title: "Erreur",
-        description: "Ajoutez au moins un article à la commande",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Ajoutez au moins un article", variant: "destructive" });
       return;
     }
 
     if (currentOrder.order_type === "dine_in" && !currentOrder.table_id) {
-      toast({
-        title: "Erreur",
-        description: "Sélectionnez une table pour les commandes sur place",
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: "Sélectionnez une table", variant: "destructive" });
       return;
     }
 
     try {
       const { subtotal, taxAmount, total } = calculateTotals();
+      const orderNumber = `POS-${Date.now()}`;
 
-      // Generate order number
-      const orderNumber = `ORD-${Date.now()}`;
-
-      // Create order
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
           order_number: orderNumber,
           order_type: currentOrder.order_type,
           table_id: currentOrder.table_id || null,
-          customer_name: currentOrder.customer_name,
-          customer_phone: currentOrder.customer_phone,
-          notes: currentOrder.notes,
-          employee_id: employeeId,
-          status: "pending",
+          customer_name: currentOrder.customer_name || null,
+          customer_phone: currentOrder.customer_phone || null,
+          notes: currentOrder.notes || null,
           total_amount: total,
+          status: "pending",
+          employee_id: employeeId || null,
         })
         .select()
         .single();
 
       if (orderError) throw orderError;
 
-      // Create order items
       const orderItems = currentOrder.items.map((item) => ({
         order_id: order.id,
         menu_item_id: item.menu_item_id,
         quantity: item.quantity,
         unit_price: item.unit_price,
         total_price: item.subtotal,
-        special_instructions: item.special_instructions || "",
+        special_instructions: item.special_instructions || null,
       }));
 
       const { error: itemsError } = await supabase
@@ -318,95 +300,107 @@ export default function POS() {
 
       if (itemsError) throw itemsError;
 
-      // Navigate to payment page
       navigate(`/pos/payment/${order.id}`);
     } catch (error: any) {
-      toast({
-        title: "Erreur",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
     }
   };
 
   const { subtotal, taxAmount, total } = calculateTotals();
-  const availableTables = tables.filter((t) => t.status === "available");
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] gap-4">
-      {/* Left Side - Menu Selection */}
-      <div className="flex-1 flex flex-col gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
+    <div className="flex h-[calc(100vh-4rem)] gap-4 p-4">
+      {/* Left: Menu Items Grid */}
+      <div className="flex-1 flex flex-col">
+        <div className="mb-4 space-y-3">
+          <div className="flex gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Rechercher un article..."
+                placeholder="Rechercher un produit..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex-1"
+                className="pl-10"
               />
             </div>
-          </CardHeader>
-        </Card>
+          </div>
 
-        <Card className="flex-1">
-          <CardHeader className="pb-3">
-            <Tabs value={selectedCategory} onValueChange={setSelectedCategory}>
-              <ScrollArea className="w-full">
-                <TabsList className="inline-flex w-max">
-                  <TabsTrigger value="all">Tous</TabsTrigger>
-                  {categories.map((cat) => (
-                    <TabsTrigger key={cat.id} value={cat.name}>
-                      {cat.name}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </ScrollArea>
-            </Tabs>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[calc(100vh-16rem)]">
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                {filteredMenuItems.map((item) => (
-                  <Card
-                    key={item.id}
-                    className="cursor-pointer hover:shadow-md transition-shadow"
-                    onClick={() => addItemToOrder(item)}
-                  >
-                    <CardContent className="p-4">
-                      <div className="flex flex-col gap-2">
-                        <Badge variant="secondary" className="w-fit text-xs">
-                          {item.category}
-                        </Badge>
-                        <h3 className="font-semibold text-sm line-clamp-2">{item.name}</h3>
-                        <p className="text-lg font-bold text-primary">{item.selling_price} DH</p>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+          {/* Category Filter */}
+          <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex gap-2 pb-2">
+              <Button
+                variant={selectedCategory === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory("all")}
+              >
+                Tous
+              </Button>
+              {posCategories.map((cat) => (
+                <Button
+                  key={cat.id}
+                  variant={selectedCategory === cat.id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory(cat.id)}
+                  style={{
+                    backgroundColor: selectedCategory === cat.id ? cat.color : undefined,
+                    borderColor: cat.color,
+                  }}
+                >
+                  {cat.name}
+                </Button>
+              ))}
+            </div>
+          </ScrollArea>
+        </div>
+
+        {/* Menu Items Grid */}
+        <ScrollArea className="flex-1">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-4">
+            {filteredMenuItems.map((item) => (
+              <Card
+                key={item.id}
+                className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+                onClick={() => addItemToOrder(item)}
+              >
+                <CardContent className="p-3 flex flex-col h-full">
+                  <div className="aspect-square mb-2 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                    {item.image_url ? (
+                      <img
+                        src={item.image_url}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Package className="h-12 w-12 text-muted-foreground" />
+                    )}
+                  </div>
+                  <h3 className="font-semibold text-sm mb-1 line-clamp-2">{item.name}</h3>
+                  <p className="text-lg font-bold text-primary mt-auto">
+                    {item.selling_price.toFixed(2)} DH
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </ScrollArea>
       </div>
 
-      {/* Right Side - Current Order */}
-      <div className="w-96 flex flex-col gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2">
-              <ShoppingCart className="h-5 w-5" />
-              Commande en cours
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
+      {/* Right: Order Summary */}
+      <Card className="w-96 flex flex-col">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5" />
+            Commande
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 flex flex-col">
+          <div className="space-y-4 mb-4">
+            <div>
               <Label>Type de commande</Label>
               <Select
                 value={currentOrder.order_type}
                 onValueChange={(value: any) =>
-                  setCurrentOrder({ ...currentOrder, order_type: value, table_id: undefined })
+                  setCurrentOrder({ ...currentOrder, order_type: value, table_id: value !== "dine_in" ? undefined : currentOrder.table_id })
                 }
               >
                 <SelectTrigger>
@@ -421,7 +415,7 @@ export default function POS() {
             </div>
 
             {currentOrder.order_type === "dine_in" && (
-              <div className="space-y-2">
+              <div>
                 <Label>Table</Label>
                 <Select
                   value={currentOrder.table_id}
@@ -433,9 +427,9 @@ export default function POS() {
                     <SelectValue placeholder="Sélectionner une table" />
                   </SelectTrigger>
                   <SelectContent>
-                    {availableTables.map((table) => (
+                    {tables.map((table) => (
                       <SelectItem key={table.id} value={table.id}>
-                        {table.table_number} ({table.seating_capacity} places)
+                        Table {table.table_number}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -445,7 +439,7 @@ export default function POS() {
 
             {currentOrder.order_type !== "dine_in" && (
               <>
-                <div className="space-y-2">
+                <div>
                   <Label>Nom du client</Label>
                   <Input
                     value={currentOrder.customer_name || ""}
@@ -454,7 +448,7 @@ export default function POS() {
                     }
                   />
                 </div>
-                <div className="space-y-2">
+                <div>
                   <Label>Téléphone</Label>
                   <Input
                     value={currentOrder.customer_phone || ""}
@@ -466,119 +460,96 @@ export default function POS() {
               </>
             )}
 
-            <div className="space-y-2">
+            <div>
               <Label>Notes</Label>
               <Textarea
                 value={currentOrder.notes || ""}
                 onChange={(e) =>
                   setCurrentOrder({ ...currentOrder, notes: e.target.value })
                 }
-                placeholder="Notes spéciales..."
                 rows={2}
               />
             </div>
-          </CardContent>
-        </Card>
+          </div>
 
-        <Card className="flex-1">
-          <CardHeader className="pb-3">
-            <CardTitle>Articles ({currentOrder.items.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ScrollArea className="h-[calc(100vh-32rem)]">
+          {/* Order Items */}
+          <ScrollArea className="flex-1 -mx-6 px-6">
+            {currentOrder.items.length === 0 ? (
+              <p className="text-center text-muted-foreground py-8">
+                Aucun article ajouté
+              </p>
+            ) : (
               <div className="space-y-3">
-                {currentOrder.items.map((item, index) => (
-                  <Card key={index}>
-                    <CardContent className="p-3 space-y-2">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <p className="font-semibold text-sm">{item.menu_item_name}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {item.unit_price} DH × {item.quantity} = {item.subtotal} DH
-                          </p>
-                        </div>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-6 w-6"
-                          onClick={() => removeItem(index)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
+                {currentOrder.items.map((item) => (
+                  <Card key={item.menu_item_id} className="p-3">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-semibold text-sm flex-1">{item.menu_item_name}</h4>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => removeItem(item.menu_item_id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Button
-                          size="icon"
                           variant="outline"
+                          size="icon"
                           className="h-7 w-7"
-                          onClick={() => updateItemQuantity(index, -1)}
+                          onClick={() => updateItemQuantity(item.menu_item_id, -1)}
                         >
                           <Minus className="h-3 w-3" />
                         </Button>
-                        <span className="text-sm font-medium w-8 text-center">
-                          {item.quantity}
-                        </span>
+                        <span className="w-8 text-center font-medium">{item.quantity}</span>
                         <Button
-                          size="icon"
                           variant="outline"
+                          size="icon"
                           className="h-7 w-7"
-                          onClick={() => updateItemQuantity(index, 1)}
+                          onClick={() => updateItemQuantity(item.menu_item_id, 1)}
                         >
                           <Plus className="h-3 w-3" />
                         </Button>
                       </div>
-                      <Input
-                        placeholder="Instructions spéciales..."
-                        value={item.special_instructions || ""}
-                        onChange={(e) => updateInstructions(index, e.target.value)}
-                        className="text-xs"
-                      />
-                    </CardContent>
+                      <span className="font-bold">{item.subtotal.toFixed(2)} DH</span>
+                    </div>
                   </Card>
                 ))}
               </div>
-            </ScrollArea>
-          </CardContent>
-        </Card>
+            )}
+          </ScrollArea>
 
-        <Card>
-          <CardContent className="p-4 space-y-3">
-            <div className="space-y-1">
-              <div className="flex justify-between text-sm">
-                <span>Sous-total</span>
-                <span>{subtotal.toFixed(2)} DH</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>TVA ({taxRate}%)</span>
-                <span>{taxAmount.toFixed(2)} DH</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold border-t pt-2">
-                <span>Total</span>
-                <span>{total.toFixed(2)} DH</span>
-              </div>
+          {/* Totals */}
+          <div className="pt-4 border-t space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Sous-total:</span>
+              <span>{subtotal.toFixed(2)} DH</span>
             </div>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                className="flex-1"
-                onClick={handleSaveDraft}
-                disabled={currentOrder.items.length === 0}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Brouillon
-              </Button>
-              <Button
-                className="flex-1"
-                onClick={handleProcessPayment}
-                disabled={currentOrder.items.length === 0}
-              >
-                <CreditCard className="h-4 w-4 mr-2" />
-                Payer
-              </Button>
+            <div className="flex justify-between text-sm">
+              <span>TVA ({taxRate}%):</span>
+              <span>{taxAmount.toFixed(2)} DH</span>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            <div className="flex justify-between text-lg font-bold">
+              <span>Total:</span>
+              <span>{total.toFixed(2)} DH</span>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-2 mt-4">
+            <Button variant="outline" className="flex-1" onClick={handleSaveDraft}>
+              <Save className="mr-2 h-4 w-4" />
+              Brouillon
+            </Button>
+            <Button className="flex-1" onClick={handleProcessPayment}>
+              <CreditCard className="mr-2 h-4 w-4" />
+              Payer
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

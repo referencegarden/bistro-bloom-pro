@@ -335,9 +335,12 @@ export type Database = {
           category: string | null
           created_at: string | null
           description: string | null
+          display_order: number
           id: string
+          image_url: string | null
           is_active: boolean
           name: string
+          pos_category_id: string | null
           selling_price: number
           updated_at: string | null
         }
@@ -345,9 +348,12 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           description?: string | null
+          display_order?: number
           id?: string
+          image_url?: string | null
           is_active?: boolean
           name: string
+          pos_category_id?: string | null
           selling_price?: number
           updated_at?: string | null
         }
@@ -355,13 +361,24 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           description?: string | null
+          display_order?: number
           id?: string
+          image_url?: string | null
           is_active?: boolean
           name?: string
+          pos_category_id?: string | null
           selling_price?: number
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_pos_category_id_fkey"
+            columns: ["pos_category_id"]
+            isOneToOne: false
+            referencedRelation: "pos_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_items: {
         Row: {
@@ -547,6 +564,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pos_categories: {
+        Row: {
+          color: string
+          created_at: string
+          description: string | null
+          display_order: number
+          id: string
+          is_active: boolean
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          description?: string | null
+          display_order?: number
+          id?: string
+          is_active?: boolean
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       product_demands: {
         Row: {
@@ -872,6 +922,7 @@ export type Database = {
       }
       cancel_order: { Args: { _order_id: string }; Returns: Json }
       confirm_order: { Args: { _order_id: string }; Returns: Json }
+      generate_receipt_data: { Args: { _order_id: string }; Returns: Json }
       get_unit_conversion_factor: {
         Args: { from_unit: string; to_unit: string }
         Returns: number

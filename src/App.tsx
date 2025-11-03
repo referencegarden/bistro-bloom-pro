@@ -16,6 +16,7 @@ import Suppliers from "./pages/Suppliers";
 import Employees from "./pages/Employees";
 import Settings from "./pages/Settings";
 import MenuItems from "./pages/MenuItems";
+import POSCategories from "./pages/POSCategories";
 import Attendance from "./pages/Attendance";
 import AttendanceAdmin from "./pages/AttendanceAdmin";
 import POS from "./pages/POS";
@@ -196,9 +197,7 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <PermissionRoute permission="can_process_payments">
-                  <Layout>
-                    <POSPayment />
-                  </Layout>
+                  <POSPayment />
                 </PermissionRoute>
               </ProtectedRoute>
             }

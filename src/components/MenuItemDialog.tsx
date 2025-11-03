@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Plus, Trash2 } from "lucide-react";
 import { MenuItemIngredientRow } from "@/components/MenuItemIngredientRow";
@@ -42,18 +43,25 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
   const [isActive, setIsActive] = useState(true);
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  const [posCategories, setPosCategories] = useState<any[]>([]);
+  const [posCategoryId, setPosCategoryId] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     if (open) {
       loadProducts();
+      loadPosCategories();
       if (editingItem) {
         setName(editingItem.name);
         setDescription(editingItem.description || "");
         setCategory(editingItem.category || "");
         setSellingPrice(editingItem.selling_price.toString());
         setIsActive(editingItem.is_active);
+        setPosCategoryId(editingItem.pos_category_id || "");
+        setImagePreview(editingItem.image_url || "");
         loadIngredients(editingItem.id);
       } else {
         resetForm();
@@ -77,6 +85,21 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
         title: "Erreur",
         description: "Impossible de charger les produits",
       });
+    }
+  };
+
+  const loadPosCategories = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("pos_categories")
+        .select("*")
+        .eq("is_active", true)
+        .order("display_order");
+
+      if (error) throw error;
+      setPosCategories(data || []);
+    } catch (error: any) {
+      console.error("Error loading POS categories:", error);
     }
   };
 
@@ -114,7 +137,22 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
     setCategory("");
     setSellingPrice("");
     setIsActive(true);
+    setPosCategoryId("");
+    setImageFile(null);
+    setImagePreview("");
     setIngredients([]);
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const addIngredient = () => {
@@ -223,12 +261,32 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
 
       console.log("Submitting menu item with ingredients:", ingredients);
 
+      // Upload image if provided
+      let imageUrl = imagePreview;
+      if (imageFile) {
+        const fileExt = imageFile.name.split('.').pop();
+        const fileName = `${crypto.randomUUID()}.${fileExt}`;
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('menu-images')
+          .upload(fileName, imageFile);
+
+        if (uploadError) throw uploadError;
+        
+        const { data: { publicUrl } } = supabase.storage
+          .from('menu-images')
+          .getPublicUrl(fileName);
+        
+        imageUrl = publicUrl;
+      }
+
       const menuItemData = {
         name: name.trim(),
         description: description?.trim() || null,
         category: category?.trim() || null,
         selling_price: numericSellingPrice,
         is_active: isActive,
+        pos_category_id: posCategoryId || null,
+        image_url: imageUrl || null,
       };
 
       let menuItemId: string;
@@ -339,7 +397,7 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Catégorie</Label>
+              <Label htmlFor="category">Catégorie (texte)</Label>
               <Input
                 id="category"
                 value={category}
@@ -347,6 +405,42 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
                 placeholder="ex: Plat Principal, Dessert"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="pos_category">Catégorie POS</Label>
+            <Select value={posCategoryId} onValueChange={setPosCategoryId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionner une catégorie POS" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Aucune catégorie</SelectItem>
+                {posCategories.map((cat) => (
+                  <SelectItem key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="image">Image du produit</Label>
+            <Input
+              id="image"
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+            />
+            {imagePreview && (
+              <div className="mt-2">
+                <img 
+                  src={imagePreview} 
+                  alt="Aperçu" 
+                  className="w-32 h-32 object-cover rounded-md border"
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-2">
