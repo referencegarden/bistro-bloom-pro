@@ -110,7 +110,7 @@ export default function POSPayment() {
           payment_method: paymentMethod,
           amount_paid: paymentMethod === "cash" ? parseFloat(receivedAmount) : order.total_amount,
           change_amount: changeAmount,
-          employee_id: employeeId,
+          employee_id: employeeId || null,
         });
 
       if (paymentError) throw paymentError;

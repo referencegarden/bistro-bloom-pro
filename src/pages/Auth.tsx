@@ -33,7 +33,7 @@ export default function Auth() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (session) {
-          navigate("/");
+          navigate("/dashboard", { replace: true });
         }
       }
     );
@@ -45,7 +45,7 @@ export default function Auth() {
       }
     }) => {
       if (session) {
-        navigate("/");
+        navigate("/dashboard", { replace: true });
       }
     });
 
@@ -84,7 +84,7 @@ export default function Auth() {
     } else {
       toast.success("Connexion réussie!");
     }
-    navigate("/");
+    navigate("/dashboard");
     setLoading(false);
   }
   async function handleEmployeeLogin(e: React.FormEvent) {
@@ -129,7 +129,7 @@ export default function Auth() {
       } else if (perms?.can_view_products) {
         navigate("/products");
       } else if (perms?.can_view_reports) {
-        navigate("/");
+        navigate("/dashboard");
       } else {
         navigate("/sales");
       }

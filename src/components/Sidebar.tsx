@@ -9,7 +9,7 @@ import { useEffect, useMemo } from "react";
 import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
 const navigation = [{
   name: "Tableau de bord",
-  href: "/",
+  href: "/dashboard",
   icon: Home
 }, {
   name: "Produits",
@@ -119,7 +119,7 @@ export function AppSidebar() {
     if (isAdmin) return navigation;
     return navigation.filter(item => {
       // Always show dashboard
-      if (item.href === "/") return permissions.can_view_reports;
+      if (item.href === "/dashboard") return permissions.can_view_reports;
       // Settings only for admins
       if (item.href === "/settings") return false;
       // Categories, Suppliers, Employees only for admins
@@ -150,13 +150,13 @@ export function AppSidebar() {
       });
       if (error) throw error;
       toast.success("Déconnecté avec succès");
-      navigate("/auth");
+      navigate("/");
     } catch (error) {
       console.error("Logout error:", error);
       // Force clear and navigation on error
       localStorage.clear();
       toast.success("Déconnecté");
-      navigate("/auth");
+      navigate("/");
     }
   }
   return <Sidebar collapsible="icon">
