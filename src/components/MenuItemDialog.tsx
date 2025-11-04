@@ -408,13 +408,12 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="pos_category">Catégorie POS</Label>
-            <Select value={posCategoryId} onValueChange={setPosCategoryId}>
+            <Label htmlFor="pos_category">Catégorie POS (optionnel)</Label>
+            <Select value={posCategoryId || undefined} onValueChange={setPosCategoryId}>
               <SelectTrigger>
-                <SelectValue placeholder="Sélectionner une catégorie POS" />
+                <SelectValue placeholder="Aucune catégorie" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Aucune catégorie</SelectItem>
                 {posCategories.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id}>
                     {cat.name}
