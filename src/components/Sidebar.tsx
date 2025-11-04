@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList, UtensilsCrossed, ClipboardCheck, ShoppingBag, ChefHat } from "lucide-react";
+import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList, UtensilsCrossed, ClipboardCheck, ShoppingBag, ChefHat, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -33,7 +33,7 @@ const navigation = [{
   icon: ClipboardList
 }, {
   name: "Catégories",
-  href: "/categories",
+  href: "/category-management",
   icon: LayoutGrid
 }, {
   name: "Fournisseurs",
@@ -59,6 +59,10 @@ const navigation = [{
   name: "Affichage Cuisine",
   href: "/pos/kitchen",
   icon: ChefHat
+}, {
+  name: "Rapports POS",
+  href: "/pos/reports",
+  icon: BarChart3
 }, {
   name: "Paramètres",
   href: "/settings",
@@ -123,7 +127,7 @@ export function AppSidebar() {
       // Settings only for admins
       if (item.href === "/settings") return false;
       // Categories, Suppliers, Employees only for admins
-      if (["/categories", "/suppliers", "/employees"].includes(item.href)) return false;
+      if (["/category-management", "/suppliers", "/employees"].includes(item.href)) return false;
       // Products visibility
       if (item.href === "/products") return permissions.can_view_products;
       // Menu items visibility (same as sales)
@@ -138,6 +142,7 @@ export function AppSidebar() {
       if (item.href === "/pos") return permissions.can_use_pos;
       if (item.href === "/pos/orders") return permissions.can_manage_orders;
       if (item.href === "/pos/kitchen") return permissions.can_view_kitchen_display;
+      if (item.href === "/pos/reports") return permissions.can_access_pos_reports;
       return true;
     });
   }, [isAdmin, permissions]);

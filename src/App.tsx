@@ -23,6 +23,8 @@ import POS from "./pages/POS";
 import POSOrders from "./pages/POSOrders";
 import POSPayment from "./pages/POSPayment";
 import KitchenDisplay from "./pages/KitchenDisplay";
+import CategoryManagement from "./pages/CategoryManagement";
+import POSReports from "./pages/POSReports";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -209,6 +211,30 @@ const App = () => (
                 <PermissionRoute permission="can_view_kitchen_display">
                   <Layout>
                     <KitchenDisplay />
+                  </Layout>
+                </PermissionRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/category-management"
+            element={
+              <ProtectedRoute>
+                <PermissionRoute permission="can_manage_stock">
+                  <Layout>
+                    <CategoryManagement />
+                  </Layout>
+                </PermissionRoute>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pos/reports"
+            element={
+              <ProtectedRoute>
+                <PermissionRoute permission="can_access_pos_reports">
+                  <Layout>
+                    <POSReports />
                   </Layout>
                 </PermissionRoute>
               </ProtectedRoute>

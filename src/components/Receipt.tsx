@@ -84,12 +84,24 @@ export function Receipt({ orderId, onDataLoaded }: ReceiptProps) {
             top: 0;
             width: 80mm;
             max-width: 80mm;
-            padding: 5mm;
+            padding: 2mm;
             margin: 0;
+            font-size: 7pt;
           }
           @page {
-            size: 80mm auto;
+            size: 80mm 55mm;
             margin: 0;
+          }
+          .receipt-container h1 {
+            font-size: 12pt;
+            margin-bottom: 1mm;
+          }
+          .receipt-container p, .receipt-container div {
+            font-size: 7pt;
+            line-height: 1.2;
+          }
+          .receipt-container table {
+            font-size: 7pt;
           }
         }
       `}</style>

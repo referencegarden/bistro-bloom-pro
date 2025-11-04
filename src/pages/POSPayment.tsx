@@ -8,7 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
-import { CreditCard, Banknote, Smartphone, FileText, CheckCircle } from "lucide-react";
+import { CreditCard, Banknote, Smartphone, FileText, CheckCircle, Printer } from "lucide-react";
+import { Receipt } from "@/components/Receipt";
 
 interface Order {
   id: string;
@@ -29,11 +30,21 @@ export default function POSPayment() {
   const [receivedAmount, setReceivedAmount] = useState<string>("");
   const [employeeId, setEmployeeId] = useState<string>("");
   const [processing, setProcessing] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
+  const [receiptLoaded, setReceiptLoaded] = useState(false);
 
   useEffect(() => {
     loadOrder();
     loadEmployee();
   }, [orderId]);
+
+  useEffect(() => {
+    if (paymentSuccess && receiptLoaded) {
+      setTimeout(() => {
+        window.print();
+      }, 500);
+    }
+  }, [paymentSuccess, receiptLoaded]);
 
   const loadEmployee = async () => {
     const { data: { user } } = await supabase.auth.getUser();
@@ -128,8 +139,7 @@ export default function POSPayment() {
         description: `Commande ${order.order_number} payée avec succès`,
       });
 
-      // Navigate back to POS
-      navigate("/pos");
+      setPaymentSuccess(true);
     } catch (error: any) {
       toast({
         title: "Erreur",
@@ -145,6 +155,36 @@ export default function POSPayment() {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (paymentSuccess) {
+    return (
+      <div className="container mx-auto p-6 max-w-2xl">
+        <Card className="p-6">
+          <div className="text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="rounded-full bg-green-100 p-3">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+            </div>
+            <h2 className="text-2xl font-bold">Paiement Confirmé!</h2>
+            <p className="text-muted-foreground">Le reçu va s'imprimer automatiquement</p>
+            <div className="flex gap-3 justify-center">
+              <Button onClick={() => window.print()} variant="outline">
+                <Printer className="mr-2 h-4 w-4" />
+                Réimprimer le Reçu
+              </Button>
+              <Button onClick={() => navigate("/pos")}>
+                Retour au POS
+              </Button>
+            </div>
+          </div>
+        </Card>
+        <div className="hidden print:block">
+          <Receipt orderId={orderId!} onDataLoaded={() => setReceiptLoaded(true)} />
+        </div>
       </div>
     );
   }
