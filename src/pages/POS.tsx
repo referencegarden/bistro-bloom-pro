@@ -11,6 +11,9 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Minus, X, Search, ShoppingCart, Save, CreditCard, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { printOrderTickets } from "@/lib/printerService";
+import { BarPreparationTicket } from "@/components/BarPreparationTicket";
+import { KitchenPreparationTicket } from "@/components/KitchenPreparationTicket";
 
 interface MenuItem {
   id: string;
@@ -67,6 +70,7 @@ export default function POS() {
   });
   const [taxRate, setTaxRate] = useState(10);
   const [employeeId, setEmployeeId] = useState<string>("");
+  const [printingOrderId, setPrintingOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -300,8 +304,34 @@ export default function POS() {
 
       if (itemsError) throw itemsError;
 
-      navigate(`/pos/payment/${order.id}`);
+      // Print preparation tickets for bar and kitchen
+      setPrintingOrderId(order.id);
+      toast({ 
+        title: "Commande envoyée", 
+        description: "Préparez les tickets d'impression..."
+      });
+
+      // Small delay to ensure order items are fully saved
+      setTimeout(async () => {
+        const { barPrinted, kitchenPrinted } = await printOrderTickets(order.id);
+        
+        const printedTickets = [];
+        if (barPrinted) printedTickets.push("Bar");
+        if (kitchenPrinted) printedTickets.push("Cuisine");
+        
+        if (printedTickets.length > 0) {
+          toast({ 
+            title: "Tickets générés", 
+            description: `Tickets: ${printedTickets.join(", ")}`
+          });
+        }
+        
+        setPrintingOrderId(null);
+        navigate(`/pos/payment/${order.id}`);
+      }, 500);
+
     } catch (error: any) {
+      setPrintingOrderId(null);
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     }
   };
@@ -543,13 +573,25 @@ export default function POS() {
               <Save className="mr-2 h-4 w-4" />
               Brouillon
             </Button>
-            <Button className="flex-1" onClick={handleProcessPayment}>
+            <Button 
+              className="flex-1" 
+              onClick={handleProcessPayment}
+              disabled={printingOrderId !== null}
+            >
               <CreditCard className="mr-2 h-4 w-4" />
-              Payer
+              {printingOrderId ? "Impression..." : "Payer"}
             </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Hidden ticket components for printing */}
+      {printingOrderId && (
+        <div className="hidden">
+          <BarPreparationTicket orderId={printingOrderId} />
+          <KitchenPreparationTicket orderId={printingOrderId} />
+        </div>
+      )}
     </div>
   );
 }
