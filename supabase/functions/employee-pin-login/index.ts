@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -33,20 +34,45 @@ serve(async (req) => {
       );
     }
 
-    // Find employee by PIN hash (ensure consistent trimming)
-    const encodedPin = btoa(trimmedPin);
-    console.log('Looking for employee with encoded PIN (trim applied)');
+    // Validate PIN format (4-8 digits)
+    if (!/^\d{4,8}$/.test(trimmedPin)) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid PIN format' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    const { data: employee, error: employeeError } = await supabaseClient
+    // Find all active employees with PIN enabled
+    const { data: employees, error: employeeError } = await supabaseClient
       .from('employees')
       .select('*')
-      .eq('pin_hash', encodedPin)
       .eq('is_active', true)
       .eq('pin_enabled', true)
-      .maybeSingle();
+      .not('pin_hash', 'is', null);
 
-    if (employeeError || !employee) {
+    if (employeeError) {
       console.error('Employee lookup failed:', employeeError);
+      return new Response(
+        JSON.stringify({ error: 'Database error' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    // Find employee by comparing PIN hash using bcrypt
+    let employee = null;
+    for (const emp of employees || []) {
+      try {
+        const isMatch = await bcrypt.compare(trimmedPin, emp.pin_hash);
+        if (isMatch) {
+          employee = emp;
+          break;
+        }
+      } catch (e) {
+        console.error('Error comparing PIN for employee:', emp.id, e);
+      }
+    }
+
+    if (!employee) {
       return new Response(
         JSON.stringify({ error: 'Invalid PIN' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }

@@ -22,7 +22,7 @@ serve(async (req) => {
       }
     );
 
-    // Verify user is admin
+    // Verify user is authenticated
     const { data: { user } } = await supabaseClient.auth.getUser();
     if (!user) {
       return new Response(
@@ -31,7 +31,53 @@ serve(async (req) => {
       );
     }
 
+    // Verify user has admin role or can_manage_stock permission
+    const { data: userRole } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    const isAdmin = userRole?.role === 'admin';
+
+    // If not admin, check employee permissions
+    let hasPermission = isAdmin;
+    if (!isAdmin) {
+      const { data: employee } = await supabaseClient
+        .from('employees')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .maybeSingle();
+
+      if (employee) {
+        const { data: permissions } = await supabaseClient
+          .from('employee_permissions')
+          .select('can_manage_stock')
+          .eq('employee_id', employee.id)
+          .maybeSingle();
+
+        hasPermission = permissions?.can_manage_stock === true;
+      }
+    }
+
+    if (!hasPermission) {
+      console.log('Unauthorized import attempt by user:', user.id);
+      return new Response(
+        JSON.stringify({ error: 'Admin privileges or stock management permission required' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     const { products } = await req.json();
+
+    // Rate limiting: max 500 products per request
+    if (products && Array.isArray(products) && products.length > 500) {
+      return new Response(
+        JSON.stringify({ error: 'Maximum 500 products per import request' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (!products || !Array.isArray(products)) {
       return new Response(
@@ -108,12 +154,23 @@ serve(async (req) => {
 
       try {
         // Validate required fields
-        if (!product.name) {
+        if (!product.name || typeof product.name !== 'string') {
           results.failed++;
           results.errors.push({
             row: rowNumber,
             name: product.name || 'Unknown',
-            error: 'Missing product name',
+            error: 'Missing or invalid product name',
+          });
+          continue;
+        }
+
+        // Validate name length
+        if (product.name.trim().length === 0 || product.name.trim().length > 200) {
+          results.failed++;
+          results.errors.push({
+            row: rowNumber,
+            name: product.name,
+            error: 'Product name must be between 1 and 200 characters',
           });
           continue;
         }
@@ -132,22 +189,34 @@ serve(async (req) => {
         const categoryName = product.category_name?.toLowerCase().trim();
         const categoryId = categoryName ? categoryMap.get(categoryName) : null;
 
-        // Parse cost - allow 0 for inventory/equipment items
+        // Parse and validate cost
         const cost = parseFloat(product.cost);
-        if (isNaN(cost)) {
+        if (isNaN(cost) || !isFinite(cost) || cost < 0 || cost > 1000000) {
           results.failed++;
           results.errors.push({
             row: rowNumber,
             name: product.name,
-            error: `Invalid cost value: ${product.cost}`,
+            error: `Invalid cost value: ${product.cost} (must be 0-1,000,000)`,
           });
           continue;
         }
 
-        // Prepare product data
+        // Validate unit of measure
+        const unitOfMeasure = product.unit_of_measure?.trim() || 'unité';
+        if (unitOfMeasure.length > 50) {
+          results.failed++;
+          results.errors.push({
+            row: rowNumber,
+            name: product.name,
+            error: 'Unit of measure too long (max 50 characters)',
+          });
+          continue;
+        }
+
+        // Prepare product data with validated values
         const productData = {
-          name: product.name.trim(),
-          unit_of_measure: product.unit_of_measure?.trim() || 'unité',
+          name: product.name.trim().substring(0, 200),
+          unit_of_measure: unitOfMeasure.substring(0, 50),
           cost_price: cost,
           sales_price: cost * 1.3, // Default 30% markup
           current_stock: 0,

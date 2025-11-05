@@ -132,10 +132,20 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
       return;
     }
 
-    // Check PIN format if provided
-    if (formData.pin.trim() && formData.pin.trim().length < 4) {
-      toast.error("Le code PIN doit contenir au moins 4 chiffres");
-      return;
+    // Validate PIN format if provided
+    if (formData.pin.trim()) {
+      const pinRegex = /^\d{4,8}$/;
+      if (!pinRegex.test(formData.pin.trim())) {
+        toast.error("Le code PIN doit contenir entre 4 et 8 chiffres uniquement");
+        return;
+      }
+
+      // Check for weak PINs
+      const weakPins = ['0000', '1111', '2222', '3333', '4444', '5555', '6666', '7777', '8888', '9999', '1234', '4321'];
+      if (weakPins.includes(formData.pin.trim())) {
+        toast.error("Ce code PIN est trop faible. Veuillez en choisir un autre");
+        return;
+      }
     }
 
     // Build base data
@@ -154,8 +164,17 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
       // Explicitly disable: clear the hash
       data.pin_hash = null;
     } else if (formData.pin_enabled && formData.pin.trim()) {
-      // New PIN provided: encode and save
-      data.pin_hash = btoa(formData.pin.trim());
+      // Hash PIN via edge function
+      const { data: hashData, error: hashError } = await supabase.functions.invoke('hash-pin', {
+        body: { pin: formData.pin.trim() }
+      });
+
+      if (hashError || !hashData?.hash) {
+        toast.error("Erreur lors du hashage du PIN");
+        console.error('PIN hash error:', hashError);
+        return;
+      }
+      data.pin_hash = hashData.hash;
     } else if (!employee) {
       // Creating new employee without PIN: set null
       data.pin_hash = null;
