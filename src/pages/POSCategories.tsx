@@ -137,6 +137,20 @@ export default function POSCategories() {
     if (!confirm("Êtes-vous sûr de vouloir supprimer cette catégorie ?")) return;
 
     try {
+      // Check if any menu items reference this category
+      const { data: menuItems, error: checkError } = await supabase
+        .from("menu_items")
+        .select("id")
+        .eq("pos_category_id", id)
+        .limit(1);
+
+      if (checkError) throw checkError;
+
+      if (menuItems && menuItems.length > 0) {
+        toast.error("Impossible de supprimer : des items de menu utilisent cette catégorie");
+        return;
+      }
+
       const { error } = await supabase
         .from("pos_categories")
         .delete()
