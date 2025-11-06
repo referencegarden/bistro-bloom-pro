@@ -27,6 +27,7 @@ export function BarPreparationTicket({ orderId }: BarPreparationTicketProps) {
 
   const loadTicketData = async () => {
     try {
+      console.log("Loading bar ticket data for order:", orderId);
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .select(`
@@ -49,17 +50,23 @@ export function BarPreparationTicket({ orderId }: BarPreparationTicketProps) {
 
       if (orderError) throw orderError;
 
+      console.log("Order data loaded:", orderData);
+
       // Filter only Bar items
       const barItems = orderData.order_items
-        .filter((item: any) => 
-          item.menu_items.category === "Bar" || 
-          item.menu_items.pos_categories?.name === "Bar"
-        )
+        .filter((item: any) => {
+          const isBar = item.menu_items.category === "Bar" || 
+                        item.menu_items.pos_categories?.name === "Bar";
+          console.log("Item:", item.menu_items.name, "isBar:", isBar, "category:", item.menu_items.category, "pos_category:", item.menu_items.pos_categories?.name);
+          return isBar;
+        })
         .map((item: any) => ({
           name: item.menu_items.name,
           quantity: item.quantity,
           special_instructions: item.special_instructions,
         }));
+
+      console.log("Bar items filtered:", barItems);
 
       setData({
         order_number: orderData.order_number,

@@ -104,30 +104,33 @@ export async function printOrderTickets(orderId: string): Promise<{
   barPrinted: boolean;
   kitchenPrinted: boolean;
 }> {
+  console.log("Fetching order data for printing:", orderId);
   const orderData = await getOrderPrintData(orderId);
   
   if (!orderData) {
-    console.error("Could not load order data for printing");
+    console.error("Could not fetch order data for printing");
     return { barPrinted: false, kitchenPrinted: false };
   }
 
+  console.log("Order data fetched:", orderData);
   const { barItems, cuisineItems } = categorizeOrderItems(orderData.items);
+  console.log("Categorized items:", { barItems: barItems.length, cuisineItems: cuisineItems.length });
 
   let barPrinted = false;
   let kitchenPrinted = false;
 
   // Print bar ticket if there are bar items
   if (barItems.length > 0) {
-    // Small delay to allow UI to render
-    await new Promise(resolve => setTimeout(resolve, 100));
+    console.log("Printing bar ticket...");
     printTicket("bar");
     barPrinted = true;
+    // Increased delay between prints
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 
   // Print kitchen ticket if there are cuisine items
-  // Wait for bar print to complete before opening kitchen print dialog
   if (cuisineItems.length > 0) {
-    await new Promise(resolve => setTimeout(resolve, barItems.length > 0 ? 2000 : 100));
+    console.log("Printing kitchen ticket...");
     printTicket("kitchen");
     kitchenPrinted = true;
   }

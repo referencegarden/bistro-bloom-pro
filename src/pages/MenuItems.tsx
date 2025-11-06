@@ -112,7 +112,15 @@ export default function MenuItems() {
     if (!confirm("Êtes-vous sûr de vouloir supprimer cet item du menu?")) return;
 
     try {
-      // First delete all ingredients for this menu item
+      // First delete all menu item sales
+      const { error: salesError } = await supabase
+        .from("menu_item_sales")
+        .delete()
+        .eq("menu_item_id", id);
+      
+      if (salesError) throw salesError;
+
+      // Then delete all ingredients for this menu item
       const { error: ingredientsError } = await supabase
         .from("menu_item_ingredients")
         .delete()
@@ -120,7 +128,7 @@ export default function MenuItems() {
       
       if (ingredientsError) throw ingredientsError;
 
-      // Then delete the menu item itself
+      // Finally delete the menu item itself
       const { error } = await supabase.from("menu_items").delete().eq("id", id);
       if (error) throw error;
 

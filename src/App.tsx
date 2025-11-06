@@ -175,9 +175,7 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <PermissionRoute permission="can_use_pos">
-                  <Layout>
-                    <POS />
-                  </Layout>
+                  <POS />
                 </PermissionRoute>
               </ProtectedRoute>
             }

@@ -306,29 +306,36 @@ export default function POS() {
 
       // Print preparation tickets for bar and kitchen
       setPrintingOrderId(order.id);
+      console.log("Starting ticket printing process for order:", order.id);
+      
       toast({ 
         title: "Commande envoyée", 
-        description: "Préparez les tickets d'impression..."
+        description: "Préparation des tickets d'impression..."
       });
 
-      // Small delay to ensure order items are fully saved
+      // Increased delay to ensure order items are fully saved and tickets are rendered
       setTimeout(async () => {
+        console.log("Attempting to print tickets...");
         const { barPrinted, kitchenPrinted } = await printOrderTickets(order.id);
         
         const printedTickets = [];
         if (barPrinted) printedTickets.push("Bar");
         if (kitchenPrinted) printedTickets.push("Cuisine");
         
+        console.log("Tickets printed:", { barPrinted, kitchenPrinted });
+        
         if (printedTickets.length > 0) {
           toast({ 
             title: "Tickets générés", 
             description: `Tickets: ${printedTickets.join(", ")}`
           });
+        } else {
+          console.warn("No tickets were generated");
         }
         
         setPrintingOrderId(null);
         navigate(`/pos/payment/${order.id}`);
-      }, 500);
+      }, 1000);
 
     } catch (error: any) {
       setPrintingOrderId(null);
@@ -339,9 +346,9 @@ export default function POS() {
   const { subtotal, taxAmount, total } = calculateTotals();
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] gap-4 p-4">
-      {/* Left: Menu Items Grid */}
-      <div className="flex-1 flex flex-col">
+    <div className="flex h-screen gap-4 p-4 bg-background">
+      {/* Left: Menu Items - Vertical List */}
+      <div className="flex-1 flex flex-col max-w-md">
         <div className="mb-4 space-y-3">
           <div className="flex gap-2">
             <div className="relative flex-1">
@@ -383,17 +390,17 @@ export default function POS() {
           </ScrollArea>
         </div>
 
-        {/* Menu Items Grid */}
+        {/* Menu Items - Vertical Scrollable List */}
         <ScrollArea className="flex-1">
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-4">
+          <div className="flex flex-col gap-3 pb-4">
             {filteredMenuItems.map((item) => (
               <Card
                 key={item.id}
-                className="cursor-pointer hover:shadow-lg transition-all hover:scale-105"
+                className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02]"
                 onClick={() => addItemToOrder(item)}
               >
-                <CardContent className="p-3 flex flex-col h-full">
-                  <div className="aspect-square mb-2 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                <CardContent className="p-4 flex gap-4 items-center">
+                  <div className="w-20 h-20 rounded-md overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center">
                     {item.image_url ? (
                       <img
                         src={item.image_url}
@@ -401,13 +408,15 @@ export default function POS() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <Package className="h-12 w-12 text-muted-foreground" />
+                      <Package className="h-10 w-10 text-muted-foreground" />
                     )}
                   </div>
-                  <h3 className="font-semibold text-sm mb-1 line-clamp-2">{item.name}</h3>
-                  <p className="text-lg font-bold text-primary mt-auto">
-                    {item.selling_price.toFixed(2)} DH
-                  </p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-base mb-1 truncate">{item.name}</h3>
+                    <p className="text-xl font-bold text-primary">
+                      {item.selling_price.toFixed(2)} DH
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             ))}
@@ -523,7 +532,7 @@ export default function POS() {
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
                         <Button
                           variant="outline"
@@ -544,6 +553,15 @@ export default function POS() {
                         </Button>
                       </div>
                       <span className="font-bold">{item.subtotal.toFixed(2)} DH</span>
+                    </div>
+                    <div className="mt-2">
+                      <Textarea
+                        placeholder="Notes spéciales..."
+                        value={item.special_instructions || ""}
+                        onChange={(e) => updateInstructions(item.menu_item_id, e.target.value)}
+                        rows={2}
+                        className="text-xs"
+                      />
                     </div>
                   </Card>
                 ))}
@@ -585,9 +603,9 @@ export default function POS() {
         </CardContent>
       </Card>
 
-      {/* Hidden ticket components for printing */}
+      {/* Ticket components for printing - visible but off-screen */}
       {printingOrderId && (
-        <div className="hidden">
+        <div style={{ position: 'fixed', left: '-9999px', top: 0 }}>
           <BarPreparationTicket orderId={printingOrderId} />
           <KitchenPreparationTicket orderId={printingOrderId} />
         </div>
