@@ -31,8 +31,9 @@ serve(async (req) => {
       );
     }
 
-    // Hash the PIN using bcrypt (convert cost to string for Deno bcrypt)
-    const hash = await bcrypt.hash(trimmedPin);
+    // Hash the PIN using bcrypt sync variants (compatible with Deno Edge runtime)
+    const salt = bcrypt.genSaltSync(10);
+    const hash = bcrypt.hashSync(trimmedPin, salt);
 
     return new Response(
       JSON.stringify({ hash }),

@@ -62,7 +62,7 @@ serve(async (req) => {
     let employee = null;
     for (const emp of employees || []) {
       try {
-        const isMatch = await bcrypt.compare(trimmedPin, emp.pin_hash);
+        const isMatch = bcrypt.compareSync(trimmedPin, emp.pin_hash);
         if (isMatch) {
           employee = emp;
           break;
