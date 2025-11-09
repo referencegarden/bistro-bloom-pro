@@ -107,7 +107,13 @@ export default function Auth() {
       const {
         data: perms
       } = await supabase.from("employee_permissions").select("*").eq("employee_id", data.employee.id).maybeSingle();
-      if (perms?.can_make_sales) {
+      
+      // Check if waiter (can_use_pos=true, no other permissions)
+      const isWaiter = perms?.can_use_pos && !perms?.can_make_sales && !perms?.can_view_products;
+      
+      if (isWaiter || perms?.can_use_pos) {
+        navigate("/pos");
+      } else if (perms?.can_make_sales) {
         navigate("/sales");
       } else if (perms?.can_view_products) {
         navigate("/products");

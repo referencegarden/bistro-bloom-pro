@@ -41,7 +41,7 @@ export function useEmployeePermissions() {
     enabled: !!session?.user?.id,
   });
 
-  const { data: permissions, isLoading } = useQuery({
+  const { data: permissionsData, isLoading } = useQuery({
     queryKey: ["employee-permissions", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
@@ -67,23 +67,41 @@ export function useEmployeePermissions() {
     enabled: !!session?.user?.id && userRole === "employee",
   });
 
+  const permissions = permissionsData || {
+    can_make_sales: false,
+    can_view_products: false,
+    can_view_reports: false,
+    can_manage_stock: false,
+    can_manage_suppliers: false,
+    can_create_demands: false,
+    can_manage_attendance: false,
+    can_use_pos: false,
+    can_manage_orders: false,
+    can_process_payments: false,
+    can_view_kitchen_display: false,
+    can_access_pos_reports: false,
+  };
+
+  const isWaiter = userRole === "employee" && permissions.can_use_pos && !permissions.can_make_sales && !permissions.can_view_products;
+
   if (userRole === "admin") {
     return {
       isAdmin: true,
       isEmployee: false,
+      isWaiter: false,
       permissions: {
-      can_make_sales: true,
-      can_view_products: true,
-      can_view_reports: true,
-      can_manage_stock: true,
-      can_manage_suppliers: true,
-      can_create_demands: true,
-      can_manage_attendance: true,
-      can_use_pos: true,
-      can_manage_orders: true,
-      can_process_payments: true,
-      can_view_kitchen_display: true,
-      can_access_pos_reports: true,
+        can_make_sales: true,
+        can_view_products: true,
+        can_view_reports: true,
+        can_manage_stock: true,
+        can_manage_suppliers: true,
+        can_create_demands: true,
+        can_manage_attendance: true,
+        can_use_pos: true,
+        can_manage_orders: true,
+        can_process_payments: true,
+        can_view_kitchen_display: true,
+        can_access_pos_reports: true,
       },
       loading: false,
     };
@@ -93,20 +111,8 @@ export function useEmployeePermissions() {
     return {
       isAdmin: false,
       isEmployee: true,
-      permissions: permissions || {
-        can_make_sales: false,
-        can_view_products: false,
-        can_view_reports: false,
-        can_manage_stock: false,
-        can_manage_suppliers: false,
-        can_create_demands: false,
-        can_manage_attendance: false,
-        can_use_pos: false,
-        can_manage_orders: false,
-        can_process_payments: false,
-        can_view_kitchen_display: false,
-        can_access_pos_reports: false,
-      },
+      isWaiter,
+      permissions,
       loading: isLoading,
     };
   }
@@ -114,6 +120,7 @@ export function useEmployeePermissions() {
   return {
     isAdmin: false,
     isEmployee: false,
+    isWaiter: false,
     permissions: {
       can_make_sales: false,
       can_view_products: false,

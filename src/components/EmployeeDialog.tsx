@@ -50,6 +50,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
     pin_enabled: false,
     pin: "",
   });
+  const [roleType, setRoleType] = useState<"employee" | "waiter">("employee");
   const [permissions, setPermissions] = useState<EmployeePermissions>({
     can_make_sales: true,
     can_view_products: true,
@@ -80,14 +81,19 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         .maybeSingle()
         .then(({ data }) => {
           if (data) {
-            setPermissions({
+            const perms = {
               can_make_sales: data.can_make_sales,
               can_view_products: data.can_view_products,
               can_view_reports: data.can_view_reports,
               can_manage_stock: data.can_manage_stock,
               can_manage_suppliers: data.can_manage_suppliers ?? false,
               can_create_demands: data.can_create_demands ?? true,
-            });
+            };
+            setPermissions(perms);
+            
+            // Detect waiter role based on permissions
+            const isWaiter = data.can_use_pos && !data.can_make_sales && !data.can_view_products && !data.can_view_reports;
+            setRoleType(isWaiter ? "waiter" : "employee");
           }
         });
     } else {
@@ -101,6 +107,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         pin_enabled: false,
         pin: "",
       });
+      setRoleType("employee");
       setPermissions({
         can_make_sales: true,
         can_view_products: true,
@@ -208,21 +215,45 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
       employeeId = newEmployee.id;
     }
 
-    // Update permissions
+    // Update permissions based on role type
     if (employeeId) {
-    const { error: permError } = await supabase
-      .from("employee_permissions")
-      .upsert({
-        employee_id: employeeId,
-        can_make_sales: permissions.can_make_sales,
-        can_view_products: permissions.can_view_products,
-        can_view_reports: permissions.can_view_reports,
-        can_manage_stock: permissions.can_manage_stock,
-        can_manage_suppliers: permissions.can_manage_suppliers,
-        can_create_demands: permissions.can_create_demands,
-      }, {
-        onConflict: 'employee_id'
-      });
+      const finalPermissions = roleType === "waiter" 
+        ? {
+            employee_id: employeeId,
+            can_use_pos: true,
+            can_manage_orders: true,
+            can_process_payments: true,
+            can_view_kitchen_display: false,
+            can_access_pos_reports: false,
+            can_make_sales: false,
+            can_view_products: false,
+            can_view_reports: false,
+            can_manage_stock: false,
+            can_manage_suppliers: false,
+            can_create_demands: false,
+            can_manage_attendance: false,
+          }
+        : {
+            employee_id: employeeId,
+            can_make_sales: permissions.can_make_sales,
+            can_view_products: permissions.can_view_products,
+            can_view_reports: permissions.can_view_reports,
+            can_manage_stock: permissions.can_manage_stock,
+            can_manage_suppliers: permissions.can_manage_suppliers,
+            can_create_demands: permissions.can_create_demands,
+            can_use_pos: false,
+            can_manage_orders: false,
+            can_process_payments: false,
+            can_view_kitchen_display: false,
+            can_access_pos_reports: false,
+            can_manage_attendance: false,
+          };
+
+      const { error: permError } = await supabase
+        .from("employee_permissions")
+        .upsert(finalPermissions, {
+          onConflict: 'employee_id'
+        });
 
       if (permError) {
         toast.error("Échec de la mise à jour des permissions");
@@ -245,6 +276,39 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="roleType">Type de compte</Label>
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant={roleType === "employee" ? "default" : "outline"}
+                onClick={() => {
+                  setRoleType("employee");
+                  setFormData({ ...formData, pin_enabled: false });
+                }}
+                className="flex-1"
+              >
+                Employé
+              </Button>
+              <Button
+                type="button"
+                variant={roleType === "waiter" ? "default" : "outline"}
+                onClick={() => {
+                  setRoleType("waiter");
+                  setFormData({ ...formData, pin_enabled: true, position: "Serveur" });
+                }}
+                className="flex-1"
+              >
+                Serveur
+              </Button>
+            </div>
+            {roleType === "waiter" && (
+              <p className="text-xs text-muted-foreground mt-1">
+                Les serveurs peuvent uniquement accéder au POS avec un code PIN
+              </p>
+            )}
+          </div>
+
           <div className="space-y-2">
             <Label htmlFor="name">Nom Complet *</Label>
             <Input
@@ -326,6 +390,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
               onCheckedChange={(checked) =>
                 setFormData({ ...formData, pin_enabled: checked, pin: "" })
               }
+              disabled={roleType === "waiter"}
             />
           </div>
 
@@ -347,19 +412,20 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
             </div>
           )}
 
-          <div className="space-y-4 border-t pt-4">
-            <h3 className="font-semibold">Permissions</h3>
+          {roleType === "employee" && (
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="font-semibold">Permissions</h3>
 
-            <div className="flex items-center justify-between">
-              <Label htmlFor="can_make_sales">Peut faire Sortie de Stock</Label>
-              <Switch
-                id="can_make_sales"
-                checked={permissions.can_make_sales}
-                onCheckedChange={(checked) =>
-                  setPermissions({ ...permissions, can_make_sales: checked })
-                }
-              />
-            </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="can_make_sales">Peut faire Sortie de Stock</Label>
+                <Switch
+                  id="can_make_sales"
+                  checked={permissions.can_make_sales}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_make_sales: checked })
+                  }
+                />
+              </div>
 
             <div className="flex items-center justify-between">
               <Label htmlFor="can_view_products">Peut voir les produits</Label>
@@ -405,17 +471,18 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
               />
             </div>
 
-            <div className="flex items-center justify-between">
-              <Label htmlFor="can_create_demands">Peut créer des commandes</Label>
-              <Switch
-                id="can_create_demands"
-                checked={permissions.can_create_demands}
-                onCheckedChange={(checked) =>
-                  setPermissions({ ...permissions, can_create_demands: checked })
-                }
-              />
+              <div className="flex items-center justify-between">
+                <Label htmlFor="can_create_demands">Peut créer des commandes</Label>
+                <Switch
+                  id="can_create_demands"
+                  checked={permissions.can_create_demands}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_create_demands: checked })
+                  }
+                />
+              </div>
             </div>
-          </div>
+          )}
 
           <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
             <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">

@@ -9,11 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Minus, X, Search, ShoppingCart, Save, CreditCard, Package } from "lucide-react";
+import { Plus, Minus, X, Search, ShoppingCart, Save, CreditCard, Package, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { printOrderTickets } from "@/lib/printerService";
 import { BarPreparationTicket } from "@/components/BarPreparationTicket";
 import { KitchenPreparationTicket } from "@/components/KitchenPreparationTicket";
+import { POSLockDialog } from "@/components/POSLockDialog";
 
 interface MenuItem {
   id: string;
@@ -71,6 +72,9 @@ export default function POS() {
   const [taxRate, setTaxRate] = useState(10);
   const [employeeId, setEmployeeId] = useState<string>("");
   const [printingOrderId, setPrintingOrderId] = useState<string | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
+  const [employeeName, setEmployeeName] = useState<string>("");
+  const [pinEnabled, setPinEnabled] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -82,12 +86,14 @@ export default function POS() {
     if (user) {
       const { data: employee } = await supabase
         .from("employees")
-        .select("id")
+        .select("id, name, pin_enabled")
         .eq("user_id", user.id)
         .single();
       
       if (employee) {
         setEmployeeId(employee.id);
+        setEmployeeName(employee.name);
+        setPinEnabled(employee.pin_enabled);
       }
     }
   };
@@ -363,6 +369,12 @@ export default function POS() {
           <span className="text-sm text-muted-foreground">
             {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })} à {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
           </span>
+          {pinEnabled && !isLocked && (
+            <Button variant="outline" size="sm" onClick={() => setIsLocked(true)}>
+              <Lock className="mr-2 h-4 w-4" />
+              Verrouiller POS
+            </Button>
+          )}
         </div>
       </div>
 
@@ -416,11 +428,15 @@ export default function POS() {
       <div className="flex flex-1 overflow-hidden">
         {/* Left: Product Grid */}
         <div className="flex-1 overflow-auto p-6">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-6 gap-4">
             {filteredMenuItems.map((item) => {
               const orderItem = getItemInOrder(item.id);
               return (
-                <Card key={item.id} className="overflow-hidden group hover:shadow-lg transition-all">
+                <Card 
+                  key={item.id} 
+                  className="overflow-hidden group hover:shadow-lg transition-all cursor-pointer"
+                  onClick={() => !isLocked && addItemToOrder(item)}
+                >
                   <div className="relative aspect-square">
                     {item.image_url ? (
                       <img
@@ -438,32 +454,17 @@ export default function POS() {
                     >
                       ● Disponible
                     </Badge>
+                    {orderItem && (
+                      <Badge 
+                        className="absolute top-2 left-2 bg-primary text-white"
+                      >
+                        {orderItem.quantity}
+                      </Badge>
+                    )}
                   </div>
                   <CardContent className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <h3 className="font-semibold text-sm">{item.name}</h3>
-                      <span className="font-bold text-sm">${item.selling_price.toFixed(2)}</span>
-                    </div>
-                    {orderItem ? (
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full"
-                        onClick={() => addItemToOrder(item)}
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Ajouter ({orderItem.quantity})
-                      </Button>
-                    ) : (
-                      <Button 
-                        size="sm" 
-                        className="w-full bg-slate-900 hover:bg-slate-800"
-                        onClick={() => addItemToOrder(item)}
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Ajouter
-                      </Button>
-                    )}
+                    <h3 className="font-semibold text-sm text-center mb-2">{item.name}</h3>
+                    <span className="font-bold text-sm block text-center">${item.selling_price.toFixed(2)}</span>
                   </CardContent>
                 </Card>
               );
@@ -664,6 +665,13 @@ export default function POS() {
           <KitchenPreparationTicket orderId={printingOrderId} />
         </div>
       )}
+
+      {/* Lock overlay */}
+      <POSLockDialog 
+        open={isLocked} 
+        employeeName={employeeName}
+        onUnlock={() => setIsLocked(false)}
+      />
     </div>
   );
 }
