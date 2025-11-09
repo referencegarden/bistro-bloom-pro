@@ -418,7 +418,7 @@ export default function POS() {
               </div>
             </div>
           )}
-          {pinEnabled && !isLocked && (
+          {!isLocked && (
             <Button variant="outline" size="sm" onClick={() => setIsLocked(true)}>
               <Lock className="mr-2 h-4 w-4" />
               Verrouiller POS
