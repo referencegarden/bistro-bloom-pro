@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Minus, X, Search, ShoppingCart, Save, CreditCard, Package, Lock } from "lucide-react";
+import { Plus, Minus, X, Search, ShoppingCart, Save, CreditCard, Package, Lock, User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { printOrderTickets } from "@/lib/printerService";
 import { BarPreparationTicket } from "@/components/BarPreparationTicket";
@@ -70,10 +70,11 @@ export default function POS() {
     items: [],
   });
   const [taxRate, setTaxRate] = useState(10);
-  const [employeeId, setEmployeeId] = useState<string>("");
+  const [activeEmployeeId, setActiveEmployeeId] = useState<string>("");
+  const [activeEmployeeName, setActiveEmployeeName] = useState<string>("");
+  const [activeEmployeePosition, setActiveEmployeePosition] = useState<string>("");
   const [printingOrderId, setPrintingOrderId] = useState<string | null>(null);
   const [isLocked, setIsLocked] = useState(false);
-  const [employeeName, setEmployeeName] = useState<string>("");
   const [pinEnabled, setPinEnabled] = useState(false);
 
   useEffect(() => {
@@ -82,20 +83,55 @@ export default function POS() {
   }, []);
 
   const loadEmployee = async () => {
+    const savedSession = localStorage.getItem('pos_active_employee');
+    
+    if (savedSession) {
+      const session = JSON.parse(savedSession);
+      setActiveEmployeeId(session.id);
+      setActiveEmployeeName(session.name);
+      setActiveEmployeePosition(session.position);
+      setPinEnabled(true);
+      return;
+    }
+    
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: employee } = await supabase
         .from("employees")
-        .select("id, name, pin_enabled")
+        .select("id, name, position, pin_enabled")
         .eq("user_id", user.id)
         .single();
       
       if (employee) {
-        setEmployeeId(employee.id);
-        setEmployeeName(employee.name);
+        setActiveEmployeeId(employee.id);
+        setActiveEmployeeName(employee.name);
+        setActiveEmployeePosition(employee.position || "");
         setPinEnabled(employee.pin_enabled);
+        
+        if (employee.pin_enabled) {
+          localStorage.setItem('pos_active_employee', JSON.stringify({
+            id: employee.id,
+            name: employee.name,
+            position: employee.position
+          }));
+        }
       }
     }
+  };
+
+  const handleUnlock = (employeeData: { id: string; name: string; position: string }) => {
+    setActiveEmployeeId(employeeData.id);
+    setActiveEmployeeName(employeeData.name);
+    setActiveEmployeePosition(employeeData.position || "");
+    
+    localStorage.setItem('pos_active_employee', JSON.stringify(employeeData));
+    
+    setIsLocked(false);
+    
+    toast({
+      title: "POS Déverrouillé",
+      description: `Connecté en tant que ${employeeData.name}`,
+    });
   };
 
   const loadData = async () => {
@@ -140,6 +176,8 @@ export default function POS() {
   });
 
   const addItemToOrder = (item: MenuItem) => {
+    if (isLocked) return;
+    
     const existingItem = currentOrder.items.find(
       (orderItem) => orderItem.menu_item_id === item.id
     );
@@ -233,7 +271,7 @@ export default function POS() {
           notes: currentOrder.notes || null,
           total_amount: total,
           status: "draft",
-          employee_id: employeeId || null,
+          employee_id: activeEmployeeId || null,
         })
         .select()
         .single();
@@ -288,7 +326,7 @@ export default function POS() {
           notes: currentOrder.notes || null,
           total_amount: total,
           status: "pending",
-          employee_id: employeeId || null,
+          employee_id: activeEmployeeId || null,
         })
         .select()
         .single();
@@ -369,6 +407,17 @@ export default function POS() {
           <span className="text-sm text-muted-foreground">
             {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })} à {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
           </span>
+          {activeEmployeeName && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg border border-primary/20">
+              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+              <div className="text-sm">
+                <div className="font-semibold text-foreground">{activeEmployeeName}</div>
+                {activeEmployeePosition && (
+                  <div className="text-xs text-muted-foreground">{activeEmployeePosition}</div>
+                )}
+              </div>
+            </div>
+          )}
           {pinEnabled && !isLocked && (
             <Button variant="outline" size="sm" onClick={() => setIsLocked(true)}>
               <Lock className="mr-2 h-4 w-4" />
@@ -667,10 +716,10 @@ export default function POS() {
       )}
 
       {/* Lock overlay */}
-      <POSLockDialog 
-        open={isLocked} 
-        employeeName={employeeName}
-        onUnlock={() => setIsLocked(false)}
+      <POSLockDialog
+        open={isLocked}
+        employeeName={activeEmployeeName}
+        onUnlock={handleUnlock}
       />
     </div>
   );

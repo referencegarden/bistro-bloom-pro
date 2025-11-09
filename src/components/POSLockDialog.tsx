@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { LockKeyhole } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { NumericKeypad } from "@/components/NumericKeypad";
 
 interface POSLockDialogProps {
   open: boolean;
   employeeName: string;
-  onUnlock: () => void;
+  onUnlock: (employeeData: { id: string; name: string; position: string }) => void;
 }
 
 export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogProps) {
@@ -18,8 +18,23 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  const handleUnlock = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleDigitPress = (digit: string) => {
+    if (pin.length < 6) {
+      setPin(prev => prev + digit);
+    }
+  };
+
+  const handleBackspace = () => {
+    setPin(prev => prev.slice(0, -1));
+  };
+
+  const handleClear = () => {
+    setPin("");
+  };
+
+  const handleUnlock = async () => {
+    if (pin.length === 0) return;
+    
     setLoading(true);
 
     try {
@@ -35,9 +50,18 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
         return;
       }
 
-      toast({ title: "Succès", description: "POS déverrouillé" });
+      const employeeData = {
+        id: data.employee.id,
+        name: data.employee.name,
+        position: data.employee.position || ""
+      };
+
+      toast({ 
+        title: "POS Déverrouillé", 
+        description: `Connecté en tant que ${employeeData.name}` 
+      });
       setPin("");
-      onUnlock();
+      onUnlock(employeeData);
     } catch (error: any) {
       toast({ title: "Erreur", description: "Échec de déverrouillage", variant: "destructive" });
       setPin("");
@@ -57,27 +81,36 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
           </div>
           <DialogTitle className="text-center text-xl">POS Verrouillé</DialogTitle>
           <p className="text-center text-sm text-muted-foreground">
-            {employeeName}, entrez votre code PIN pour continuer
+            Entrez votre code PIN pour déverrouiller
           </p>
         </DialogHeader>
-        <form onSubmit={handleUnlock} className="space-y-4 mt-4">
+        <div className="space-y-6 mt-6">
           <div className="space-y-2">
-            <Label htmlFor="unlock-pin">Code PIN</Label>
-            <Input
-              id="unlock-pin"
-              type="password"
-              placeholder="Entrez votre code PIN"
-              value={pin}
-              onChange={(e) => setPin(e.target.value)}
-              maxLength={6}
-              autoFocus
-              required
-            />
+            <Label className="text-center block">Code PIN</Label>
+            <div className="flex justify-center items-center h-12 bg-muted rounded-md text-3xl tracking-widest font-mono">
+              {pin ? '●'.repeat(pin.length) : ''}
+              <span className="text-muted-foreground ml-2">
+                {pin.length < 6 ? `(${pin.length}/6)` : ''}
+              </span>
+            </div>
           </div>
-          <Button type="submit" disabled={loading} className="w-full">
+          
+          <NumericKeypad
+            onDigitPress={handleDigitPress}
+            onBackspace={handleBackspace}
+            onClear={handleClear}
+            disabled={loading}
+          />
+          
+          <Button 
+            onClick={handleUnlock} 
+            disabled={loading || pin.length === 0} 
+            className="w-full"
+            size="lg"
+          >
             {loading ? "Déverrouillage..." : "Déverrouiller POS"}
           </Button>
-        </form>
+        </div>
       </DialogContent>
     </Dialog>
   );
