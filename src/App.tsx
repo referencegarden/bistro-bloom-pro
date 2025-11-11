@@ -34,6 +34,7 @@ import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminTenants from "./pages/SuperAdminTenants";
 import SuperAdminSubscriptions from "./pages/SuperAdminSubscriptions";
 import { SuperAdminLayout } from "./components/SuperAdminLayout";
+import { SubscriptionGuard } from "./components/SubscriptionGuard";
 
 const queryClient = new QueryClient();
 
@@ -57,26 +58,32 @@ const App = () => (
             path="/:slug/dashboard"
             element={
               <TenantProvider>
-                <ProtectedRoute>
-                  <PermissionRoute permission="can_view_reports">
-                    <Layout>
-                      <Dashboard />
-                    </Layout>
-                  </PermissionRoute>
-                </ProtectedRoute>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <PermissionRoute permission="can_view_reports">
+                      <Layout>
+                        <Dashboard />
+                      </Layout>
+                    </PermissionRoute>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
               </TenantProvider>
             }
           />
           <Route
-            path="/products"
+            path="/:slug/products"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_view_products">
-                  <Layout>
-                    <Products />
-                  </Layout>
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <PermissionRoute permission="can_view_products">
+                      <Layout>
+                        <Products />
+                      </Layout>
+                    </PermissionRoute>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
