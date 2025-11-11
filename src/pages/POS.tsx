@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,17 +75,10 @@ export default function POS() {
   const [activeEmployeePosition, setActiveEmployeePosition] = useState<string>("");
   const [printingOrderId, setPrintingOrderId] = useState<string | null>(null);
   const [isLocked, setIsLocked] = useState(true);
-  const [pinEnabled, setPinEnabled] = useState(false);
 
   useEffect(() => {
     loadData();
-    loadEmployee();
   }, []);
-
-  const loadEmployee = async () => {
-    // POS now requires PIN entry on every access
-    // Employee data will be set only through handleUnlock after PIN verification
-  };
 
   const handleUnlock = (employeeData: { id: string; name: string; position: string }) => {
     setActiveEmployeeId(employeeData.id);
@@ -103,45 +96,43 @@ export default function POS() {
   };
 
   const loadData = async () => {
-    // Load POS categories
-    const { data: cats } = await supabase
-      .from("pos_categories")
-      .select("*")
-      .eq("is_active", true)
-      .order("display_order");
-    if (cats) setPosCategories(cats);
+    try {
+      // Load all data in parallel for better performance
+      const [
+        { data: cats },
+        { data: items },
+        { data: tablesData },
+        { data: settings }
+      ] = await Promise.all([
+        supabase.from("pos_categories").select("*").eq("is_active", true).order("display_order"),
+        supabase.from("menu_items").select("*").eq("is_active", true).order("display_order"),
+        supabase.from("tables").select("*").order("table_number"),
+        supabase.from("app_settings").select("tax_rate").single()
+      ]);
 
-    // Load menu items with POS category info
-    const { data: items } = await supabase
-      .from("menu_items")
-      .select("*")
-      .eq("is_active", true)
-      .order("display_order");
-    if (items) setMenuItems(items);
-
-    // Load tables
-    const { data: tablesData } = await supabase
-      .from("tables")
-      .select("*")
-      .order("table_number");
-    if (tablesData) setTables(tablesData);
-
-    // Load tax rate
-    const { data: settings } = await supabase
-      .from("app_settings")
-      .select("tax_rate")
-      .single();
-    if (settings) setTaxRate(settings.tax_rate);
+      if (cats) setPosCategories(cats);
+      if (items) setMenuItems(items);
+      if (tablesData) setTables(tablesData);
+      if (settings) setTaxRate(settings.tax_rate);
+    } catch (error: any) {
+      toast({ 
+        title: "Erreur de chargement", 
+        description: error.message, 
+        variant: "destructive" 
+      });
+    }
   };
 
-  const filteredMenuItems = menuItems.filter((item) => {
-    const matchesCategory =
-      selectedCategory === "all" || item.pos_category_id === selectedCategory;
-    const matchesSearch = item.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
-  });
+  const filteredMenuItems = useMemo(() => {
+    return menuItems.filter((item) => {
+      const matchesCategory =
+        selectedCategory === "all" || item.pos_category_id === selectedCategory;
+      const matchesSearch = item.name
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+      return matchesCategory && matchesSearch;
+    });
+  }, [menuItems, selectedCategory, searchQuery]);
 
   const addItemToOrder = (item: MenuItem) => {
     if (isLocked) return;
@@ -481,7 +472,7 @@ export default function POS() {
                   </div>
                   <CardContent className="p-4">
                     <h3 className="font-semibold text-sm text-center mb-2">{item.name}</h3>
-                    <span className="font-bold text-sm block text-center">${item.selling_price.toFixed(2)}</span>
+                    <span className="font-bold text-sm block text-center">{item.selling_price.toFixed(2)} DH</span>
                   </CardContent>
                 </Card>
               );
@@ -538,7 +529,7 @@ export default function POS() {
                           <p className="text-xs text-muted-foreground mb-2">Notes : {item.special_instructions}</p>
                         )}
                         <div className="flex items-center justify-between">
-                          <span className="font-bold text-sm">${item.subtotal.toFixed(2)}</span>
+                          <span className="font-bold text-sm">{item.subtotal.toFixed(2)} DH</span>
                           <div className="flex items-center gap-1">
                             <Button
                               variant="outline"
@@ -577,19 +568,15 @@ export default function POS() {
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
                 <span>Sous-total</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>{subtotal.toFixed(2)} DH</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span>TVA</span>
-                <span>${taxAmount.toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between text-sm text-green-600">
-                <span>Remise</span>
-                <span>-${taxAmount.toFixed(2)}</span>
+                <span>TVA ({taxRate}%)</span>
+                <span>{taxAmount.toFixed(2)} DH</span>
               </div>
               <div className="flex justify-between text-lg font-bold pt-2 border-t">
                 <span>Total</span>
-                <span>${total.toFixed(2)}</span>
+                <span>{total.toFixed(2)} DH</span>
               </div>
             </div>
 
