@@ -35,19 +35,12 @@ export function SuperAdminLayout() {
   }, []);
 
   const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut({ scope: 'local' });
-      localStorage.clear();
-      toast({
-        title: "Signed Out",
-        description: "You have been logged out successfully.",
-      });
-      navigate("/super-admin/login");
-    } catch (error) {
-      console.error("Sign out error:", error);
-      localStorage.clear();
-      navigate("/super-admin/login");
-    }
+    await supabase.auth.signOut();
+    toast({
+      title: "Signed Out",
+      description: "You have been logged out successfully.",
+    });
+    navigate("/super-admin/login");
   };
 
   if (loading) {

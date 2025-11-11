@@ -48,10 +48,7 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
           return;
         }
 
-        const subscription = Array.isArray(tenant.subscriptions) && tenant.subscriptions.length > 0
-          ? tenant.subscriptions[0]
-          : null;
-
+        const subscription = tenant.subscriptions?.[0];
         setSubscriptionData({ tenant, subscription });
 
         // Check if tenant is active and has valid subscription
@@ -97,7 +94,7 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
     const slug = localStorage.getItem('current_tenant_slug') || 'default-restaurant';
     await supabase.auth.signOut({ scope: 'local' });
     localStorage.clear();
-    navigate(`/${slug}`);
+    navigate(`/${slug}/auth`);
   };
 
   if (loading) {

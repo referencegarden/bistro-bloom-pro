@@ -16,7 +16,7 @@ export default function SuperAdminLogin() {
   const [password, setPassword] = useState("");
 
   useEffect(() => {
-    // Only clear session if user is NOT super admin
+    // Check if already logged in as super admin
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
@@ -27,12 +27,9 @@ export default function SuperAdminLogin() {
           .eq("role", "super_admin")
           .single();
         
-        if (!roleData) {
-          // Clear session if not super admin (tenant users shouldn't be here)
-          await supabase.auth.signOut({ scope: 'local' });
-          localStorage.clear();
+        if (roleData) {
+          navigate("/super-admin/dashboard");
         }
-        // Don't auto-redirect super admins - let them click login button
       }
     };
     checkAuth();

@@ -166,14 +166,14 @@ export function AppSidebar() {
       
       localStorage.clear();
       toast.success("Déconnecté avec succès");
-      navigate(`/${slug}`);
+      navigate(`/${slug}/auth`);
     } catch (error) {
       console.error("Logout error:", error);
       const slug = localStorage.getItem('current_tenant_slug') || 'default-restaurant';
       // Force clear and navigation on error
       localStorage.clear();
       toast.success("Déconnecté");
-      navigate(`/${slug}`);
+      navigate(`/${slug}/auth`);
     }
   }
   return <Sidebar collapsible="icon">

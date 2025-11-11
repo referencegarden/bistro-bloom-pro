@@ -21,7 +21,7 @@ interface Order {
 }
 
 export default function POSPayment() {
-  const { orderId, slug } = useParams();
+  const { orderId } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
   
@@ -184,7 +184,7 @@ export default function POSPayment() {
                 <Printer className="mr-2 h-4 w-4" />
                 Réimprimer le Reçu
               </Button>
-              <Button onClick={() => navigate(`/${slug}/pos`)}>
+              <Button onClick={() => navigate("/pos")}>
                 Retour au POS
               </Button>
             </div>
@@ -345,7 +345,7 @@ export default function POSPayment() {
             <Button
               variant="outline"
               className="flex-1"
-              onClick={() => navigate(`/${slug}/pos`)}
+              onClick={() => navigate("/pos")}
               disabled={processing}
             >
               Annuler
