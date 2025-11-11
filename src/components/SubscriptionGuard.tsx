@@ -40,49 +40,28 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
           .eq("id", tenantId)
           .maybeSingle();
 
-        console.log("Subscription Guard Debug:", {
-          tenantId,
-          tenant,
-          subscriptions: tenant?.subscriptions,
-          tenantError
-        });
-
-        if (tenantError) {
-          console.error("Tenant query error:", tenantError);
-          throw tenantError;
-        }
+        if (tenantError) throw tenantError;
 
         if (!tenant) {
-          console.log("No tenant found");
           setSubscriptionValid(false);
           setLoading(false);
           return;
         }
 
-        // Handle subscriptions array properly
         const subscription = Array.isArray(tenant.subscriptions) && tenant.subscriptions.length > 0
           ? tenant.subscriptions[0]
           : null;
-
-        console.log("Subscription check:", {
-          hasSubscription: !!subscription,
-          subscriptionStatus: subscription?.status,
-          endDate: subscription?.end_date,
-          isActive: tenant?.is_active
-        });
 
         setSubscriptionData({ tenant, subscription });
 
         // Check if tenant is active and has valid subscription
         if (!tenant.is_active) {
-          console.log("Tenant not active");
           setSubscriptionValid(false);
           setLoading(false);
           return;
         }
 
         if (!subscription) {
-          console.log("No subscription found");
           setSubscriptionValid(false);
           setLoading(false);
           return;
@@ -90,7 +69,6 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
 
         // Check subscription status
         if (subscription.status === 'expired' || subscription.status === 'suspended') {
-          console.log("Subscription expired or suspended");
           setSubscriptionValid(false);
           setLoading(false);
           return;
@@ -98,13 +76,11 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
 
         // Check if end date has passed
         if (subscription.end_date && new Date(subscription.end_date) < new Date()) {
-          console.log("Subscription end date passed");
           setSubscriptionValid(false);
           setLoading(false);
           return;
         }
 
-        console.log("Subscription is valid");
         setSubscriptionValid(true);
       } catch (error) {
         console.error("Error checking subscription:", error);
