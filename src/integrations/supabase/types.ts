@@ -923,6 +923,19 @@ export type Database = {
       cancel_order: { Args: { _order_id: string }; Returns: Json }
       confirm_order: { Args: { _order_id: string }; Returns: Json }
       generate_receipt_data: { Args: { _order_id: string }; Returns: Json }
+      get_pos_sales_by_employee: {
+        Args: { _end_date: string; _start_date: string }
+        Returns: {
+          avg_order_value: number
+          employee_id: string
+          employee_name: string
+          employee_position: string
+          rank: number
+          total_items_sold: number
+          total_orders: number
+          total_revenue: number
+        }[]
+      }
       get_pos_sales_report: {
         Args: { _end_date: string; _start_date: string }
         Returns: {

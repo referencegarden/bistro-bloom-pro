@@ -30,6 +30,7 @@ interface Order {
   total_amount: number;
   created_at: string;
   tables: { table_number: string } | null;
+  employees: { name: string; position: string | null } | null;
   order_items: { id: string; menu_item_id: string; quantity: number }[];
 }
 
@@ -66,6 +67,7 @@ export default function POSOrders() {
       .select(`
         *,
         tables(table_number),
+        employees(name, position),
         order_items(id, menu_item_id, quantity)
       `)
       .not("status", "in", '("completed","cancelled")')
@@ -239,6 +241,12 @@ export default function POSOrders() {
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Client:</span>
                     <span className="font-medium">{order.customer_name}</span>
+                  </div>
+                )}
+                {order.employees && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground">Serveur:</span>
+                    <span className="font-medium">{order.employees.name}</span>
                   </div>
                 )}
                 <div className="flex items-center justify-between">
