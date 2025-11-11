@@ -45,11 +45,11 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          {/* Redirect root to auth (for backward compatibility) */}
-          <Route path="/" element={<Navigate to="/default/auth" replace />} />
+          {/* Redirect root to super admin */}
+          <Route path="/" element={<Navigate to="/super-admin/login" replace />} />
           
           {/* Slug-based tenant routes */}
-          <Route path="/:slug/auth" element={
+          <Route path="/:slug" element={
             <TenantProvider>
               <Auth />
             </TenantProvider>

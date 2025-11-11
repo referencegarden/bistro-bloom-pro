@@ -94,7 +94,7 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
     const slug = localStorage.getItem('current_tenant_slug') || 'default-restaurant';
     await supabase.auth.signOut({ scope: 'local' });
     localStorage.clear();
-    navigate(`/${slug}/auth`);
+    navigate(`/${slug}`);
   };
 
   if (loading) {
