@@ -48,6 +48,7 @@ const editTenantSchema = z.object({
   contactEmail: z.string().email("Valid email is required"),
   contactPhone: z.string().optional(),
   address: z.string().optional(),
+  newAdminPassword: z.string().min(8, "Password must be at least 8 characters").optional().or(z.literal("")),
 });
 
 type CreateTenantFormData = z.infer<typeof createTenantSchema>;
@@ -64,6 +65,8 @@ interface TenantDialogProps {
     contact_email: string;
     contact_phone?: string;
     address?: string;
+    admin_email?: string;
+    admin_user_id?: string;
   };
   onSuccess: () => void;
 }
@@ -79,6 +82,7 @@ export function TenantDialog({ open, onOpenChange, mode, tenant, onSuccess }: Te
       contactEmail: tenant.contact_email,
       contactPhone: tenant.contact_phone || "",
       address: tenant.address || "",
+      newAdminPassword: "",
     } : {
       name: "",
       slug: "",
@@ -155,7 +159,33 @@ export function TenantDialog({ open, onOpenChange, mode, tenant, onSuccess }: Te
           .eq("id", tenant!.id);
 
         if (error) throw error;
-        toast.success("Restaurant updated successfully");
+
+        // Handle password reset if provided
+        if (editData.newAdminPassword && editData.newAdminPassword.trim()) {
+          const { data: { session } } = await supabase.auth.getSession();
+          
+          const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/reset-tenant-admin-password`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session?.access_token}`,
+            },
+            body: JSON.stringify({
+              tenantId: tenant!.id,
+              newPassword: editData.newAdminPassword,
+            }),
+          });
+
+          const result = await response.json();
+
+          if (!response.ok) {
+            throw new Error(result.error || "Failed to reset admin password");
+          }
+
+          toast.success("Restaurant and admin password updated successfully");
+        } else {
+          toast.success("Restaurant updated successfully");
+        }
       }
 
       onSuccess();
@@ -253,6 +283,40 @@ export function TenantDialog({ open, onOpenChange, mode, tenant, onSuccess }: Te
                 </FormItem>
               )}
             />
+
+            {mode === "edit" && tenant?.admin_email && (
+              <div className="border-t pt-4 mt-4">
+                <h3 className="text-sm font-medium mb-4">Admin Account</h3>
+                
+                <div className="space-y-4">
+                  <FormItem>
+                    <FormLabel>Current Admin Email</FormLabel>
+                    <Input value={tenant.admin_email} disabled className="bg-muted" />
+                  </FormItem>
+
+                  <FormField
+                    control={form.control}
+                    name="newAdminPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>New Password (Optional)</FormLabel>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            type="password" 
+                            placeholder="Leave blank to keep current password" 
+                          />
+                        </FormControl>
+                        <p className="text-xs text-muted-foreground">
+                          Only fill this if you want to reset the admin's password
+                        </p>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            )}
 
             {mode === "create" && (
               <>

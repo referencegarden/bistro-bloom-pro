@@ -47,12 +47,38 @@ export default function SuperAdminTenants() {
             status,
             plan_type,
             end_date
+          ),
+          tenant_users!inner(
+            user_id,
+            user_roles!inner(role)
           )
         `)
+        .eq('tenant_users.user_roles.role', 'admin')
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      return data;
+
+      // Fetch admin emails for each tenant
+      const tenantsWithAdmins = await Promise.all(
+        (data || []).map(async (tenant) => {
+          const userId = tenant.tenant_users?.[0]?.user_id;
+          if (userId) {
+            const { data: { user } } = await supabase.auth.admin.getUserById(userId);
+            return {
+              ...tenant,
+              admin_email: user?.email || undefined,
+              admin_user_id: userId,
+            };
+          }
+          return {
+            ...tenant,
+            admin_email: undefined,
+            admin_user_id: undefined,
+          };
+        })
+      );
+
+      return tenantsWithAdmins;
     },
   });
 
@@ -134,10 +160,11 @@ export default function SuperAdminTenants() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
+                <TableHead>Slug</TableHead>
+                <TableHead>Contact Email</TableHead>
+                <TableHead>Admin Email</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Subscription</TableHead>
-                <TableHead>Plan</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -145,7 +172,13 @@ export default function SuperAdminTenants() {
               {tenants?.map((tenant) => (
                 <TableRow key={tenant.id}>
                   <TableCell className="font-medium">{tenant.name}</TableCell>
+                  <TableCell>
+                    <code className="text-xs bg-muted px-2 py-1 rounded">/{tenant.slug}</code>
+                  </TableCell>
                   <TableCell>{tenant.contact_email}</TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {tenant.admin_email || "N/A"}
+                  </TableCell>
                   <TableCell>
                     {tenant.is_active ? (
                       <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
@@ -169,9 +202,6 @@ export default function SuperAdminTenants() {
                         {tenant.subscriptions[0].status}
                       </Badge>
                     )}
-                  </TableCell>
-                  <TableCell>
-                    {tenant.subscriptions?.[0]?.plan_type || "N/A"}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">

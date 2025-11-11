@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useTenant } from "@/contexts/TenantContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -11,6 +12,8 @@ import { Store } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 export default function Auth() {
   const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
+  const { tenantId, tenantName, loading: tenantLoading } = useTenant();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,22 +21,30 @@ export default function Auth() {
   const {
     data: settings
   } = useQuery({
-    queryKey: ["app-settings-public"],
+    queryKey: ["app-settings-public", tenantId],
     queryFn: async () => {
+      if (!tenantId) return null;
       const {
         data,
         error
-      } = await supabase.from("app_settings").select("login_logo_url, restaurant_name").single();
+      } = await supabase
+        .from("app_settings")
+        .select("login_logo_url, restaurant_name")
+        .eq("tenant_id", tenantId)
+        .single();
       if (error) return null;
       return data;
-    }
+    },
+    enabled: !!tenantId,
   });
   useEffect(() => {
+    if (!slug) return;
+
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (session) {
-          navigate("/dashboard", { replace: true });
+          navigate(`/${slug}/dashboard`, { replace: true });
         }
       }
     );
@@ -45,14 +56,19 @@ export default function Auth() {
       }
     }) => {
       if (session) {
-        navigate("/dashboard", { replace: true });
+        navigate(`/${slug}/dashboard`, { replace: true });
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, slug]);
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
+    if (!tenantId) {
+      toast.error("Restaurant not found");
+      return;
+    }
+
     setLoading(true);
     const {
       data: authData,
@@ -67,23 +83,23 @@ export default function Auth() {
       return;
     }
 
-    // Link user to default tenant if not already linked
+    // Verify user belongs to this tenant
     const { data: tenantUser } = await supabase
       .from("tenant_users")
       .select("tenant_id")
       .eq("user_id", authData.user.id)
+      .eq("tenant_id", tenantId)
       .maybeSingle();
 
     if (!tenantUser) {
-      // Link to default tenant
-      await supabase.from("tenant_users").insert({
-        user_id: authData.user.id,
-        tenant_id: '00000000-0000-0000-0000-000000000001'
-      });
+      toast.error("Vous n'avez pas accès à ce restaurant");
+      await supabase.auth.signOut();
+      setLoading(false);
+      return;
     }
 
     toast.success("Connexion réussie!");
-    navigate("/dashboard");
+    navigate(`/${slug}/dashboard`);
     setLoading(false);
   }
   async function handleEmployeeLogin(e: React.FormEvent) {
@@ -128,15 +144,15 @@ export default function Auth() {
       const isWaiter = perms?.can_use_pos && !perms?.can_make_sales && !perms?.can_view_products;
       
       if (isWaiter || perms?.can_use_pos) {
-        navigate("/pos");
+        navigate(`/${slug}/pos`);
       } else if (perms?.can_make_sales) {
-        navigate("/sales");
+        navigate(`/${slug}/sales`);
       } else if (perms?.can_view_products) {
-        navigate("/products");
+        navigate(`/${slug}/products`);
       } else if (perms?.can_view_reports) {
-        navigate("/dashboard");
+        navigate(`/${slug}/dashboard`);
       } else {
-        navigate("/sales");
+        navigate(`/${slug}/sales`);
       }
     } catch (error) {
       console.error('Employee login error:', error);
@@ -145,6 +161,29 @@ export default function Auth() {
       setLoading(false);
     }
   }
+  if (tenantLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (!tenantId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-center text-destructive">Restaurant Not Found</CardTitle>
+            <CardDescription className="text-center">
+              The restaurant "{slug}" does not exist or is not active.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
+
   return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
@@ -154,7 +193,7 @@ export default function Auth() {
               </div>}
           </div>
           <CardTitle className="text-2xl font-bold">
-            {settings?.restaurant_name || "Gestion de Restaurant"}
+            {settings?.restaurant_name || tenantName || "Gestion de Restaurant"}
           </CardTitle>
           <CardDescription>
             Connectez-vous pour accéder à votre tableau de bord

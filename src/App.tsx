@@ -2,10 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PermissionRoute } from "./components/PermissionRoute";
+import { TenantProvider } from "./contexts/TenantContext";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Sales from "./pages/Sales";
@@ -43,17 +44,27 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Auth />} />
+          {/* Redirect root to auth (for backward compatibility) */}
+          <Route path="/" element={<Navigate to="/default/auth" replace />} />
+          
+          {/* Slug-based tenant routes */}
+          <Route path="/:slug/auth" element={
+            <TenantProvider>
+              <Auth />
+            </TenantProvider>
+          } />
           <Route
-            path="/dashboard"
+            path="/:slug/dashboard"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_view_reports">
-                  <Layout>
-                    <Dashboard />
-                  </Layout>
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <ProtectedRoute>
+                  <PermissionRoute permission="can_view_reports">
+                    <Layout>
+                      <Dashboard />
+                    </Layout>
+                  </PermissionRoute>
+                </ProtectedRoute>
+              </TenantProvider>
             }
           />
           <Route
