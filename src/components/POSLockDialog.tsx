@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { LockKeyhole } from "lucide-react";
+import { LockKeyhole, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NumericKeypad } from "@/components/NumericKeypad";
@@ -112,12 +112,24 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
                 {error}
               </div>
             )}
+            {loading && (
+              <div className="flex items-center justify-center gap-2 text-sm text-primary font-medium bg-primary/10 py-2 px-3 rounded-md">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Vérification en cours...
+              </div>
+            )}
             <Label className="text-center block">Code PIN</Label>
             <div className="flex justify-center items-center h-12 bg-muted rounded-md text-3xl tracking-widest font-mono">
-              {pin ? '●'.repeat(pin.length) : ''}
-              <span className="text-muted-foreground ml-2">
-                {pin.length < 6 ? `(${pin.length}/6)` : ''}
-              </span>
+              {loading ? (
+                <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              ) : (
+                <>
+                  {pin ? '●'.repeat(pin.length) : ''}
+                  <span className="text-muted-foreground ml-2">
+                    {pin.length < 6 ? `(${pin.length}/6)` : ''}
+                  </span>
+                </>
+              )}
             </div>
           </div>
           
