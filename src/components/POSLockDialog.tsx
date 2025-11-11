@@ -16,10 +16,12 @@ interface POSLockDialogProps {
 export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogProps) {
   const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const { toast } = useToast();
 
   const handleDigitPress = (digit: string) => {
     if (pin.length < 6) {
+      setError(""); // Clear error when user starts typing
       setPin(prev => prev + digit);
     }
   };
@@ -45,21 +47,13 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
       // Handle HTTP errors or response errors
       if (error) {
         console.error("Edge function error:", error);
-        toast({ 
-          title: "Erreur", 
-          description: "Code PIN incorrect", 
-          variant: "destructive" 
-        });
+        setError("Code PIN incorrect");
         setPin("");
         return;
       }
 
       if (data?.error) {
-        toast({ 
-          title: "Erreur", 
-          description: "Code PIN incorrect", 
-          variant: "destructive" 
-        });
+        setError("Code PIN incorrect");
         setPin("");
         return;
       }
@@ -79,15 +73,12 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
         title: "POS Déverrouillé", 
         description: `Connecté en tant que ${employeeData.name}` 
       });
+      setError("");
       setPin("");
       onUnlock(employeeData);
     } catch (error: any) {
       console.error("Unlock error:", error);
-      toast({ 
-        title: "Erreur", 
-        description: error.message || "Échec de déverrouillage", 
-        variant: "destructive" 
-      });
+      setError(error.message || "Échec de déverrouillage");
       setPin("");
     } finally {
       setLoading(false);
@@ -110,6 +101,11 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
         </DialogHeader>
         <div className="space-y-6 mt-6">
           <div className="space-y-2">
+            {error && (
+              <div className="text-center text-sm text-destructive font-medium bg-destructive/10 py-2 px-3 rounded-md">
+                {error}
+              </div>
+            )}
             <Label className="text-center block">Code PIN</Label>
             <div className="flex justify-center items-center h-12 bg-muted rounded-md text-3xl tracking-widest font-mono">
               {pin ? '●'.repeat(pin.length) : ''}
