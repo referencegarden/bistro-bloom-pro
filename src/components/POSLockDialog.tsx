@@ -22,7 +22,13 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
   const handleDigitPress = (digit: string) => {
     if (pin.length < 6) {
       setError(""); // Clear error when user starts typing
-      setPin(prev => prev + digit);
+      const newPin = pin + digit;
+      setPin(newPin);
+      
+      // Auto-unlock when 6 digits are entered
+      if (newPin.length === 6) {
+        handleUnlock(newPin);
+      }
     }
   };
 
@@ -34,14 +40,14 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
     setPin("");
   };
 
-  const handleUnlock = async () => {
-    if (pin.length === 0) return;
+  const handleUnlock = async (pinToVerify: string = pin) => {
+    if (pinToVerify.length === 0) return;
     
     setLoading(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('employee-pin-login', {
-        body: { pin: pin.trim() }
+        body: { pin: pinToVerify.trim() }
       });
 
       // Handle HTTP errors or response errors
@@ -121,15 +127,6 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
             onClear={handleClear}
             disabled={loading}
           />
-          
-          <Button 
-            onClick={handleUnlock} 
-            disabled={loading || pin.length === 0} 
-            className="w-full"
-            size="lg"
-          >
-            {loading ? "Déverrouillage..." : "Déverrouiller POS"}
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
