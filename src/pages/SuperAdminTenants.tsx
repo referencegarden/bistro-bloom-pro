@@ -38,7 +38,8 @@ export default function SuperAdminTenants() {
   const { data: tenants, isLoading } = useQuery({
     queryKey: ["super-admin-tenants"],
     queryFn: async () => {
-      const { data, error } = await supabase
+      // Step 1: Fetch all tenants with subscriptions
+      const { data: tenantsData, error: tenantsError } = await supabase
         .from("tenants")
         .select(`
           *,
@@ -47,29 +48,34 @@ export default function SuperAdminTenants() {
             status,
             plan_type,
             end_date
-          ),
-          tenant_users!inner(
-            user_id,
-            user_roles!inner(role)
           )
         `)
-        .eq('tenant_users.user_roles.role', 'admin')
         .order("created_at", { ascending: false });
 
-      if (error) throw error;
+      if (tenantsError) throw tenantsError;
 
-      // Fetch admin emails for each tenant
+      // Step 2: For each tenant, find their admin user
       const tenantsWithAdmins = await Promise.all(
-        (data || []).map(async (tenant) => {
-          const userId = tenant.tenant_users?.[0]?.user_id;
-          if (userId) {
-            const { data: { user } } = await supabase.auth.admin.getUserById(userId);
+        (tenantsData || []).map(async (tenant) => {
+          // Find admin user for this tenant
+          const { data: tenantUsers } = await supabase
+            .from("tenant_users")
+            .select("user_id, user_roles!inner(role)")
+            .eq("tenant_id", tenant.id)
+            .eq("user_roles.role", "admin")
+            .limit(1)
+            .maybeSingle();
+
+          if (tenantUsers?.user_id) {
+            // Fetch admin email from auth
+            const { data: { user } } = await supabase.auth.admin.getUserById(tenantUsers.user_id);
             return {
               ...tenant,
               admin_email: user?.email || undefined,
-              admin_user_id: userId,
+              admin_user_id: tenantUsers.user_id,
             };
           }
+
           return {
             ...tenant,
             admin_email: undefined,
