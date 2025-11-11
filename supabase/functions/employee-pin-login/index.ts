@@ -24,12 +24,19 @@ serve(async (req) => {
       }
     );
 
-    const { pin } = await req.json();
+    const { pin, tenantId } = await req.json();
 
     const trimmedPin = typeof pin === 'string' ? pin.trim() : '';
     if (!trimmedPin) {
       return new Response(
         JSON.stringify({ error: 'PIN is required' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!tenantId) {
+      return new Response(
+        JSON.stringify({ error: 'Tenant ID is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -42,12 +49,13 @@ serve(async (req) => {
       );
     }
 
-    // Find all active employees with PIN enabled
+    // Find all active employees with PIN enabled in this tenant
     const { data: employees, error: employeeError } = await supabaseClient
       .from('employees')
       .select('*')
       .eq('is_active', true)
       .eq('pin_enabled', true)
+      .eq('tenant_id', tenantId)
       .not('pin_hash', 'is', null);
 
     if (employeeError) {
@@ -124,6 +132,15 @@ serve(async (req) => {
       if (roleError) {
         console.error('Failed to assign employee role:', roleError);
       }
+
+      // Create tenant_users record
+      const { error: tenantUserError } = await supabaseClient
+        .from('tenant_users')
+        .insert({ user_id: userId, tenant_id: employee.tenant_id });
+
+      if (tenantUserError) {
+        console.error('Failed to create tenant_users record:', tenantUserError);
+      }
     } else {
       // Check if auth user exists
       console.log('Checking existing auth user');
@@ -165,6 +182,15 @@ serve(async (req) => {
 
         if (roleError) {
           console.error('Failed to assign employee role:', roleError);
+        }
+
+        // Create tenant_users record
+        const { error: tenantUserError } = await supabaseClient
+          .from('tenant_users')
+          .insert({ user_id: userId, tenant_id: employee.tenant_id });
+
+        if (tenantUserError) {
+          console.error('Failed to create tenant_users record:', tenantUserError);
         }
       } else {
         // Update existing user's password

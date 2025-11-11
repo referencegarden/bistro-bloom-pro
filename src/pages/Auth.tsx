@@ -98,6 +98,9 @@ export default function Auth() {
       return;
     }
 
+    // Store tenant slug for sign-out redirect
+    localStorage.setItem('current_tenant_slug', slug || '');
+    
     toast.success("Connexion réussie!");
     navigate(`/${slug}/dashboard`);
     setLoading(false);
@@ -111,7 +114,8 @@ export default function Auth() {
         error
       } = await supabase.functions.invoke('employee-pin-login', {
         body: {
-          pin: pin.trim()
+          pin: pin.trim(),
+          tenantId: tenantId
         }
       });
       if (error) throw error;
@@ -133,6 +137,9 @@ export default function Auth() {
         setLoading(false);
         return;
       }
+      // Store tenant slug for sign-out redirect
+      localStorage.setItem('current_tenant_slug', slug || '');
+      
       toast.success(`Bienvenue ${data.employee.name}`);
 
       // Smart redirect based on permissions
