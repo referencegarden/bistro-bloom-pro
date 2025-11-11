@@ -54,6 +54,7 @@ export default function Auth() {
       if (roleData) {
         // Super admin shouldn't auto-login to restaurants
         await supabase.auth.signOut({ scope: 'local' });
+        localStorage.clear();
         return;
       }
 
@@ -71,6 +72,7 @@ export default function Auth() {
       } else {
         // User doesn't belong to this tenant, sign out
         await supabase.auth.signOut({ scope: 'local' });
+        localStorage.clear();
       }
     };
 
