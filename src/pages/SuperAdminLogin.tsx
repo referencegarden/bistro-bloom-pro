@@ -29,6 +29,10 @@ export default function SuperAdminLogin() {
         
         if (roleData) {
           navigate("/super-admin/dashboard");
+        } else {
+          // Clear session if not super admin
+          await supabase.auth.signOut({ scope: 'local' });
+          localStorage.clear();
         }
       }
     };
