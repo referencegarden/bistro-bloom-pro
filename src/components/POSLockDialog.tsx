@@ -42,12 +42,31 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
         body: { pin: pin.trim() }
       });
 
-      if (error) throw error;
-      if (data.error) {
-        toast({ title: "Erreur", description: "Code PIN incorrect", variant: "destructive" });
+      // Handle HTTP errors or response errors
+      if (error) {
+        console.error("Edge function error:", error);
+        toast({ 
+          title: "Erreur", 
+          description: "Code PIN incorrect", 
+          variant: "destructive" 
+        });
         setPin("");
-        setLoading(false);
         return;
+      }
+
+      if (data?.error) {
+        toast({ 
+          title: "Erreur", 
+          description: "Code PIN incorrect", 
+          variant: "destructive" 
+        });
+        setPin("");
+        return;
+      }
+
+      // Successful login
+      if (!data?.employee) {
+        throw new Error("Données employé manquantes");
       }
 
       const employeeData = {
@@ -63,7 +82,12 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
       setPin("");
       onUnlock(employeeData);
     } catch (error: any) {
-      toast({ title: "Erreur", description: "Échec de déverrouillage", variant: "destructive" });
+      console.error("Unlock error:", error);
+      toast({ 
+        title: "Erreur", 
+        description: error.message || "Échec de déverrouillage", 
+        variant: "destructive" 
+      });
       setPin("");
     } finally {
       setLoading(false);
