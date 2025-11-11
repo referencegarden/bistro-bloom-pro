@@ -24,12 +24,16 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { TenantDialog } from "@/components/TenantDialog";
 
 export default function SuperAdminTenants() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [tenantToDelete, setTenantToDelete] = useState<string | null>(null);
+  const [tenantDialogOpen, setTenantDialogOpen] = useState(false);
+  const [dialogMode, setDialogMode] = useState<"create" | "edit">("create");
+  const [selectedTenant, setSelectedTenant] = useState<any>(null);
 
   const { data: tenants, isLoading } = useQuery({
     queryKey: ["super-admin-tenants"],
@@ -88,6 +92,22 @@ export default function SuperAdminTenants() {
     }
   };
 
+  const handleAddTenant = () => {
+    setDialogMode("create");
+    setSelectedTenant(null);
+    setTenantDialogOpen(true);
+  };
+
+  const handleEditTenant = (tenant: any) => {
+    setDialogMode("edit");
+    setSelectedTenant(tenant);
+    setTenantDialogOpen(true);
+  };
+
+  const handleDialogSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["super-admin-tenants"] });
+  };
+
   if (isLoading) {
     return <div>Loading...</div>;
   }
@@ -99,7 +119,7 @@ export default function SuperAdminTenants() {
           <h2 className="text-3xl font-bold tracking-tight">Restaurants</h2>
           <p className="text-muted-foreground">Manage all restaurant tenants</p>
         </div>
-        <Button>
+        <Button onClick={handleAddTenant}>
           <Plus className="h-4 w-4 mr-2" />
           Add Restaurant
         </Button>
@@ -155,7 +175,11 @@ export default function SuperAdminTenants() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Button variant="ghost" size="icon">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        onClick={() => handleEditTenant(tenant)}
+                      >
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
@@ -173,6 +197,14 @@ export default function SuperAdminTenants() {
           </Table>
         </CardContent>
       </Card>
+
+      <TenantDialog
+        open={tenantDialogOpen}
+        onOpenChange={setTenantDialogOpen}
+        mode={dialogMode}
+        tenant={selectedTenant}
+        onSuccess={handleDialogSuccess}
+      />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

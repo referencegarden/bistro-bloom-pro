@@ -1,4 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,8 +14,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { format } from "date-fns";
+import { SubscriptionExtendDialog } from "@/components/SubscriptionExtendDialog";
 
 export default function SuperAdminSubscriptions() {
+  const queryClient = useQueryClient();
+  const [extendDialogOpen, setExtendDialogOpen] = useState(false);
+  const [selectedSubscription, setSelectedSubscription] = useState<any>(null);
+
   const { data: subscriptions, isLoading } = useQuery({
     queryKey: ["super-admin-subscriptions"],
     queryFn: async () => {
@@ -54,6 +60,15 @@ export default function SuperAdminSubscriptions() {
     };
     
     return colors[plan] || colors.basic;
+  };
+
+  const handleExtendSubscription = (subscription: any) => {
+    setSelectedSubscription(subscription);
+    setExtendDialogOpen(true);
+  };
+
+  const handleDialogSuccess = () => {
+    queryClient.invalidateQueries({ queryKey: ["super-admin-subscriptions"] });
   };
 
   if (isLoading) {
@@ -164,7 +179,11 @@ export default function SuperAdminSubscriptions() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => handleExtendSubscription(subscription)}
+                    >
                       Extend
                     </Button>
                   </TableCell>
@@ -174,6 +193,15 @@ export default function SuperAdminSubscriptions() {
           </Table>
         </CardContent>
       </Card>
+
+      {selectedSubscription && (
+        <SubscriptionExtendDialog
+          open={extendDialogOpen}
+          onOpenChange={setExtendDialogOpen}
+          subscription={selectedSubscription}
+          onSuccess={handleDialogSuccess}
+        />
+      )}
     </div>
   );
 }
