@@ -28,6 +28,7 @@ import POSReports from "./pages/POSReports";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import SuperAdminLogin from "./pages/SuperAdminLogin";
+import SuperAdminInitialize from "./pages/SuperAdminInitialize";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminTenants from "./pages/SuperAdminTenants";
 import SuperAdminSubscriptions from "./pages/SuperAdminSubscriptions";
@@ -245,6 +246,7 @@ const App = () => (
           />
           {/* Super Admin Routes */}
           <Route path="/super-admin/login" element={<SuperAdminLogin />} />
+          <Route path="/super-admin/initialize" element={<SuperAdminInitialize />} />
           <Route path="/super-admin" element={<SuperAdminLayout />}>
             <Route path="dashboard" element={<SuperAdminDashboard />} />
             <Route path="tenants" element={<SuperAdminTenants />} />
