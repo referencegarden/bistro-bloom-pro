@@ -84,7 +84,8 @@ serve(async (req) => {
     // Generate a unique email and password for this employee
     let userId = employee.user_id;
     const uniqueEmail = `employee_${employee.id}@internal.app`;
-    const employeePassword = `emp_${employee.id}_${employee.pin_hash}`;
+    // Generate a secure but simple password (not using pin_hash to avoid length issues)
+    const employeePassword = `EmpPin${employee.id}2025!`;
     let signInEmail = uniqueEmail;
 
     if (!userId) {
