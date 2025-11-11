@@ -55,6 +55,7 @@ export default function Auth() {
     e.preventDefault();
     setLoading(true);
     const {
+      data: authData,
       error
     } = await supabase.auth.signInWithPassword({
       email,
@@ -64,6 +65,21 @@ export default function Auth() {
       toast.error("Échec de connexion: " + error.message);
       setLoading(false);
       return;
+    }
+
+    // Link user to default tenant if not already linked
+    const { data: tenantUser } = await supabase
+      .from("tenant_users")
+      .select("tenant_id")
+      .eq("user_id", authData.user.id)
+      .maybeSingle();
+
+    if (!tenantUser) {
+      // Link to default tenant
+      await supabase.from("tenant_users").insert({
+        user_id: authData.user.id,
+        tenant_id: '00000000-0000-0000-0000-000000000001'
+      });
     }
 
     toast.success("Connexion réussie!");
