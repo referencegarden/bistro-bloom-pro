@@ -42,6 +42,15 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!session) {
+    // Check if we're on a tenant route
+    const path = window.location.pathname;
+    const slugMatch = path.match(/^\/([^\/]+)/);
+    const slug = slugMatch ? slugMatch[1] : null;
+    
+    // Redirect to tenant login if on tenant route, otherwise super admin
+    if (slug && slug !== 'super-admin') {
+      return <Navigate to={`/${slug}`} replace />;
+    }
     return <Navigate to="/" replace />;
   }
 

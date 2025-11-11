@@ -38,30 +38,58 @@ export default function Auth() {
     enabled: !!tenantId,
   });
   useEffect(() => {
-    if (!slug) return;
+    if (!slug || !tenantId) return;
 
-    // Listen for auth state changes
+    const checkAndRedirect = async (session: any) => {
+      if (!session) return;
+
+      // Check if user is super admin
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .eq("role", "super_admin")
+        .maybeSingle();
+
+      if (roleData) {
+        // Super admin shouldn't auto-login to restaurants
+        await supabase.auth.signOut({ scope: 'local' });
+        return;
+      }
+
+      // Check if user belongs to this tenant
+      const { data: tenantUser } = await supabase
+        .from("tenant_users")
+        .select("tenant_id")
+        .eq("user_id", session.user.id)
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+
+      if (tenantUser) {
+        // User belongs to this tenant, redirect to dashboard
+        navigate(`/${slug}/dashboard`, { replace: true });
+      } else {
+        // User doesn't belong to this tenant, sign out
+        await supabase.auth.signOut({ scope: 'local' });
+      }
+    };
+
+    // Check existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      checkAndRedirect(session);
+    });
+
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         if (session) {
-          navigate(`/${slug}/dashboard`, { replace: true });
+          checkAndRedirect(session);
         }
       }
     );
 
-    // Check if there's already a session
-    supabase.auth.getSession().then(({
-      data: {
-        session
-      }
-    }) => {
-      if (session) {
-        navigate(`/${slug}/dashboard`, { replace: true });
-      }
-    });
-
     return () => subscription.unsubscribe();
-  }, [navigate, slug]);
+  }, [navigate, slug, tenantId]);
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     if (!tenantId) {
