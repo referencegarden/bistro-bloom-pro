@@ -74,7 +74,7 @@ export default function POS() {
   const [activeEmployeeName, setActiveEmployeeName] = useState<string>("");
   const [activeEmployeePosition, setActiveEmployeePosition] = useState<string>("");
   const [printingOrderId, setPrintingOrderId] = useState<string | null>(null);
-  const [isLocked, setIsLocked] = useState(false);
+  const [isLocked, setIsLocked] = useState(true);
   const [pinEnabled, setPinEnabled] = useState(false);
 
   useEffect(() => {
@@ -83,40 +83,8 @@ export default function POS() {
   }, []);
 
   const loadEmployee = async () => {
-    const savedSession = localStorage.getItem('pos_active_employee');
-    
-    if (savedSession) {
-      const session = JSON.parse(savedSession);
-      setActiveEmployeeId(session.id);
-      setActiveEmployeeName(session.name);
-      setActiveEmployeePosition(session.position);
-      setPinEnabled(true);
-      return;
-    }
-    
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: employee } = await supabase
-        .from("employees")
-        .select("id, name, position, pin_enabled")
-        .eq("user_id", user.id)
-        .single();
-      
-      if (employee) {
-        setActiveEmployeeId(employee.id);
-        setActiveEmployeeName(employee.name);
-        setActiveEmployeePosition(employee.position || "");
-        setPinEnabled(employee.pin_enabled);
-        
-        if (employee.pin_enabled) {
-          localStorage.setItem('pos_active_employee', JSON.stringify({
-            id: employee.id,
-            name: employee.name,
-            position: employee.position
-          }));
-        }
-      }
-    }
+    // POS now requires PIN entry on every access
+    // Employee data will be set only through handleUnlock after PIN verification
   };
 
   const handleUnlock = (employeeData: { id: string; name: string; position: string }) => {
