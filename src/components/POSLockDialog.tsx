@@ -6,6 +6,7 @@ import { LockKeyhole, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { NumericKeypad } from "@/components/NumericKeypad";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface POSLockDialogProps {
   open: boolean;
@@ -18,6 +19,7 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const { toast } = useToast();
+  const { tenantId } = useTenant();
 
   const handleDigitPress = (digit: string) => {
     if (pin.length < 6) {
@@ -43,11 +45,16 @@ export function POSLockDialog({ open, employeeName, onUnlock }: POSLockDialogPro
   const handleUnlock = async (pinToVerify: string = pin) => {
     if (pinToVerify.length === 0) return;
     
+    if (!tenantId) {
+      setError("Restaurant context not loaded");
+      return;
+    }
+    
     setLoading(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('employee-pin-login', {
-        body: { pin: pinToVerify.trim() }
+        body: { pin: pinToVerify.trim(), tenantId }
       });
 
       // Handle HTTP errors or response errors
