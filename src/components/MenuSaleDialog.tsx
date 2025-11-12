@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,7 @@ interface IngredientUsage {
 }
 
 export function MenuSaleDialog({ open, onClose }: MenuSaleDialogProps) {
+  const { tenantId } = useTenant();
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [selectedMenuItemId, setSelectedMenuItemId] = useState("");
@@ -120,6 +122,15 @@ export function MenuSaleDialog({ open, onClose }: MenuSaleDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!tenantId) {
+      toast({
+        variant: "destructive",
+        title: "Erreur",
+        description: "Restaurant context not loaded. Please try again.",
+      });
+      return;
+    }
+
     if (!selectedMenuItemId || !quantity) {
       toast({
         variant: "destructive",
@@ -150,6 +161,7 @@ export function MenuSaleDialog({ open, onClose }: MenuSaleDialogProps) {
         total_price: selectedMenuItem.selling_price * parseFloat(quantity),
         employee_id: selectedEmployeeId || null,
         notes: notes || null,
+        tenant_id: tenantId,
       };
 
       const { error } = await supabase.from("menu_item_sales").insert([saleData]);

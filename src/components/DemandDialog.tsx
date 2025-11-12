@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +26,7 @@ interface DemandDialogProps {
 }
 
 export function DemandDialog({ open, onOpenChange, onSuccess, prefilledProductId }: DemandDialogProps) {
+  const { tenantId } = useTenant();
   const [products, setProducts] = useState<Product[]>([]);
   const [formData, setFormData] = useState({
     product_id: "",
@@ -57,6 +59,11 @@ export function DemandDialog({ open, onOpenChange, onSuccess, prefilledProductId
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
+    if (!tenantId) {
+      toast.error("Restaurant context not loaded. Please try again.");
+      return;
+    }
 
     // Check permission
     if (!isAdmin && !permissions.can_create_demands) {
@@ -92,6 +99,7 @@ export function DemandDialog({ open, onOpenChange, onSuccess, prefilledProductId
           requested_by: employee.id,
           quantity: formData.quantity,
           notes: formData.notes || null,
+          tenant_id: tenantId,
         });
 
       if (error) throw error;

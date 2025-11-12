@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -26,6 +27,7 @@ interface SupplierDialogProps {
 }
 
 export function SupplierDialog({ open, onClose, supplier }: SupplierDialogProps) {
+  const { tenantId } = useTenant();
   const [formData, setFormData] = useState({
     name: "",
     contact: "",
@@ -54,6 +56,11 @@ export function SupplierDialog({ open, onClose, supplier }: SupplierDialogProps)
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    if (!tenantId) {
+      toast.error("Restaurant context not loaded. Please try again.");
+      return;
+    }
+
     const data = {
       name: formData.name,
       contact: formData.contact || null,
@@ -73,7 +80,10 @@ export function SupplierDialog({ open, onClose, supplier }: SupplierDialogProps)
       }
       toast.success("Supplier updated");
     } else {
-      const { error } = await supabase.from("suppliers").insert(data);
+      const { error } = await supabase.from("suppliers").insert({
+        ...data,
+        tenant_id: tenantId,
+      });
 
       if (error) {
         toast.error("Failed to create supplier");

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +41,7 @@ interface EmployeePermissions {
 }
 
 export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps) {
+  const { tenantId } = useTenant();
   const [formData, setFormData] = useState({
     name: "",
     employee_number: "",
@@ -122,6 +124,11 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    if (!tenantId) {
+      toast.error("Restaurant context not loaded. Please try again.");
+      return;
+    }
+
     if (!formData.name.trim()) {
       toast.error("Le nom est requis");
       return;
@@ -203,7 +210,10 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
     } else {
       const { data: newEmployee, error } = await supabase
         .from("employees")
-        .insert(data)
+        .insert({
+          ...data,
+          tenant_id: tenantId,
+        })
         .select()
         .single();
 
@@ -251,7 +261,10 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
 
       const { error: permError } = await supabase
         .from("employee_permissions")
-        .upsert(finalPermissions, {
+        .upsert({
+          ...finalPermissions,
+          tenant_id: tenantId,
+        }, {
           onConflict: 'employee_id'
         });
 

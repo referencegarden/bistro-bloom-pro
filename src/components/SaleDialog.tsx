@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -43,6 +44,7 @@ interface SaleDialogProps {
 }
 
 export function SaleDialog({ open, onClose }: SaleDialogProps) {
+  const { tenantId } = useTenant();
   const [products, setProducts] = useState<Product[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [productSearchOpen, setProductSearchOpen] = useState(false);
@@ -102,6 +104,11 @@ const { data } = await supabase
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    if (!tenantId) {
+      toast.error("Restaurant context not loaded. Please try again.");
+      return;
+    }
+
     const product = products.find((p) => p.id === formData.product_id);
     if (!product) {
       toast.error("Veuillez sélectionner un produit");
@@ -125,6 +132,7 @@ const unitPrice = typeof product.sales_price === "number" ? product.sales_price 
       quantity: formData.quantity,
       unit_price: unitPrice,
       notes: formData.notes || null,
+      tenant_id: tenantId,
     });
 
     if (error) {

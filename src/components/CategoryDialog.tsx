@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,6 +26,7 @@ interface CategoryDialogProps {
 }
 
 export function CategoryDialog({ open, onClose, category }: CategoryDialogProps) {
+  const { tenantId } = useTenant();
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -47,6 +49,11 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    if (!tenantId) {
+      toast.error("Restaurant context not loaded. Please try again.");
+      return;
+    }
+
     const data = {
       name: formData.name,
       description: formData.description || null,
@@ -64,7 +71,10 @@ export function CategoryDialog({ open, onClose, category }: CategoryDialogProps)
       }
       toast.success("Category updated");
     } else {
-      const { error } = await supabase.from("categories").insert(data);
+      const { error } = await supabase.from("categories").insert({
+        ...data,
+        tenant_id: tenantId,
+      });
 
       if (error) {
         toast.error("Failed to create category");

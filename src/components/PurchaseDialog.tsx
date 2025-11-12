@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -62,6 +63,7 @@ interface PurchaseDialogProps {
 
 
 export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, prefilledQuantity, purchase }: PurchaseDialogProps) {
+  const { tenantId } = useTenant();
   const [products, setProducts] = useState<Product[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -166,6 +168,11 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    if (!tenantId) {
+      toast.error("Restaurant context not loaded. Please try again.");
+      return;
+    }
+
     if (!formData.product_id) {
       toast.error("Veuillez sélectionner un produit");
       return;
@@ -201,6 +208,7 @@ export function PurchaseDialog({ open, onClose, demandId, prefilledProductId, pr
         unit_cost: formData.unit_cost,
         notes: formData.notes || null,
         demand_id: demandId || null,
+        tenant_id: tenantId,
       });
 
       if (purchaseError) {

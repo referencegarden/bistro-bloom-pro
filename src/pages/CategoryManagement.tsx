@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Plus, Pencil, Trash2, Package, UtensilsCrossed } from "lucide-react";
@@ -41,6 +42,7 @@ interface POSCategory {
 }
 
 export default function CategoryManagement() {
+  const { tenantId } = useTenant();
   const [inventoryCategories, setInventoryCategories] = useState<InventoryCategory[]>([]);
   const [posCategories, setPosCategories] = useState<POSCategory[]>([]);
   const [loading, setLoading] = useState(true);
@@ -106,6 +108,11 @@ export default function CategoryManagement() {
       return;
     }
 
+    if (!tenantId) {
+      toast.error("Restaurant context not loaded. Please try again.");
+      return;
+    }
+
     try {
       if (editingInvCategory) {
         const { error } = await supabase
@@ -122,6 +129,7 @@ export default function CategoryManagement() {
         const { error } = await supabase.from("categories").insert({
           name: invFormData.name,
           description: invFormData.description || null,
+          tenant_id: tenantId,
         });
 
         if (error) throw error;
@@ -178,6 +186,11 @@ export default function CategoryManagement() {
       return;
     }
 
+    if (!tenantId) {
+      toast.error("Restaurant context not loaded. Please try again.");
+      return;
+    }
+
     try {
       if (editingPosCategory) {
         const { error } = await supabase
@@ -204,6 +217,7 @@ export default function CategoryManagement() {
           color: posFormData.color,
           is_active: posFormData.is_active,
           display_order: maxOrder + 1,
+          tenant_id: tenantId,
         });
 
         if (error) throw error;

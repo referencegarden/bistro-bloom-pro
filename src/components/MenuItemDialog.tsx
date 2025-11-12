@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ interface Ingredient {
 }
 
 export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogProps) {
+  const { tenantId } = useTenant();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("");
@@ -225,6 +227,10 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
     setLoading(true);
 
     try {
+      if (!tenantId) {
+        throw new Error("Restaurant context not loaded. Please try again.");
+      }
+
       const numericSellingPrice = parseFloat(String(sellingPrice).replace(',', '.'));
       if (!name.trim() || Number.isNaN(numericSellingPrice)) {
         throw new Error("Veuillez remplir tous les champs requis");
@@ -308,7 +314,10 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
       } else {
         const { data, error } = await supabase
           .from("menu_items")
-          .insert([menuItemData])
+          .insert([{
+            ...menuItemData,
+            tenant_id: tenantId,
+          }])
           .select()
           .single();
 
@@ -323,6 +332,7 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
           product_id: ing.product_id,
           quantity_per_unit: ing.quantity_per_unit,
           unit_of_measure: ing.unit_of_measure && ing.unit_of_measure !== 'unité' ? ing.unit_of_measure : null,
+          tenant_id: tenantId,
         }));
 
         console.log(`Inserting ${ingredientsData.length} ingredients:`, ingredientsData);

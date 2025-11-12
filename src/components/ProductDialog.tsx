@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -49,6 +50,7 @@ interface ProductDialogProps {
 }
 
 export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
+  const { tenantId } = useTenant();
   const [categories, setCategories] = useState<Category[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [formData, setFormData] = useState({
@@ -100,6 +102,11 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
+    if (!tenantId) {
+      toast.error("Restaurant context not loaded. Please try again.");
+      return;
+    }
+
     const data = {
       ...formData,
       category_id: formData.category_id || null,
@@ -122,6 +129,7 @@ export function ProductDialog({ open, onClose, product }: ProductDialogProps) {
         ...data,
         current_stock: 0,
         sales_price: 0,
+        tenant_id: tenantId,
       });
 
       if (error) {
