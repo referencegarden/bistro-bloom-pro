@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { Navigate, useParams } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Session } from "@supabase/supabase-js";
 
 export function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { slug } = useParams<{ slug: string }>();
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -43,12 +42,7 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (!session) {
-    // If on a tenant route, redirect to that tenant's auth page
-    if (slug) {
-      return <Navigate to={`/${slug}/auth`} replace />;
-    }
-    // Otherwise redirect to super admin login
-    return <Navigate to="/super-admin/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

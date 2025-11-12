@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,12 +9,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Minus, X, Search, ShoppingCart, Save, CreditCard, Package, Lock, User } from "lucide-react";
+import { Plus, Minus, X, Search, ShoppingCart, Save, CreditCard, Package } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { printOrderTickets } from "@/lib/printerService";
 import { BarPreparationTicket } from "@/components/BarPreparationTicket";
 import { KitchenPreparationTicket } from "@/components/KitchenPreparationTicket";
-import { POSLockDialog } from "@/components/POSLockDialog";
 
 interface MenuItem {
   id: string;
@@ -70,73 +69,71 @@ export default function POS() {
     items: [],
   });
   const [taxRate, setTaxRate] = useState(10);
-  const [activeEmployeeId, setActiveEmployeeId] = useState<string>("");
-  const [activeEmployeeName, setActiveEmployeeName] = useState<string>("");
-  const [activeEmployeePosition, setActiveEmployeePosition] = useState<string>("");
+  const [employeeId, setEmployeeId] = useState<string>("");
   const [printingOrderId, setPrintingOrderId] = useState<string | null>(null);
-  const [isLocked, setIsLocked] = useState(true);
 
   useEffect(() => {
     loadData();
+    loadEmployee();
   }, []);
 
-  const handleUnlock = (employeeData: { id: string; name: string; position: string }) => {
-    setActiveEmployeeId(employeeData.id);
-    setActiveEmployeeName(employeeData.name);
-    setActiveEmployeePosition(employeeData.position || "");
-    
-    localStorage.setItem('pos_active_employee', JSON.stringify(employeeData));
-    
-    setIsLocked(false);
-    
-    toast({
-      title: "POS Déverrouillé",
-      description: `Connecté en tant que ${employeeData.name}`,
-    });
-  };
-
-  const loadData = async () => {
-    try {
-      // Load all data in parallel for better performance
-      const [
-        { data: cats },
-        { data: items },
-        { data: tablesData },
-        { data: settings }
-      ] = await Promise.all([
-        supabase.from("pos_categories").select("*").eq("is_active", true).order("display_order"),
-        supabase.from("menu_items").select("*").eq("is_active", true).order("display_order"),
-        supabase.from("tables").select("*").order("table_number"),
-        supabase.from("app_settings").select("tax_rate").single()
-      ]);
-
-      if (cats) setPosCategories(cats);
-      if (items) setMenuItems(items);
-      if (tablesData) setTables(tablesData);
-      if (settings) setTaxRate(settings.tax_rate);
-    } catch (error: any) {
-      toast({ 
-        title: "Erreur de chargement", 
-        description: error.message, 
-        variant: "destructive" 
-      });
+  const loadEmployee = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: employee } = await supabase
+        .from("employees")
+        .select("id")
+        .eq("user_id", user.id)
+        .single();
+      
+      if (employee) {
+        setEmployeeId(employee.id);
+      }
     }
   };
 
-  const filteredMenuItems = useMemo(() => {
-    return menuItems.filter((item) => {
-      const matchesCategory =
-        selectedCategory === "all" || item.pos_category_id === selectedCategory;
-      const matchesSearch = item.name
-        .toLowerCase()
-        .includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [menuItems, selectedCategory, searchQuery]);
+  const loadData = async () => {
+    // Load POS categories
+    const { data: cats } = await supabase
+      .from("pos_categories")
+      .select("*")
+      .eq("is_active", true)
+      .order("display_order");
+    if (cats) setPosCategories(cats);
+
+    // Load menu items with POS category info
+    const { data: items } = await supabase
+      .from("menu_items")
+      .select("*")
+      .eq("is_active", true)
+      .order("display_order");
+    if (items) setMenuItems(items);
+
+    // Load tables
+    const { data: tablesData } = await supabase
+      .from("tables")
+      .select("*")
+      .order("table_number");
+    if (tablesData) setTables(tablesData);
+
+    // Load tax rate
+    const { data: settings } = await supabase
+      .from("app_settings")
+      .select("tax_rate")
+      .single();
+    if (settings) setTaxRate(settings.tax_rate);
+  };
+
+  const filteredMenuItems = menuItems.filter((item) => {
+    const matchesCategory =
+      selectedCategory === "all" || item.pos_category_id === selectedCategory;
+    const matchesSearch = item.name
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const addItemToOrder = (item: MenuItem) => {
-    if (isLocked) return;
-    
     const existingItem = currentOrder.items.find(
       (orderItem) => orderItem.menu_item_id === item.id
     );
@@ -230,7 +227,7 @@ export default function POS() {
           notes: currentOrder.notes || null,
           total_amount: total,
           status: "draft",
-          employee_id: activeEmployeeId || null,
+          employee_id: employeeId || null,
         })
         .select()
         .single();
@@ -285,7 +282,7 @@ export default function POS() {
           notes: currentOrder.notes || null,
           total_amount: total,
           status: "pending",
-          employee_id: activeEmployeeId || null,
+          employee_id: employeeId || null,
         })
         .select()
         .single();
@@ -348,104 +345,62 @@ export default function POS() {
 
   const { subtotal, taxAmount, total } = calculateTotals();
 
-  const getItemInOrder = (menuItemId: string) => {
-    return currentOrder.items.find(item => item.menu_item_id === menuItemId);
-  };
-
   return (
-    <div className="flex flex-col h-screen bg-background">
-      {/* Header */}
-      <div className="border-b bg-card px-6 py-3 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <h1 className="text-xl font-bold">Restaurant POS</h1>
-          <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/20">
-            Ouvert
-          </Badge>
-        </div>
-        <div className="flex items-center gap-4">
-          <span className="text-sm text-muted-foreground">
-            {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' })} à {new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-          </span>
-          {activeEmployeeName && (
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg border border-primary/20">
-              <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-              <div className="text-sm">
-                <div className="font-semibold text-foreground">{activeEmployeeName}</div>
-                {activeEmployeePosition && (
-                  <div className="text-xs text-muted-foreground">{activeEmployeePosition}</div>
-                )}
-              </div>
-            </div>
-          )}
-          {!isLocked && (
-            <Button variant="outline" size="sm" onClick={() => setIsLocked(true)}>
-              <Lock className="mr-2 h-4 w-4" />
-              Verrouiller POS
-            </Button>
-          )}
-        </div>
-      </div>
-
-      {/* Navigation Bar */}
-      <div className="border-b bg-card px-6 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="outline" size="sm">
-            <Package className="mr-2 h-4 w-4" />
-            Menu
-          </Button>
+    <div className="flex h-screen gap-4 p-4 bg-background">
+      {/* Left: Menu Items - Vertical List */}
+      <div className="flex-1 flex flex-col max-w-md">
+        <div className="mb-4 space-y-3">
           <div className="flex gap-2">
-            <Button
-              variant={selectedCategory === "all" ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedCategory("all")}
-            >
-              Tous <Badge variant="secondary" className="ml-2">{menuItems.length}</Badge>
-            </Button>
-            {posCategories.map((cat) => {
-              const count = menuItems.filter(item => item.pos_category_id === cat.id).length;
-              return (
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Rechercher un produit..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+
+          {/* Category Filter */}
+          <ScrollArea className="w-full whitespace-nowrap">
+            <div className="flex gap-2 pb-2">
+              <Button
+                variant={selectedCategory === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSelectedCategory("all")}
+              >
+                Tous
+              </Button>
+              {posCategories.map((cat) => (
                 <Button
                   key={cat.id}
                   variant={selectedCategory === cat.id ? "default" : "outline"}
                   size="sm"
                   onClick={() => setSelectedCategory(cat.id)}
+                  style={{
+                    backgroundColor: selectedCategory === cat.id ? cat.color : undefined,
+                    borderColor: cat.color,
+                  }}
                 >
-                  {cat.name} <Badge variant="secondary" className="ml-2">{count}</Badge>
+                  {cat.name}
                 </Button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          </ScrollArea>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={loadData}>
-            <Search className="mr-2 h-4 w-4" />
-            Actualiser
-          </Button>
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Rechercher un produit..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 w-64"
-            />
-          </div>
-        </div>
-      </div>
 
-      <div className="flex flex-1 overflow-hidden">
-        {/* Left: Product Grid */}
-        <div className="flex-1 overflow-auto p-6">
-          <div className="grid grid-cols-6 gap-4">
-            {filteredMenuItems.map((item) => {
-              const orderItem = getItemInOrder(item.id);
-              return (
-                <Card 
-                  key={item.id} 
-                  className="overflow-hidden group hover:shadow-lg transition-all cursor-pointer"
-                  onClick={() => !isLocked && addItemToOrder(item)}
-                >
-                  <div className="relative aspect-square">
+        {/* Menu Items - Vertical Scrollable List */}
+        <ScrollArea className="flex-1">
+          <div className="flex flex-col gap-3 pb-4">
+            {filteredMenuItems.map((item) => (
+              <Card
+                key={item.id}
+                className="cursor-pointer hover:shadow-lg transition-all hover:scale-[1.02]"
+                onClick={() => addItemToOrder(item)}
+              >
+                <CardContent className="p-4 flex gap-4 items-center">
+                  <div className="w-20 h-20 rounded-md overflow-hidden bg-muted flex-shrink-0 flex items-center justify-center">
                     {item.image_url ? (
                       <img
                         src={item.image_url}
@@ -453,214 +408,200 @@ export default function POS() {
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-muted flex items-center justify-center">
-                        <Package className="h-16 w-16 text-muted-foreground" />
-                      </div>
-                    )}
-                    <Badge 
-                      className="absolute top-2 right-2 bg-green-500 text-white"
-                    >
-                      ● Disponible
-                    </Badge>
-                    {orderItem && (
-                      <Badge 
-                        className="absolute top-2 left-2 bg-primary text-white"
-                      >
-                        {orderItem.quantity}
-                      </Badge>
+                      <Package className="h-10 w-10 text-muted-foreground" />
                     )}
                   </div>
-                  <CardContent className="p-4">
-                    <h3 className="font-semibold text-sm text-center mb-2">{item.name}</h3>
-                    <span className="font-bold text-sm block text-center">{item.selling_price.toFixed(2)} DH</span>
-                  </CardContent>
-                </Card>
-              );
-            })}
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-base mb-1 truncate">{item.name}</h3>
+                    <p className="text-xl font-bold text-primary">
+                      {item.selling_price.toFixed(2)} DH
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
-        </div>
+        </ScrollArea>
+      </div>
 
-        {/* Right: Order Summary */}
-        <div className="w-[400px] border-l bg-card flex flex-col">
-          <div className="p-6 border-b">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-bold">Résumé de commande</h2>
-              <span className="text-sm text-muted-foreground">#POS-{Date.now().toString().slice(-6)}</span>
+      {/* Right: Order Summary */}
+      <Card className="w-96 flex flex-col">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ShoppingCart className="h-5 w-5" />
+            Commande
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex-1 flex flex-col">
+          <div className="space-y-4 mb-4">
+            <div>
+              <Label>Type de commande</Label>
+              <Select
+                value={currentOrder.order_type}
+                onValueChange={(value: any) =>
+                  setCurrentOrder({ ...currentOrder, order_type: value, table_id: value !== "dine_in" ? undefined : currentOrder.table_id })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="dine_in">Sur place</SelectItem>
+                  <SelectItem value="takeaway">À emporter</SelectItem>
+                  <SelectItem value="delivery">Livraison</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {currentOrder.order_type === "dine_in" && (
+              <div>
+                <Label>Table</Label>
+                <Select
+                  value={currentOrder.table_id}
+                  onValueChange={(value) =>
+                    setCurrentOrder({ ...currentOrder, table_id: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner une table" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tables.map((table) => (
+                      <SelectItem key={table.id} value={table.id}>
+                        Table {table.table_number}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {currentOrder.order_type !== "dine_in" && (
+              <>
+                <div>
+                  <Label>Nom du client</Label>
+                  <Input
+                    value={currentOrder.customer_name || ""}
+                    onChange={(e) =>
+                      setCurrentOrder({ ...currentOrder, customer_name: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label>Téléphone</Label>
+                  <Input
+                    value={currentOrder.customer_phone || ""}
+                    onChange={(e) =>
+                      setCurrentOrder({ ...currentOrder, customer_phone: e.target.value })
+                    }
+                  />
+                </div>
+              </>
+            )}
+
+            <div>
+              <Label>Notes</Label>
+              <Textarea
+                value={currentOrder.notes || ""}
+                onChange={(e) =>
+                  setCurrentOrder({ ...currentOrder, notes: e.target.value })
+                }
+                rows={2}
+              />
             </div>
           </div>
 
-          <ScrollArea className="flex-1 p-6">
+          {/* Order Items */}
+          <ScrollArea className="flex-1 -mx-6 px-6">
             {currentOrder.items.length === 0 ? (
               <p className="text-center text-muted-foreground py-8">
                 Aucun article ajouté
               </p>
             ) : (
               <div className="space-y-3">
-                {currentOrder.items.map((item) => {
-                  const menuItem = menuItems.find(m => m.id === item.menu_item_id);
-                  return (
-                    <div key={item.menu_item_id} className="flex gap-3 pb-3 border-b">
-                      <div className="w-16 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0">
-                        {menuItem?.image_url ? (
-                          <img
-                            src={menuItem.image_url}
-                            alt={item.menu_item_name}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <Package className="h-6 w-6 text-muted-foreground" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start mb-1">
-                          <h4 className="font-semibold text-sm">{item.menu_item_name} ({item.quantity})</h4>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 -mt-1"
-                            onClick={() => removeItem(item.menu_item_id)}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                        {item.special_instructions && (
-                          <p className="text-xs text-muted-foreground mb-2">Notes : {item.special_instructions}</p>
-                        )}
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-sm">{item.subtotal.toFixed(2)} DH</span>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => updateItemQuantity(item.menu_item_id, -1)}
-                            >
-                              <Minus className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-6 w-6"
-                              onClick={() => updateItemQuantity(item.menu_item_id, 1)}
-                            >
-                              <Plus className="h-3 w-3" />
-                            </Button>
-                          </div>
-                        </div>
-                        <Textarea
-                          placeholder="Notes spéciales..."
-                          value={item.special_instructions || ""}
-                          onChange={(e) => updateInstructions(item.menu_item_id, e.target.value)}
-                          rows={2}
-                          className="text-xs mt-2"
-                        />
-                      </div>
+                {currentOrder.items.map((item) => (
+                  <Card key={item.menu_item_id} className="p-3">
+                    <div className="flex justify-between items-start mb-2">
+                      <h4 className="font-semibold text-sm flex-1">{item.menu_item_name}</h4>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-6 w-6"
+                        onClick={() => removeItem(item.menu_item_id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
-                  );
-                })}
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => updateItemQuantity(item.menu_item_id, -1)}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <span className="w-8 text-center font-medium">{item.quantity}</span>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => updateItemQuantity(item.menu_item_id, 1)}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      <span className="font-bold">{item.subtotal.toFixed(2)} DH</span>
+                    </div>
+                    <div className="mt-2">
+                      <Textarea
+                        placeholder="Notes spéciales..."
+                        value={item.special_instructions || ""}
+                        onChange={(e) => updateInstructions(item.menu_item_id, e.target.value)}
+                        rows={2}
+                        className="text-xs"
+                      />
+                    </div>
+                  </Card>
+                ))}
               </div>
             )}
           </ScrollArea>
 
-          <div className="p-6 border-t space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Sous-total</span>
-                <span>{subtotal.toFixed(2)} DH</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span>TVA ({taxRate}%)</span>
-                <span>{taxAmount.toFixed(2)} DH</span>
-              </div>
-              <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                <span>Total</span>
-                <span>{total.toFixed(2)} DH</span>
-              </div>
+          {/* Totals */}
+          <div className="pt-4 border-t space-y-2">
+            <div className="flex justify-between text-sm">
+              <span>Sous-total:</span>
+              <span>{subtotal.toFixed(2)} DH</span>
             </div>
-
-            <div className="space-y-3">
-              <div>
-                <Label className="text-xs text-muted-foreground">Type de commande</Label>
-                <Select
-                  value={currentOrder.order_type}
-                  onValueChange={(value: any) =>
-                    setCurrentOrder({ ...currentOrder, order_type: value, table_id: value !== "dine_in" ? undefined : currentOrder.table_id })
-                  }
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="dine_in">Sur place</SelectItem>
-                    <SelectItem value="takeaway">À emporter</SelectItem>
-                    <SelectItem value="delivery">Livraison</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {currentOrder.order_type === "dine_in" && (
-                <div>
-                  <Label className="text-xs text-muted-foreground">Sélectionner une table</Label>
-                  <Select
-                    value={currentOrder.table_id}
-                    onValueChange={(value) =>
-                      setCurrentOrder({ ...currentOrder, table_id: value })
-                    }
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder="Sélectionner une table" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {tables.map((table) => (
-                        <SelectItem key={table.id} value={table.id}>
-                          Table {table.table_number}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              {currentOrder.order_type !== "dine_in" && (
-                <>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Nom du client</Label>
-                    <Input
-                      value={currentOrder.customer_name || ""}
-                      onChange={(e) =>
-                        setCurrentOrder({ ...currentOrder, customer_name: e.target.value })
-                      }
-                      className="mt-1"
-                    />
-                  </div>
-                  <div>
-                    <Label className="text-xs text-muted-foreground">Téléphone</Label>
-                    <Input
-                      value={currentOrder.customer_phone || ""}
-                      onChange={(e) =>
-                        setCurrentOrder({ ...currentOrder, customer_phone: e.target.value })
-                      }
-                      className="mt-1"
-                    />
-                  </div>
-                </>
-              )}
+            <div className="flex justify-between text-sm">
+              <span>TVA ({taxRate}%):</span>
+              <span>{taxAmount.toFixed(2)} DH</span>
             </div>
+            <div className="flex justify-between text-lg font-bold">
+              <span>Total:</span>
+              <span>{total.toFixed(2)} DH</span>
+            </div>
+          </div>
 
+          {/* Action Buttons */}
+          <div className="flex gap-2 mt-4">
+            <Button variant="outline" className="flex-1" onClick={handleSaveDraft}>
+              <Save className="mr-2 h-4 w-4" />
+              Brouillon
+            </Button>
             <Button 
-              className="w-full bg-slate-900 hover:bg-slate-800" 
-              size="lg"
+              className="flex-1" 
               onClick={handleProcessPayment}
               disabled={printingOrderId !== null}
             >
-              <CreditCard className="mr-2 h-5 w-5" />
-              {printingOrderId ? "Impression..." : "Confirmer le paiement"}
+              <CreditCard className="mr-2 h-4 w-4" />
+              {printingOrderId ? "Impression..." : "Payer"}
             </Button>
           </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Ticket components for printing - visible but off-screen */}
       {printingOrderId && (
@@ -669,13 +610,6 @@ export default function POS() {
           <KitchenPreparationTicket orderId={printingOrderId} />
         </div>
       )}
-
-      {/* Lock overlay */}
-      <POSLockDialog
-        open={isLocked}
-        employeeName={activeEmployeeName}
-        onUnlock={handleUnlock}
-      />
     </div>
   );
 }

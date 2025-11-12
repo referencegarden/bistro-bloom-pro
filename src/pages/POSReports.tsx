@@ -11,9 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Download, TrendingUp, DollarSign, ShoppingCart, Award, Users } from "lucide-react";
+import { Download, TrendingUp, DollarSign, ShoppingCart, Award } from "lucide-react";
 import * as XLSX from "xlsx";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 
@@ -29,25 +28,12 @@ interface SalesReportItem {
   rank: number;
 }
 
-interface EmployeeSalesItem {
-  employee_id: string;
-  employee_name: string;
-  employee_position: string;
-  total_orders: number;
-  total_revenue: number;
-  total_items_sold: number;
-  avg_order_value: number;
-  rank: number;
-}
-
 export default function POSReports() {
   const [reportData, setReportData] = useState<SalesReportItem[]>([]);
-  const [employeeReport, setEmployeeReport] = useState<EmployeeSalesItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState("today");
   const [startDate, setStartDate] = useState<Date>(startOfDay(new Date()));
   const [endDate, setEndDate] = useState<Date>(endOfDay(new Date()));
-  const [activeTab, setActiveTab] = useState("products");
 
   useEffect(() => {
     updateDateRange(dateRange);
@@ -78,22 +64,13 @@ export default function POSReports() {
   const loadReport = async () => {
     setLoading(true);
     try {
-      const [productsResult, employeesResult] = await Promise.all([
-        supabase.rpc("get_pos_sales_report", {
-          _start_date: startDate.toISOString(),
-          _end_date: endDate.toISOString(),
-        }),
-        supabase.rpc("get_pos_sales_by_employee", {
-          _start_date: startDate.toISOString(),
-          _end_date: endDate.toISOString(),
-        }),
-      ]);
+      const { data, error } = await supabase.rpc("get_pos_sales_report", {
+        _start_date: startDate.toISOString(),
+        _end_date: endDate.toISOString(),
+      });
 
-      if (productsResult.error) throw productsResult.error;
-      if (employeesResult.error) throw employeesResult.error;
-
-      setReportData(productsResult.data || []);
-      setEmployeeReport(employeesResult.data || []);
+      if (error) throw error;
+      setReportData(data || []);
     } catch (error: any) {
       toast.error("Erreur lors du chargement du rapport");
       console.error(error);
@@ -103,10 +80,7 @@ export default function POSReports() {
   };
 
   const exportToExcel = () => {
-    const wb = XLSX.utils.book_new();
-    
-    // Products sheet
-    const productsWs = XLSX.utils.json_to_sheet(
+    const ws = XLSX.utils.json_to_sheet(
       reportData.map((item) => ({
         Rang: item.rank,
         "Nom du Produit": item.menu_item_name,
@@ -118,22 +92,9 @@ export default function POSReports() {
         "% des Ventes": item.sales_percentage.toFixed(2) + "%",
       }))
     );
-    
-    // Employees sheet
-    const employeesWs = XLSX.utils.json_to_sheet(
-      employeeReport.map((item) => ({
-        Rang: item.rank,
-        Serveur: item.employee_name,
-        Poste: item.employee_position || "-",
-        "Nombre de Commandes": item.total_orders,
-        "Revenu Total (DH)": item.total_revenue.toFixed(2),
-        "Articles Vendus": item.total_items_sold,
-        "Valeur Moyenne (DH)": item.avg_order_value.toFixed(2),
-      }))
-    );
 
-    XLSX.utils.book_append_sheet(wb, productsWs, "Produits");
-    XLSX.utils.book_append_sheet(wb, employeesWs, "Serveurs");
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Rapport POS");
     XLSX.writeFile(wb, `Rapport_POS_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
     toast.success("Rapport exporté avec succès");
   };
@@ -141,7 +102,6 @@ export default function POSReports() {
   const totalRevenue = reportData.reduce((sum, item) => sum + item.total_revenue, 0);
   const totalOrders = reportData.reduce((sum, item) => sum + item.order_count, 0);
   const topProduct = reportData[0];
-  const topEmployee = employeeReport[0];
 
   if (loading) {
     return (
@@ -156,7 +116,7 @@ export default function POSReports() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Rapports POS</h1>
-          <p className="text-muted-foreground">Analyse des ventes par produits et serveurs</p>
+          <p className="text-muted-foreground">Analyse des ventes et produits populaires</p>
         </div>
         <div className="flex gap-3">
           <Select value={dateRange} onValueChange={setDateRange}>
@@ -177,7 +137,7 @@ export default function POSReports() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Revenu Total</CardTitle>
@@ -217,19 +177,6 @@ export default function POSReports() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Meilleur Serveur</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold truncate">{topEmployee?.employee_name || "-"}</div>
-            <p className="text-xs text-muted-foreground">
-              {topEmployee?.total_revenue.toFixed(2) || "0.00"} DH
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Valeur Moyenne</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -242,123 +189,62 @@ export default function POSReports() {
         </Card>
       </div>
 
-      {/* Tabbed Reports */}
-      <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="products">Produits</TabsTrigger>
-          <TabsTrigger value="employees">Serveurs</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="products" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Classement des Produits</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-lg border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">Rang</TableHead>
-                      <TableHead>Produit</TableHead>
-                      <TableHead>Catégorie</TableHead>
-                      <TableHead className="text-right">Qté</TableHead>
-                      <TableHead className="text-right">Revenu</TableHead>
-                      <TableHead className="text-right">Commandes</TableHead>
-                      <TableHead className="text-right">% Ventes</TableHead>
+      {/* Detailed Table */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Classement des Produits</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg border overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">Rang</TableHead>
+                  <TableHead>Produit</TableHead>
+                  <TableHead>Catégorie</TableHead>
+                  <TableHead className="text-right">Qté</TableHead>
+                  <TableHead className="text-right">Revenu</TableHead>
+                  <TableHead className="text-right">Commandes</TableHead>
+                  <TableHead className="text-right">% Ventes</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {reportData.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                      Aucune vente trouvée pour cette période
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  reportData.map((item) => (
+                    <TableRow key={item.menu_item_id}>
+                      <TableCell className="font-bold">#{item.rank}</TableCell>
+                      <TableCell className="font-medium">{item.menu_item_name}</TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {item.menu_item_category || "-"}
+                      </TableCell>
+                      <TableCell className="text-right">{item.total_quantity}</TableCell>
+                      <TableCell className="text-right">{item.total_revenue.toFixed(2)} DH</TableCell>
+                      <TableCell className="text-right">{item.order_count}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-primary"
+                              style={{ width: `${Math.min(item.sales_percentage, 100)}%` }}
+                            />
+                          </div>
+                          <span className="text-sm">{item.sales_percentage.toFixed(1)}%</span>
+                        </div>
+                      </TableCell>
                     </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {reportData.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                          Aucune vente trouvée pour cette période
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      reportData.map((item) => (
-                        <TableRow key={item.menu_item_id}>
-                          <TableCell className="font-bold">#{item.rank}</TableCell>
-                          <TableCell className="font-medium">{item.menu_item_name}</TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {item.menu_item_category || "-"}
-                          </TableCell>
-                          <TableCell className="text-right">{item.total_quantity}</TableCell>
-                          <TableCell className="text-right">{item.total_revenue.toFixed(2)} DH</TableCell>
-                          <TableCell className="text-right">{item.order_count}</TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-2">
-                              <div className="w-16 h-2 bg-muted rounded-full overflow-hidden">
-                                <div
-                                  className="h-full bg-primary"
-                                  style={{ width: `${Math.min(item.sales_percentage, 100)}%` }}
-                                />
-                              </div>
-                              <span className="text-sm">{item.sales_percentage.toFixed(1)}%</span>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="employees" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Performance des Serveurs</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="rounded-lg border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-12">Rang</TableHead>
-                      <TableHead>Serveur</TableHead>
-                      <TableHead>Poste</TableHead>
-                      <TableHead className="text-right">Commandes</TableHead>
-                      <TableHead className="text-right">Articles</TableHead>
-                      <TableHead className="text-right">Revenu</TableHead>
-                      <TableHead className="text-right">Moy./Cmd</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {employeeReport.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                          Aucune donnée trouvée pour cette période
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      employeeReport.map((item) => (
-                        <TableRow key={item.employee_id}>
-                          <TableCell className="font-bold">#{item.rank}</TableCell>
-                          <TableCell className="font-medium">{item.employee_name}</TableCell>
-                          <TableCell className="text-muted-foreground">
-                            {item.employee_position || "-"}
-                          </TableCell>
-                          <TableCell className="text-right">{item.total_orders}</TableCell>
-                          <TableCell className="text-right">{item.total_items_sold}</TableCell>
-                          <TableCell className="text-right font-semibold">
-                            {item.total_revenue.toFixed(2)} DH
-                          </TableCell>
-                          <TableCell className="text-right">
-                            {item.avg_order_value.toFixed(2)} DH
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import * as bcrypt from "https://deno.land/x/bcrypt@v0.2.4/mod.ts";
+import * as bcrypt from "https://deno.land/x/bcrypt@v0.4.1/mod.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,19 +24,12 @@ serve(async (req) => {
       }
     );
 
-    const { pin, tenantId } = await req.json();
+    const { pin } = await req.json();
 
     const trimmedPin = typeof pin === 'string' ? pin.trim() : '';
     if (!trimmedPin) {
       return new Response(
         JSON.stringify({ error: 'PIN is required' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    if (!tenantId) {
-      return new Response(
-        JSON.stringify({ error: 'Tenant ID is required' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
@@ -49,13 +42,12 @@ serve(async (req) => {
       );
     }
 
-    // Find all active employees with PIN enabled in this tenant
+    // Find all active employees with PIN enabled
     const { data: employees, error: employeeError } = await supabaseClient
       .from('employees')
       .select('*')
       .eq('is_active', true)
       .eq('pin_enabled', true)
-      .eq('tenant_id', tenantId)
       .not('pin_hash', 'is', null);
 
     if (employeeError) {
@@ -70,7 +62,7 @@ serve(async (req) => {
     let employee = null;
     for (const emp of employees || []) {
       try {
-        const isMatch = bcrypt.compareSync(trimmedPin, emp.pin_hash);
+        const isMatch = await bcrypt.compare(trimmedPin, emp.pin_hash);
         if (isMatch) {
           employee = emp;
           break;
@@ -92,8 +84,7 @@ serve(async (req) => {
     // Generate a unique email and password for this employee
     let userId = employee.user_id;
     const uniqueEmail = `employee_${employee.id}@internal.app`;
-    // Generate a secure but simple password (not using pin_hash to avoid length issues)
-    const employeePassword = `EmpPin${employee.id}2025!`;
+    const employeePassword = `emp_${employee.id}_${employee.pin_hash}`;
     let signInEmail = uniqueEmail;
 
     if (!userId) {
@@ -131,15 +122,6 @@ serve(async (req) => {
 
       if (roleError) {
         console.error('Failed to assign employee role:', roleError);
-      }
-
-      // Create tenant_users record
-      const { error: tenantUserError } = await supabaseClient
-        .from('tenant_users')
-        .insert({ user_id: userId, tenant_id: employee.tenant_id });
-
-      if (tenantUserError) {
-        console.error('Failed to create tenant_users record:', tenantUserError);
       }
     } else {
       // Check if auth user exists
@@ -182,15 +164,6 @@ serve(async (req) => {
 
         if (roleError) {
           console.error('Failed to assign employee role:', roleError);
-        }
-
-        // Create tenant_users record
-        const { error: tenantUserError } = await supabaseClient
-          .from('tenant_users')
-          .insert({ user_id: userId, tenant_id: employee.tenant_id });
-
-        if (tenantUserError) {
-          console.error('Failed to create tenant_users record:', tenantUserError);
         }
       } else {
         // Update existing user's password

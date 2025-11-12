@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ReportExport } from "@/components/ReportExport";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface DashboardStats {
   totalProducts: number;
@@ -26,7 +26,6 @@ interface DashboardStats {
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { slug } = useParams<{ slug: string }>();
   const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
     totalSales: 0,
@@ -156,7 +155,7 @@ export default function Dashboard() {
       <div className="grid gap-4 md:grid-cols-2">
         <Card 
           className="cursor-pointer hover:bg-accent/50 transition-colors"
-          onClick={() => navigate(`/${slug}/demands`)}
+          onClick={() => navigate("/demands")}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Commandes en Attente</CardTitle>
@@ -172,7 +171,7 @@ export default function Dashboard() {
 
         <Card 
           className="cursor-pointer hover:bg-accent/50 transition-colors"
-          onClick={() => navigate(`/${slug}/demands`)}
+          onClick={() => navigate("/demands")}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Produits en Stock</CardTitle>

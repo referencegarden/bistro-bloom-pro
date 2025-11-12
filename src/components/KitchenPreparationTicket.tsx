@@ -27,6 +27,7 @@ export function KitchenPreparationTicket({ orderId }: KitchenPreparationTicketPr
 
   const loadTicketData = async () => {
     try {
+      console.log("Loading kitchen ticket data for order:", orderId);
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .select(`
@@ -49,11 +50,14 @@ export function KitchenPreparationTicket({ orderId }: KitchenPreparationTicketPr
 
       if (orderError) throw orderError;
 
+      console.log("Order data loaded:", orderData);
+
       // Filter only Cuisine items
       const cuisineItems = orderData.order_items
         .filter((item: any) => {
           const isCuisine = item.menu_items.category === "Cuisine" || 
                             item.menu_items.pos_categories?.name === "Cuisine";
+          console.log("Item:", item.menu_items.name, "isCuisine:", isCuisine, "category:", item.menu_items.category, "pos_category:", item.menu_items.pos_categories?.name);
           return isCuisine;
         })
         .map((item: any) => ({
@@ -61,6 +65,8 @@ export function KitchenPreparationTicket({ orderId }: KitchenPreparationTicketPr
           quantity: item.quantity,
           special_instructions: item.special_instructions,
         }));
+
+      console.log("Cuisine items filtered:", cuisineItems);
 
       setData({
         order_number: orderData.order_number,
