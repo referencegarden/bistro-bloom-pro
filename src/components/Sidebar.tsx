@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useNavigate, useParams } from "react-router-dom";
 import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList, UtensilsCrossed, ClipboardCheck, ShoppingBag, ChefHat, BarChart3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -7,69 +7,71 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupConte
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
-const navigation = [{
-  name: "Tableau de bord",
-  href: "/dashboard",
-  icon: Home
-}, {
-  name: "Produits",
-  href: "/products",
-  icon: Package
-}, {
-  name: "Menu / Recettes",
-  href: "/menu-items",
-  icon: UtensilsCrossed
-}, {
-  name: "Sortie de Stock",
-  href: "/sales",
-  icon: ShoppingCart
-}, {
-  name: "Achats",
-  href: "/purchases",
-  icon: TrendingUp
-}, {
-  name: "Commandes",
-  href: "/demands",
-  icon: ClipboardList
-}, {
-  name: "Catégories",
-  href: "/category-management",
-  icon: LayoutGrid
-}, {
-  name: "Fournisseurs",
-  href: "/suppliers",
-  icon: Users
-}, {
-  name: "Présence",
-  href: "/attendance",
-  icon: ClipboardCheck
-}, {
-  name: "Employés",
-  href: "/employees",
-  icon: Users
-}, {
-  name: "Point de Vente",
-  href: "/pos",
-  icon: ShoppingBag
-}, {
-  name: "Commandes POS",
-  href: "/pos/orders",
-  icon: ClipboardList
-}, {
-  name: "Affichage Cuisine",
-  href: "/pos/kitchen",
-  icon: ChefHat
-}, {
-  name: "Rapports POS",
-  href: "/pos/reports",
-  icon: BarChart3
-}, {
-  name: "Paramètres",
-  href: "/settings",
-  icon: Settings
-}];
 export function AppSidebar() {
   const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
+  
+  const navigation = [{
+    name: "Tableau de bord",
+    href: `/${slug}/dashboard`,
+    icon: Home
+  }, {
+    name: "Produits",
+    href: `/${slug}/products`,
+    icon: Package
+  }, {
+    name: "Menu / Recettes",
+    href: `/${slug}/menu-items`,
+    icon: UtensilsCrossed
+  }, {
+    name: "Sortie de Stock",
+    href: `/${slug}/sales`,
+    icon: ShoppingCart
+  }, {
+    name: "Achats",
+    href: `/${slug}/purchases`,
+    icon: TrendingUp
+  }, {
+    name: "Commandes",
+    href: `/${slug}/demands`,
+    icon: ClipboardList
+  }, {
+    name: "Catégories",
+    href: `/${slug}/category-management`,
+    icon: LayoutGrid
+  }, {
+    name: "Fournisseurs",
+    href: `/${slug}/suppliers`,
+    icon: Users
+  }, {
+    name: "Présence",
+    href: `/${slug}/attendance`,
+    icon: ClipboardCheck
+  }, {
+    name: "Employés",
+    href: `/${slug}/employees`,
+    icon: Users
+  }, {
+    name: "Point de Vente",
+    href: `/${slug}/pos`,
+    icon: ShoppingBag
+  }, {
+    name: "Commandes POS",
+    href: `/${slug}/pos/orders`,
+    icon: ClipboardList
+  }, {
+    name: "Affichage Cuisine",
+    href: `/${slug}/pos/kitchen`,
+    icon: ChefHat
+  }, {
+    name: "Rapports POS",
+    href: `/${slug}/pos/reports`,
+    icon: BarChart3
+  }, {
+    name: "Paramètres",
+    href: `/${slug}/settings`,
+    icon: Settings
+  }];
   const {
     open
   } = useSidebar();
@@ -125,34 +127,34 @@ export function AppSidebar() {
     
     // Waiters only see POS
     if (isWaiter) {
-      return navigation.filter(item => item.href === "/pos");
+      return navigation.filter(item => item.href === `/${slug}/pos`);
     }
     
     return navigation.filter(item => {
       // Always show dashboard
-      if (item.href === "/dashboard") return permissions.can_view_reports;
+      if (item.href === `/${slug}/dashboard`) return permissions.can_view_reports;
       // Settings only for admins
-      if (item.href === "/settings") return false;
+      if (item.href === `/${slug}/settings`) return false;
       // Categories, Suppliers, Employees only for admins
-      if (["/category-management", "/suppliers", "/employees"].includes(item.href)) return false;
+      if ([`/${slug}/category-management`, `/${slug}/suppliers`, `/${slug}/employees`].includes(item.href)) return false;
       // Products visibility
-      if (item.href === "/products") return permissions.can_view_products;
+      if (item.href === `/${slug}/products`) return permissions.can_view_products;
       // Menu items visibility (same as sales)
-      if (item.href === "/menu-items") return permissions.can_make_sales;
+      if (item.href === `/${slug}/menu-items`) return permissions.can_make_sales;
       // Sales visibility
-      if (item.href === "/sales") return permissions.can_make_sales;
+      if (item.href === `/${slug}/sales`) return permissions.can_make_sales;
       // Purchases only for admins or those who can manage stock
-      if (item.href === "/purchases") return permissions.can_manage_stock;
+      if (item.href === `/${slug}/purchases`) return permissions.can_manage_stock;
       // Demands visible to all employees
-      if (item.href === "/demands") return true;
+      if (item.href === `/${slug}/demands`) return true;
       // POS permissions
-      if (item.href === "/pos") return permissions.can_use_pos;
-      if (item.href === "/pos/orders") return permissions.can_manage_orders;
-      if (item.href === "/pos/kitchen") return permissions.can_view_kitchen_display;
-      if (item.href === "/pos/reports") return permissions.can_access_pos_reports;
+      if (item.href === `/${slug}/pos`) return permissions.can_use_pos;
+      if (item.href === `/${slug}/pos/orders`) return permissions.can_manage_orders;
+      if (item.href === `/${slug}/pos/kitchen`) return permissions.can_view_kitchen_display;
+      if (item.href === `/${slug}/pos/reports`) return permissions.can_access_pos_reports;
       return true;
     });
-  }, [isAdmin, isWaiter, permissions]);
+  }, [isAdmin, isWaiter, permissions, slug, navigation]);
   async function handleSignOut() {
     try {
       const slug = localStorage.getItem('current_tenant_slug') || 'default-restaurant';
