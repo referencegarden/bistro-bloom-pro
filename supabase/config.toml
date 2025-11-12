@@ -5,3 +5,9 @@ verify_jwt = false
 
 [functions.hash-pin]
 verify_jwt = true
+
+[functions.initialize-super-admin]
+verify_jwt = false
+
+[functions.reset-tenant-admin-password]
+verify_jwt = true

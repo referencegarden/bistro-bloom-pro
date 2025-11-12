@@ -47,6 +47,14 @@ export default function POSPayment() {
   }, [paymentSuccess, receiptLoaded]);
 
   const loadEmployee = async () => {
+    const savedSession = localStorage.getItem('pos_active_employee');
+    
+    if (savedSession) {
+      const session = JSON.parse(savedSession);
+      setEmployeeId(session.id);
+      return;
+    }
+    
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
       const { data: employee } = await supabase

@@ -75,6 +75,7 @@ export function AppSidebar() {
   } = useSidebar();
   const {
     isAdmin,
+    isWaiter,
     permissions
   } = useEmployeePermissions();
   const {
@@ -121,6 +122,12 @@ export function AppSidebar() {
   }, [settings]);
   const filteredNavigation = useMemo(() => {
     if (isAdmin) return navigation;
+    
+    // Waiters only see POS
+    if (isWaiter) {
+      return navigation.filter(item => item.href === "/pos");
+    }
+    
     return navigation.filter(item => {
       // Always show dashboard
       if (item.href === "/dashboard") return permissions.can_view_reports;
@@ -145,23 +152,28 @@ export function AppSidebar() {
       if (item.href === "/pos/reports") return permissions.can_access_pos_reports;
       return true;
     });
-  }, [isAdmin, permissions]);
+  }, [isAdmin, isWaiter, permissions]);
   async function handleSignOut() {
     try {
+      const slug = localStorage.getItem('current_tenant_slug') || 'default-restaurant';
+      
       const {
         error
       } = await supabase.auth.signOut({
         scope: 'local'
       });
       if (error) throw error;
+      
+      localStorage.clear();
       toast.success("Déconnecté avec succès");
-      navigate("/");
+      navigate(`/${slug}`);
     } catch (error) {
       console.error("Logout error:", error);
+      const slug = localStorage.getItem('current_tenant_slug') || 'default-restaurant';
       // Force clear and navigation on error
       localStorage.clear();
       toast.success("Déconnecté");
-      navigate("/");
+      navigate(`/${slug}`);
     }
   }
   return <Sidebar collapsible="icon">

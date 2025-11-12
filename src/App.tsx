@@ -2,10 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PermissionRoute } from "./components/PermissionRoute";
+import { TenantProvider } from "./contexts/TenantContext";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Sales from "./pages/Sales";
@@ -27,6 +28,13 @@ import CategoryManagement from "./pages/CategoryManagement";
 import POSReports from "./pages/POSReports";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
+import SuperAdminLogin from "./pages/SuperAdminLogin";
+import SuperAdminInitialize from "./pages/SuperAdminInitialize";
+import SuperAdminDashboard from "./pages/SuperAdminDashboard";
+import SuperAdminTenants from "./pages/SuperAdminTenants";
+import SuperAdminSubscriptions from "./pages/SuperAdminSubscriptions";
+import { SuperAdminLayout } from "./components/SuperAdminLayout";
+import { SubscriptionGuard } from "./components/SubscriptionGuard";
 
 const queryClient = new QueryClient();
 
@@ -37,29 +45,45 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Auth />} />
+          {/* Redirect root to super admin */}
+          <Route path="/" element={<Navigate to="/super-admin/login" replace />} />
+          
+          {/* Slug-based tenant routes */}
+          <Route path="/:slug" element={
+            <TenantProvider>
+              <Auth />
+            </TenantProvider>
+          } />
           <Route
-            path="/dashboard"
+            path="/:slug/dashboard"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_view_reports">
-                  <Layout>
-                    <Dashboard />
-                  </Layout>
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <PermissionRoute permission="can_view_reports">
+                      <Layout>
+                        <Dashboard />
+                      </Layout>
+                    </PermissionRoute>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/products"
+            path="/:slug/products"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_view_products">
-                  <Layout>
-                    <Products />
-                  </Layout>
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <PermissionRoute permission="can_view_products">
+                      <Layout>
+                        <Products />
+                      </Layout>
+                    </PermissionRoute>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
@@ -238,6 +262,14 @@ const App = () => (
               </ProtectedRoute>
             }
           />
+          {/* Super Admin Routes */}
+          <Route path="/super-admin/login" element={<SuperAdminLogin />} />
+          <Route path="/super-admin/initialize" element={<SuperAdminInitialize />} />
+          <Route path="/super-admin" element={<SuperAdminLayout />}>
+            <Route path="dashboard" element={<SuperAdminDashboard />} />
+            <Route path="tenants" element={<SuperAdminTenants />} />
+            <Route path="subscriptions" element={<SuperAdminSubscriptions />} />
+          </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
