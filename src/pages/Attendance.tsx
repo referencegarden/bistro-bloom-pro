@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
@@ -26,6 +26,7 @@ interface WeeklyAttendance {
 }
 export default function Attendance() {
   const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
   const { isAdmin, loading: permissionsLoading } = useEmployeePermissions();
   const [todayAttendance, setTodayAttendance] = useState<TodayAttendance | null>(null);
   const [weeklyAttendance, setWeeklyAttendance] = useState<WeeklyAttendance[]>([]);
@@ -45,9 +46,9 @@ export default function Attendance() {
   // Redirect admins to admin view
   useEffect(() => {
     if (!permissionsLoading && isAdmin) {
-      navigate('/attendance-admin', { replace: true });
+      navigate(`/${slug}/attendance-admin`, { replace: true });
     }
-  }, [isAdmin, permissionsLoading, navigate]);
+  }, [isAdmin, permissionsLoading, navigate, slug]);
 
   useEffect(() => {
     loadEmployeeData();

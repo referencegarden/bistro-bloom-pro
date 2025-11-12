@@ -93,7 +93,8 @@ export default function Auth() {
 
     if (!tenantUser) {
       toast.error("Vous n'avez pas accès à ce restaurant");
-      await supabase.auth.signOut();
+      await supabase.auth.signOut({ scope: 'local' });
+      localStorage.clear();
       setLoading(false);
       return;
     }

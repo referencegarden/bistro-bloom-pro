@@ -60,11 +60,9 @@ const App = () => (
               <TenantProvider>
                 <SubscriptionGuard>
                   <ProtectedRoute>
-                    <PermissionRoute permission="can_view_reports">
-                      <Layout>
-                        <Dashboard />
-                      </Layout>
-                    </PermissionRoute>
+                    <Layout>
+                      <Dashboard />
+                    </Layout>
                   </ProtectedRoute>
                 </SubscriptionGuard>
               </TenantProvider>
@@ -76,190 +74,232 @@ const App = () => (
               <TenantProvider>
                 <SubscriptionGuard>
                   <ProtectedRoute>
-                    <PermissionRoute permission="can_view_products">
-                      <Layout>
-                        <Products />
-                      </Layout>
-                    </PermissionRoute>
+                    <Layout>
+                      <Products />
+                    </Layout>
                   </ProtectedRoute>
                 </SubscriptionGuard>
               </TenantProvider>
             }
           />
           <Route
-            path="/sales"
+            path="/:slug/sales"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_make_sales">
-                  <Layout>
-                    <Sales />
-                  </Layout>
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <Sales />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/purchases"
+            path="/:slug/purchases"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_manage_stock">
-                  <Layout>
-                    <Purchases />
-                  </Layout>
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <Purchases />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/demands"
+            path="/:slug/demands"
             element={
-              <ProtectedRoute>
-                <Layout>
-                  <Demands />
-                </Layout>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <Demands />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/categories"
+            path="/:slug/categories"
             element={
-              <ProtectedRoute>
-                <Layout>
-                  <Categories />
-                </Layout>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <Categories />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/suppliers"
+            path="/:slug/suppliers"
             element={
-              <ProtectedRoute>
-                <Layout>
-                  <Suppliers />
-                </Layout>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <Suppliers />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/employees"
+            path="/:slug/employees"
             element={
-              <ProtectedRoute>
-                <Layout>
-                  <Employees />
-                </Layout>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <Employees />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/menu-items"
+            path="/:slug/menu-items"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_make_sales">
-                  <Layout>
-                    <MenuItems />
-                  </Layout>
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <MenuItems />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/settings"
+            path="/:slug/settings"
             element={
-              <ProtectedRoute>
-                <Layout>
-                  <Settings />
-                </Layout>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <Settings />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/attendance"
+            path="/:slug/attendance"
             element={
-              <ProtectedRoute>
-                <Layout>
-                  <Attendance />
-                </Layout>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <Attendance />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/attendance-admin"
+            path="/:slug/attendance-admin"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_manage_attendance">
-                  <Layout>
-                    <AttendanceAdmin />
-                  </Layout>
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <AttendanceAdmin />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/pos"
+            path="/:slug/category-management"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_use_pos">
-                  <POS />
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <CategoryManagement />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/pos/orders"
+            path="/:slug/pos"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_manage_orders">
-                  <Layout>
-                    <POSOrders />
-                  </Layout>
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <POS />
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/pos/payment/:orderId"
+            path="/:slug/pos/orders"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_process_payments">
-                  <POSPayment />
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <POSOrders />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/pos/kitchen"
+            path="/:slug/pos/payment/:orderId"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_view_kitchen_display">
-                  <Layout>
-                    <KitchenDisplay />
-                  </Layout>
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <POSPayment />
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/category-management"
+            path="/:slug/pos/kitchen"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_manage_stock">
-                  <Layout>
-                    <CategoryManagement />
-                  </Layout>
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <KitchenDisplay />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           <Route
-            path="/pos/reports"
+            path="/:slug/pos/reports"
             element={
-              <ProtectedRoute>
-                <PermissionRoute permission="can_access_pos_reports">
-                  <Layout>
-                    <POSReports />
-                  </Layout>
-                </PermissionRoute>
-              </ProtectedRoute>
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <POSReports />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
             }
           />
           {/* Super Admin Routes */}

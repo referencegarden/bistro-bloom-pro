@@ -8,7 +8,7 @@ interface PermissionRouteProps {
 }
 
 export function PermissionRoute({ children, permission }: PermissionRouteProps) {
-  const { isAdmin, permissions, loading } = useEmployeePermissions();
+  const { loading } = useEmployeePermissions();
 
   if (loading) {
     return (
@@ -18,25 +18,6 @@ export function PermissionRoute({ children, permission }: PermissionRouteProps) 
     );
   }
 
-  // Admins have all permissions
-  if (isAdmin) {
-    return <>{children}</>;
-  }
-
-  // Check specific permission and redirect to appropriate page
-  if (permission && !permissions[permission]) {
-    const fallback = isAdmin
-      ? '/dashboard'
-      : permissions.can_make_sales
-        ? '/sales'
-        : permissions.can_view_products
-          ? '/products'
-          : permissions.can_view_reports
-            ? '/dashboard'
-            : '/';
-    
-    return <Navigate to={fallback} replace />;
-  }
-
+  // All restaurants have unrestricted access to all features
   return <>{children}</>;
 }

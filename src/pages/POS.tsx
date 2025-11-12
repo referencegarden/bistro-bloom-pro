@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Minus, X, Search, ShoppingCart, Save, CreditCard, Package, Lock, User } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { printOrderTickets } from "@/lib/printerService";
 import { BarPreparationTicket } from "@/components/BarPreparationTicket";
 import { KitchenPreparationTicket } from "@/components/KitchenPreparationTicket";
@@ -58,6 +58,7 @@ interface CurrentOrder {
 
 export default function POS() {
   const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
   const { toast } = useToast();
   
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
@@ -337,7 +338,7 @@ export default function POS() {
         }
         
         setPrintingOrderId(null);
-        navigate(`/pos/payment/${order.id}`);
+        navigate(`/${slug}/pos/payment/${order.id}`);
       }, 1000);
 
     } catch (error: any) {
