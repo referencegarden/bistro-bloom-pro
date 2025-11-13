@@ -15,6 +15,7 @@ import { printOrderTickets } from "@/lib/printerService";
 import { BarPreparationTicket } from "@/components/BarPreparationTicket";
 import { KitchenPreparationTicket } from "@/components/KitchenPreparationTicket";
 import { POSLockDialog } from "@/components/POSLockDialog";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface MenuItem {
   id: string;
@@ -60,6 +61,7 @@ export default function POS() {
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const { toast } = useToast();
+  const { tenantId } = useTenant();
   
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [posCategories, setPosCategories] = useState<POSCategory[]>([]);
@@ -216,6 +218,11 @@ export default function POS() {
       return;
     }
 
+    if (!tenantId) {
+      toast({ title: "Erreur", description: "Contexte restaurant non chargé", variant: "destructive" });
+      return;
+    }
+
     try {
       const { subtotal, taxAmount, total } = calculateTotals();
       const orderNumber = `POS-${Date.now()}`;
@@ -232,6 +239,7 @@ export default function POS() {
           total_amount: total,
           status: "draft",
           employee_id: activeEmployeeId || null,
+          tenant_id: tenantId,
         })
         .select()
         .single();
@@ -245,6 +253,7 @@ export default function POS() {
         unit_price: item.unit_price,
         total_price: item.subtotal,
         special_instructions: item.special_instructions || null,
+        tenant_id: tenantId,
       }));
 
       const { error: itemsError } = await supabase
@@ -271,6 +280,11 @@ export default function POS() {
       return;
     }
 
+    if (!tenantId) {
+      toast({ title: "Erreur", description: "Contexte restaurant non chargé", variant: "destructive" });
+      return;
+    }
+
     try {
       const { subtotal, taxAmount, total } = calculateTotals();
       const orderNumber = `POS-${Date.now()}`;
@@ -287,6 +301,7 @@ export default function POS() {
           total_amount: total,
           status: "pending",
           employee_id: activeEmployeeId || null,
+          tenant_id: tenantId,
         })
         .select()
         .single();
@@ -300,6 +315,7 @@ export default function POS() {
         unit_price: item.unit_price,
         total_price: item.subtotal,
         special_instructions: item.special_instructions || null,
+        tenant_id: tenantId,
       }));
 
       const { error: itemsError } = await supabase

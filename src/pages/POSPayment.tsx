@@ -10,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Separator } from "@/components/ui/separator";
 import { CreditCard, Banknote, Smartphone, FileText, CheckCircle, Printer } from "lucide-react";
 import { Receipt } from "@/components/Receipt";
+import { useTenant } from "@/contexts/TenantContext";
 
 interface Order {
   id: string;
@@ -24,6 +25,7 @@ export default function POSPayment() {
   const { orderId, slug } = useParams<{ orderId: string; slug: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { tenantId } = useTenant();
   
   const [order, setOrder] = useState<Order | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<string>("cash");
@@ -94,6 +96,15 @@ export default function POSPayment() {
   const handlePayment = async () => {
     if (!order) return;
 
+    if (!tenantId) {
+      toast({
+        title: "Erreur",
+        description: "Contexte restaurant non chargé",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setProcessing(true);
 
     try {
@@ -130,6 +141,7 @@ export default function POSPayment() {
           amount_paid: paymentMethod === "cash" ? parseFloat(receivedAmount) : order.total_amount,
           change_amount: changeAmount,
           employee_id: employeeId || null,
+          tenant_id: tenantId,
         });
 
       if (paymentError) throw paymentError;
