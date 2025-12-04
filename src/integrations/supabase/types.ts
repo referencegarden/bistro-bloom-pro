@@ -414,6 +414,7 @@ export type Database = {
           is_active: boolean
           name: string
           pos_category_id: string | null
+          preparation_display: string | null
           selling_price: number
           tenant_id: string | null
           updated_at: string | null
@@ -428,6 +429,7 @@ export type Database = {
           is_active?: boolean
           name: string
           pos_category_id?: string | null
+          preparation_display?: string | null
           selling_price?: number
           tenant_id?: string | null
           updated_at?: string | null
@@ -442,6 +444,7 @@ export type Database = {
           is_active?: boolean
           name?: string
           pos_category_id?: string | null
+          preparation_display?: string | null
           selling_price?: number
           tenant_id?: string | null
           updated_at?: string | null

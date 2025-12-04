@@ -16,9 +16,7 @@ interface OrderItem {
   special_instructions: string | null;
   menu_items: {
     name: string;
-    category: string | null;
-    pos_category_id: string | null;
-    pos_categories: { name: string } | null;
+    preparation_display: string | null;
   };
 }
 
@@ -87,9 +85,7 @@ export default function KitchenDisplay() {
           special_instructions,
           menu_items(
             name,
-            category,
-            pos_category_id,
-            pos_categories(name)
+            preparation_display
           )
         )
       `)
@@ -102,20 +98,17 @@ export default function KitchenDisplay() {
       return;
     }
 
-    // Filter orders to only include those with Cuisine items
-    const ordersWithCuisineItems = (data || [])
+    // Filter orders to only include those with kitchen preparation items
+    const ordersWithKitchenItems = (data || [])
       .map((order: any) => ({
         ...order,
         order_items: order.order_items.filter((item: OrderItem) => {
-          const isCuisine = 
-            item.menu_items.category === "Cuisine" ||
-            item.menu_items.pos_categories?.name === "Cuisine";
-          return isCuisine;
+          return item.menu_items.preparation_display === "kitchen";
         }),
       }))
       .filter((order: Order) => order.order_items.length > 0);
 
-    setOrders(ordersWithCuisineItems);
+    setOrders(ordersWithKitchenItems);
   };
 
   const handleMarkReady = async (orderId: string) => {

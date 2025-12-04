@@ -38,9 +38,7 @@ export function BarPreparationTicket({ orderId }: BarPreparationTicketProps) {
             special_instructions,
             menu_items (
               name,
-              category,
-              pos_category_id,
-              pos_categories (name)
+              preparation_display
             )
           )
         `)
@@ -49,12 +47,10 @@ export function BarPreparationTicket({ orderId }: BarPreparationTicketProps) {
 
       if (orderError) throw orderError;
 
-      // Filter only Bar items
+      // Filter only bar preparation items
       const barItems = orderData.order_items
         .filter((item: any) => {
-          const isBar = item.menu_items.category === "Bar" || 
-                        item.menu_items.pos_categories?.name === "Bar";
-          return isBar;
+          return item.menu_items.preparation_display === "bar";
         })
         .map((item: any) => ({
           name: item.menu_items.name,

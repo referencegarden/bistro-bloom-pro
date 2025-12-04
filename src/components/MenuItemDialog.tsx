@@ -47,6 +47,7 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
   const [products, setProducts] = useState<Product[]>([]);
   const [posCategories, setPosCategories] = useState<any[]>([]);
   const [posCategoryId, setPosCategoryId] = useState("");
+  const [preparationDisplay, setPreparationDisplay] = useState("none");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
   const [loading, setLoading] = useState(false);
@@ -63,6 +64,7 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
         setSellingPrice(editingItem.selling_price.toString());
         setIsActive(editingItem.is_active);
         setPosCategoryId(editingItem.pos_category_id || "");
+        setPreparationDisplay(editingItem.preparation_display || "none");
         setImagePreview(editingItem.image_url || "");
         loadIngredients(editingItem.id);
       } else {
@@ -140,6 +142,7 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
     setSellingPrice("");
     setIsActive(true);
     setPosCategoryId("");
+    setPreparationDisplay("none");
     setImageFile(null);
     setImagePreview("");
     setIngredients([]);
@@ -292,6 +295,7 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
         selling_price: numericSellingPrice,
         is_active: isActive,
         pos_category_id: posCategoryId || null,
+        preparation_display: preparationDisplay,
         image_url: imageUrl || null,
       };
 
@@ -431,6 +435,23 @@ export function MenuItemDialog({ open, onClose, editingItem }: MenuItemDialogPro
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="preparation_display">Écran de préparation</Label>
+            <Select value={preparationDisplay} onValueChange={setPreparationDisplay}>
+              <SelectTrigger>
+                <SelectValue placeholder="Sélectionner l'écran" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Aucun</SelectItem>
+                <SelectItem value="kitchen">Cuisine</SelectItem>
+                <SelectItem value="bar">Bar</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Sélectionnez l'écran où ce produit apparaîtra lors d'une commande
+            </p>
           </div>
 
           <div className="space-y-2">

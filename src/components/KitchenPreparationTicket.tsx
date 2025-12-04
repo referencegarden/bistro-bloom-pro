@@ -38,9 +38,7 @@ export function KitchenPreparationTicket({ orderId }: KitchenPreparationTicketPr
             special_instructions,
             menu_items (
               name,
-              category,
-              pos_category_id,
-              pos_categories (name)
+              preparation_display
             )
           )
         `)
@@ -49,12 +47,10 @@ export function KitchenPreparationTicket({ orderId }: KitchenPreparationTicketPr
 
       if (orderError) throw orderError;
 
-      // Filter only Cuisine items
-      const cuisineItems = orderData.order_items
+      // Filter only kitchen preparation items
+      const kitchenItems = orderData.order_items
         .filter((item: any) => {
-          const isCuisine = item.menu_items.category === "Cuisine" || 
-                            item.menu_items.pos_categories?.name === "Cuisine";
-          return isCuisine;
+          return item.menu_items.preparation_display === "kitchen";
         })
         .map((item: any) => ({
           name: item.menu_items.name,
@@ -65,7 +61,7 @@ export function KitchenPreparationTicket({ orderId }: KitchenPreparationTicketPr
       setData({
         order_number: orderData.order_number,
         table_number: orderData.tables?.table_number,
-        items: cuisineItems,
+        items: kitchenItems,
         created_at: orderData.created_at,
       });
     } catch (error) {
