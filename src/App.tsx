@@ -24,6 +24,7 @@ import POS from "./pages/POS";
 import POSOrders from "./pages/POSOrders";
 import POSPayment from "./pages/POSPayment";
 import KitchenDisplay from "./pages/KitchenDisplay";
+import BarDisplay from "./pages/BarDisplay";
 import CategoryManagement from "./pages/CategoryManagement";
 import POSReports from "./pages/POSReports";
 import Auth from "./pages/Auth";
@@ -282,6 +283,20 @@ const App = () => (
                   <ProtectedRoute>
                     <Layout>
                       <KitchenDisplay />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
+            }
+          />
+          <Route
+            path="/:slug/pos/bar"
+            element={
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <BarDisplay />
                     </Layout>
                   </ProtectedRoute>
                 </SubscriptionGuard>

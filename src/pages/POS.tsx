@@ -11,9 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Plus, Minus, X, Search, ShoppingCart, Save, CreditCard, Package, Lock, User } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
-import { printOrderTickets } from "@/lib/printerService";
-import { BarPreparationTicket } from "@/components/BarPreparationTicket";
-import { KitchenPreparationTicket } from "@/components/KitchenPreparationTicket";
 import { POSLockDialog } from "@/components/POSLockDialog";
 import { useTenant } from "@/contexts/TenantContext";
 
@@ -76,7 +73,6 @@ export default function POS() {
   const [activeEmployeeId, setActiveEmployeeId] = useState<string>("");
   const [activeEmployeeName, setActiveEmployeeName] = useState<string>("");
   const [activeEmployeePosition, setActiveEmployeePosition] = useState<string>("");
-  const [printingOrderId, setPrintingOrderId] = useState<string | null>(null);
   const [isLocked, setIsLocked] = useState(true);
 
   useEffect(() => {
@@ -324,41 +320,14 @@ export default function POS() {
 
       if (itemsError) throw itemsError;
 
-      // Print preparation tickets for bar and kitchen
-      setPrintingOrderId(order.id);
-      console.log("Starting ticket printing process for order:", order.id);
-      
       toast({ 
         title: "Commande envoyée", 
-        description: "Préparation des tickets d'impression..."
+        description: "Commande transmise aux écrans de préparation"
       });
 
-      // Increased delay to ensure order items are fully saved and tickets are rendered
-      setTimeout(async () => {
-        console.log("Attempting to print tickets...");
-        const { barPrinted, kitchenPrinted } = await printOrderTickets(order.id);
-        
-        const printedTickets = [];
-        if (barPrinted) printedTickets.push("Bar");
-        if (kitchenPrinted) printedTickets.push("Cuisine");
-        
-        console.log("Tickets printed:", { barPrinted, kitchenPrinted });
-        
-        if (printedTickets.length > 0) {
-          toast({ 
-            title: "Tickets générés", 
-            description: `Tickets: ${printedTickets.join(", ")}`
-          });
-        } else {
-          console.warn("No tickets were generated");
-        }
-        
-        setPrintingOrderId(null);
-        navigate(`/${slug}/pos/payment/${order.id}`);
-      }, 1000);
+      navigate(`/${slug}/pos/payment/${order.id}`);
 
     } catch (error: any) {
-      setPrintingOrderId(null);
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     }
   };
@@ -670,22 +639,13 @@ export default function POS() {
               className="w-full bg-slate-900 hover:bg-slate-800" 
               size="lg"
               onClick={handleProcessPayment}
-              disabled={printingOrderId !== null}
             >
               <CreditCard className="mr-2 h-5 w-5" />
-              {printingOrderId ? "Impression..." : "Confirmer le paiement"}
+              Confirmer le paiement
             </Button>
           </div>
         </div>
       </div>
-
-      {/* Ticket components for printing - visible but off-screen */}
-      {printingOrderId && (
-        <div style={{ position: 'fixed', left: '-9999px', top: 0 }}>
-          <BarPreparationTicket orderId={printingOrderId} />
-          <KitchenPreparationTicket orderId={printingOrderId} />
-        </div>
-      )}
 
       {/* Lock overlay */}
       <POSLockDialog

@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, useParams } from "react-router-dom";
-import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList, UtensilsCrossed, ClipboardCheck, ShoppingBag, ChefHat, BarChart3 } from "lucide-react";
+import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList, UtensilsCrossed, ClipboardCheck, ShoppingBag, ChefHat, BarChart3, Wine } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -65,6 +65,7 @@ export function AppSidebar() {
     { name: "Point de Vente", href: `/${slug}/pos`, icon: ShoppingBag },
     { name: "Commandes POS", href: `/${slug}/pos/orders`, icon: ClipboardList },
     { name: "Affichage Cuisine", href: `/${slug}/pos/kitchen`, icon: ChefHat },
+    { name: "Affichage Bar", href: `/${slug}/pos/bar`, icon: Wine },
     { name: "Rapports POS", href: `/${slug}/pos/reports`, icon: BarChart3 },
     { name: "Paramètres", href: `/${slug}/settings`, icon: Settings },
   ];

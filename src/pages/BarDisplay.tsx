@@ -5,7 +5,7 @@ import { useTenant } from "@/contexts/TenantContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Clock, AlertCircle, ChefHat } from "lucide-react";
+import { CheckCircle, Clock, AlertCircle, Wine } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { fr } from "date-fns/locale";
 
@@ -34,19 +34,19 @@ interface Order {
   order_items: OrderItem[];
 }
 
-export default function KitchenDisplay() {
+export default function BarDisplay() {
   const { toast } = useToast();
   const { tenantId } = useTenant();
   const [orders, setOrders] = useState<Order[]>([]);
 
   useEffect(() => {
     if (!tenantId) return;
-
+    
     loadOrders();
 
     // Subscribe to realtime updates
     const channel = supabase
-      .channel("kitchen_orders")
+      .channel("bar_orders")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "orders" },
@@ -102,24 +102,26 @@ export default function KitchenDisplay() {
       return;
     }
 
-    // Filter orders to only include those with Cuisine items
-    const ordersWithCuisineItems = (data || [])
+    // Filter orders to only include those with Bar items
+    const ordersWithBarItems = (data || [])
       .map((order: any) => ({
         ...order,
         order_items: order.order_items.filter((item: OrderItem) => {
-          const isCuisine = 
-            item.menu_items.category === "Cuisine" ||
-            item.menu_items.pos_categories?.name === "Cuisine";
-          return isCuisine;
+          const isBar = 
+            item.menu_items.category === "Bar" ||
+            item.menu_items.pos_categories?.name === "Bar";
+          return isBar;
         }),
       }))
       .filter((order: Order) => order.order_items.length > 0);
 
-    setOrders(ordersWithCuisineItems);
+    setOrders(ordersWithBarItems);
   };
 
   const handleMarkReady = async (orderId: string) => {
     try {
+      // Check if all items in this order (bar + kitchen) are ready
+      // For now, just mark individual bar items as ready by updating order status
       const { error } = await supabase
         .from("orders")
         .update({ status: "ready" })
@@ -129,7 +131,7 @@ export default function KitchenDisplay() {
 
       toast({
         title: "Commande prête",
-        description: "La commande cuisine a été marquée comme prête",
+        description: "La commande bar a été marquée comme prête",
       });
 
       loadOrders();
@@ -144,8 +146,8 @@ export default function KitchenDisplay() {
 
   const getOrderPriority = (createdAt: string) => {
     const minutes = Math.floor((Date.now() - new Date(createdAt).getTime()) / 60000);
-    if (minutes > 15) return "high";
-    if (minutes > 10) return "medium";
+    if (minutes > 10) return "high";
+    if (minutes > 5) return "medium";
     return "low";
   };
 
@@ -156,7 +158,7 @@ export default function KitchenDisplay() {
       case "medium":
         return "border-yellow-500 bg-yellow-50 dark:bg-yellow-950";
       default:
-        return "border-green-500 bg-green-50 dark:bg-green-950";
+        return "border-blue-500 bg-blue-50 dark:bg-blue-950";
     }
   };
 
@@ -175,8 +177,8 @@ export default function KitchenDisplay() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <ChefHat className="h-8 w-8 text-green-600" />
-              <CardTitle className="text-2xl">Affichage Cuisine</CardTitle>
+              <Wine className="h-8 w-8 text-blue-600" />
+              <CardTitle className="text-2xl">Affichage Bar</CardTitle>
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
@@ -190,7 +192,7 @@ export default function KitchenDisplay() {
         <Card>
           <CardContent className="p-12 text-center text-muted-foreground">
             <CheckCircle className="h-16 w-16 mx-auto mb-4 opacity-50" />
-            <p className="text-xl">Aucune commande cuisine en attente</p>
+            <p className="text-xl">Aucune commande bar en attente</p>
           </CardContent>
         </Card>
       ) : (
@@ -244,7 +246,7 @@ export default function KitchenDisplay() {
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2">
-                                <Badge className="text-lg px-3 py-1">
+                                <Badge className="text-lg px-3 py-1 bg-blue-600">
                                   {item.quantity}x
                                 </Badge>
                                 <span className="font-semibold text-lg">
@@ -264,7 +266,7 @@ export default function KitchenDisplay() {
                   </div>
 
                   <Button
-                    className="w-full text-lg py-6"
+                    className="w-full text-lg py-6 bg-blue-600 hover:bg-blue-700"
                     size="lg"
                     onClick={() => handleMarkReady(order.id)}
                   >
