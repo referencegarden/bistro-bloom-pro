@@ -146,13 +146,8 @@ export default function POSPayment() {
 
       if (paymentError) throw paymentError;
 
-      // Update order status to completed
-      const { error: orderError } = await supabase
-        .from("orders")
-        .update({ status: "completed" })
-        .eq("id", order.id);
-
-      if (orderError) throw orderError;
+      // Order remains at "confirmed" status so it stays visible on Kitchen/Bar displays
+      // Staff will mark it as "ready" when preparation is complete
 
       toast({
         title: "Paiement effectué",
