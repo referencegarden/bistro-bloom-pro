@@ -90,7 +90,7 @@ export default function KitchenDisplay() {
         )
       `)
       .eq("tenant_id", tenantId)
-      .in("status", ["confirmed", "preparing"])
+      .in("status", ["confirmed", "preparing", "sent_for_preparation"])
       .order("created_at", { ascending: true });
 
     if (error) {

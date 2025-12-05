@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Plus, Minus, X, Search, ShoppingCart, Save, CreditCard, Package, Lock, User } from "lucide-react";
+import { Plus, Minus, X, Search, ShoppingCart, Save, CreditCard, Package, Lock, User, Send } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { POSLockDialog } from "@/components/POSLockDialog";
 import { useTenant } from "@/contexts/TenantContext";
@@ -265,7 +265,7 @@ export default function POS() {
     }
   };
 
-  const handleProcessPayment = async () => {
+  const handleSendForPreparation = async () => {
     if (currentOrder.items.length === 0) {
       toast({ title: "Erreur", description: "Ajoutez au moins un article", variant: "destructive" });
       return;
@@ -285,6 +285,7 @@ export default function POS() {
       const { subtotal, taxAmount, total } = calculateTotals();
       const orderNumber = `POS-${Date.now()}`;
 
+      // Create order with pending status first
       const { data: order, error: orderError } = await supabase
         .from("orders")
         .insert({
@@ -320,11 +321,95 @@ export default function POS() {
 
       if (itemsError) throw itemsError;
 
+      // Call confirm_order to deduct stock and send to preparation displays
+      const { data: confirmResult, error: confirmError } = await supabase.rpc("confirm_order", {
+        _order_id: order.id,
+      });
+
+      if (confirmError) throw confirmError;
+
+      const result = confirmResult as { success: boolean; insufficient_stock?: any[] };
+      if (!result.success) {
+        toast({
+          title: "Stock insuffisant",
+          description: "Certains produits n'ont pas assez de stock",
+          variant: "destructive",
+        });
+        // Delete the order since we couldn't confirm it
+        await supabase.from("order_items").delete().eq("order_id", order.id);
+        await supabase.from("orders").delete().eq("id", order.id);
+        return;
+      }
+
       toast({ 
         title: "Commande envoyée", 
         description: "Commande transmise aux écrans de préparation"
       });
 
+      setCurrentOrder({ order_type: "dine_in", items: [] });
+
+    } catch (error: any) {
+      toast({ title: "Erreur", description: error.message, variant: "destructive" });
+    }
+  };
+
+  const handleProcessPayment = async () => {
+    if (currentOrder.items.length === 0) {
+      toast({ title: "Erreur", description: "Ajoutez au moins un article", variant: "destructive" });
+      return;
+    }
+
+    if (currentOrder.order_type === "dine_in" && !currentOrder.table_id) {
+      toast({ title: "Erreur", description: "Sélectionnez une table", variant: "destructive" });
+      return;
+    }
+
+    if (!tenantId) {
+      toast({ title: "Erreur", description: "Contexte restaurant non chargé", variant: "destructive" });
+      return;
+    }
+
+    try {
+      const { subtotal, taxAmount, total } = calculateTotals();
+      const orderNumber = `POS-${Date.now()}`;
+
+      // Create order with pending status - NOT sent for preparation yet
+      const { data: order, error: orderError } = await supabase
+        .from("orders")
+        .insert({
+          order_number: orderNumber,
+          order_type: currentOrder.order_type,
+          table_id: currentOrder.table_id || null,
+          customer_name: currentOrder.customer_name || null,
+          customer_phone: currentOrder.customer_phone || null,
+          notes: currentOrder.notes || null,
+          total_amount: total,
+          status: "pending",
+          employee_id: activeEmployeeId || null,
+          tenant_id: tenantId,
+        })
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      const orderItems = currentOrder.items.map((item) => ({
+        order_id: order.id,
+        menu_item_id: item.menu_item_id,
+        quantity: item.quantity,
+        unit_price: item.unit_price,
+        total_price: item.subtotal,
+        special_instructions: item.special_instructions || null,
+        tenant_id: tenantId,
+      }));
+
+      const { error: itemsError } = await supabase
+        .from("order_items")
+        .insert(orderItems);
+
+      if (itemsError) throw itemsError;
+
+      // Navigate to payment page - order is NOT sent for preparation yet
       navigate(`/${slug}/pos/payment/${order.id}`);
 
     } catch (error: any) {
@@ -635,14 +720,26 @@ export default function POS() {
               )}
             </div>
 
-            <Button 
-              className="w-full bg-slate-900 hover:bg-slate-800" 
-              size="lg"
-              onClick={handleProcessPayment}
-            >
-              <CreditCard className="mr-2 h-5 w-5" />
-              Confirmer le paiement
-            </Button>
+            <div className="grid grid-cols-2 gap-2">
+              <Button 
+                variant="outline"
+                size="lg"
+                onClick={handleSendForPreparation}
+                disabled={currentOrder.items.length === 0}
+              >
+                <Send className="mr-2 h-5 w-5" />
+                Envoyer en préparation
+              </Button>
+              <Button 
+                className="bg-slate-900 hover:bg-slate-800" 
+                size="lg"
+                onClick={handleProcessPayment}
+                disabled={currentOrder.items.length === 0}
+              >
+                <CreditCard className="mr-2 h-5 w-5" />
+                Procéder au paiement
+              </Button>
+            </div>
           </div>
         </div>
       </div>
