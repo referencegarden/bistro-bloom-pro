@@ -108,19 +108,26 @@ export default function POSPayment() {
     setProcessing(true);
 
     try {
-      // Confirm order if not already confirmed
-      if (order.order_type !== "completed") {
+      // Check if order is still pending (not sent for preparation yet)
+      const { data: currentOrder } = await supabase
+        .from("orders")
+        .select("status")
+        .eq("id", order.id)
+        .single();
+
+      // If order is pending, send it for preparation first
+      if (currentOrder?.status === "pending") {
         const { data: confirmResult, error: confirmError } = await supabase.rpc("confirm_order", {
           _order_id: order.id,
         });
 
         if (confirmError) throw confirmError;
 
-        const result = confirmResult as { success: boolean; message?: string };
+        const result = confirmResult as { success: boolean; insufficient_stock?: any[] };
         if (!result.success) {
           toast({
             title: "Stock insuffisant",
-            description: "Impossible de confirmer la commande",
+            description: "Certains produits n'ont pas assez de stock",
             variant: "destructive",
           });
           setProcessing(false);
