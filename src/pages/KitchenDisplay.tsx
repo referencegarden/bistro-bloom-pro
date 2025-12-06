@@ -14,6 +14,7 @@ interface OrderItem {
   menu_item_id: string;
   quantity: number;
   special_instructions: string | null;
+  preparation_status: string;
   menu_items: {
     name: string;
     preparation_display: string | null;
@@ -83,6 +84,7 @@ export default function KitchenDisplay() {
           menu_item_id,
           quantity,
           special_instructions,
+          preparation_status,
           menu_items(
             name,
             preparation_display
@@ -98,12 +100,13 @@ export default function KitchenDisplay() {
       return;
     }
 
-    // Filter orders to only include those with kitchen preparation items
+    // Filter orders to only include those with kitchen preparation items that are NOT ready
     const ordersWithKitchenItems = (data || [])
       .map((order: any) => ({
         ...order,
         order_items: order.order_items.filter((item: OrderItem) => {
-          return item.menu_items.preparation_display === "kitchen";
+          return item.menu_items.preparation_display === "kitchen" && 
+                 item.preparation_status !== "ready";
         }),
       }))
       .filter((order: Order) => order.order_items.length > 0);
@@ -113,16 +116,45 @@ export default function KitchenDisplay() {
 
   const handleMarkReady = async (orderId: string) => {
     try {
-      const { error } = await supabase
-        .from("orders")
-        .update({ status: "ready" })
-        .eq("id", orderId);
+      // Get all kitchen items for this order
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
 
-      if (error) throw error;
+      const kitchenItemIds = order.order_items.map(item => item.id);
+
+      // Mark only kitchen items as ready
+      const { error: itemsError } = await supabase
+        .from("order_items")
+        .update({ preparation_status: "ready" })
+        .in("id", kitchenItemIds);
+
+      if (itemsError) throw itemsError;
+
+      // Check if ALL items (kitchen + bar) are now ready
+      const { data: allItems, error: checkError } = await supabase
+        .from("order_items")
+        .select("id, preparation_status")
+        .eq("order_id", orderId);
+
+      if (checkError) throw checkError;
+
+      const allReady = allItems?.every(item => item.preparation_status === "ready");
+
+      // Only update order status to ready if ALL items are ready
+      if (allReady) {
+        const { error: orderError } = await supabase
+          .from("orders")
+          .update({ status: "ready" })
+          .eq("id", orderId);
+
+        if (orderError) throw orderError;
+      }
 
       toast({
-        title: "Commande prête",
-        description: "La commande cuisine a été marquée comme prête",
+        title: "Préparation cuisine terminée",
+        description: allReady 
+          ? "Toute la commande est prête" 
+          : "Articles cuisine prêts, en attente du bar",
       });
 
       loadOrders();

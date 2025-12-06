@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
+import { Separator } from "@/components/ui/separator";
 
 interface Employee {
   id: string;
@@ -38,7 +39,28 @@ interface EmployeePermissions {
   can_manage_stock: boolean;
   can_manage_suppliers: boolean;
   can_create_demands: boolean;
+  can_use_pos: boolean;
+  can_manage_orders: boolean;
+  can_process_payments: boolean;
+  can_view_kitchen_display: boolean;
+  can_access_pos_reports: boolean;
+  can_manage_attendance: boolean;
 }
+
+const defaultPermissions: EmployeePermissions = {
+  can_make_sales: true,
+  can_view_products: true,
+  can_view_reports: false,
+  can_manage_stock: false,
+  can_manage_suppliers: false,
+  can_create_demands: true,
+  can_use_pos: false,
+  can_manage_orders: false,
+  can_process_payments: false,
+  can_view_kitchen_display: false,
+  can_access_pos_reports: false,
+  can_manage_attendance: false,
+};
 
 export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps) {
   const { tenantId } = useTenant();
@@ -53,14 +75,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
     pin: "",
   });
   const [roleType, setRoleType] = useState<"employee" | "waiter">("employee");
-  const [permissions, setPermissions] = useState<EmployeePermissions>({
-    can_make_sales: true,
-    can_view_products: true,
-    can_view_reports: false,
-    can_manage_stock: false,
-    can_manage_suppliers: false,
-    can_create_demands: true,
-  });
+  const [permissions, setPermissions] = useState<EmployeePermissions>(defaultPermissions);
 
   useEffect(() => {
     if (employee) {
@@ -83,18 +98,25 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         .maybeSingle()
         .then(({ data }) => {
           if (data) {
-            const perms = {
+            const perms: EmployeePermissions = {
               can_make_sales: data.can_make_sales,
               can_view_products: data.can_view_products,
               can_view_reports: data.can_view_reports,
               can_manage_stock: data.can_manage_stock,
               can_manage_suppliers: data.can_manage_suppliers ?? false,
               can_create_demands: data.can_create_demands ?? true,
+              can_use_pos: data.can_use_pos ?? false,
+              can_manage_orders: data.can_manage_orders ?? false,
+              can_process_payments: data.can_process_payments ?? false,
+              can_view_kitchen_display: data.can_view_kitchen_display ?? false,
+              can_access_pos_reports: data.can_access_pos_reports ?? false,
+              can_manage_attendance: data.can_manage_attendance ?? false,
             };
             setPermissions(perms);
             
             // Detect waiter role based on permissions
-            const isWaiter = data.can_use_pos && !data.can_make_sales && !data.can_view_products && !data.can_view_reports;
+            const isWaiter = data.can_use_pos && data.can_manage_orders && data.can_process_payments && 
+                            !data.can_make_sales && !data.can_view_products && !data.can_view_reports;
             setRoleType(isWaiter ? "waiter" : "employee");
           }
         });
@@ -110,14 +132,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
         pin: "",
       });
       setRoleType("employee");
-      setPermissions({
-        can_make_sales: true,
-        can_view_products: true,
-        can_view_reports: false,
-        can_manage_stock: false,
-        can_manage_suppliers: false,
-        can_create_demands: true,
-      });
+      setPermissions(defaultPermissions);
     }
   }, [employee, open]);
 
@@ -251,12 +266,12 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
             can_manage_stock: permissions.can_manage_stock,
             can_manage_suppliers: permissions.can_manage_suppliers,
             can_create_demands: permissions.can_create_demands,
-            can_use_pos: false,
-            can_manage_orders: false,
-            can_process_payments: false,
-            can_view_kitchen_display: false,
-            can_access_pos_reports: false,
-            can_manage_attendance: false,
+            can_use_pos: permissions.can_use_pos,
+            can_manage_orders: permissions.can_manage_orders,
+            can_process_payments: permissions.can_process_payments,
+            can_view_kitchen_display: permissions.can_view_kitchen_display,
+            can_access_pos_reports: permissions.can_access_pos_reports,
+            can_manage_attendance: permissions.can_manage_attendance,
           };
 
       const { error: permError } = await supabase
@@ -427,7 +442,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
 
           {roleType === "employee" && (
             <div className="space-y-4 border-t pt-4">
-              <h3 className="font-semibold">Permissions</h3>
+              <h3 className="font-semibold">Permissions Stock & Rapports</h3>
 
               <div className="flex items-center justify-between">
                 <Label htmlFor="can_make_sales">Peut faire Sortie de Stock</Label>
@@ -440,52 +455,52 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
                 />
               </div>
 
-            <div className="flex items-center justify-between">
-              <Label htmlFor="can_view_products">Peut voir les produits</Label>
-              <Switch
-                id="can_view_products"
-                checked={permissions.can_view_products}
-                onCheckedChange={(checked) =>
-                  setPermissions({ ...permissions, can_view_products: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="can_view_reports">Peut voir les rapports</Label>
-              <Switch
-                id="can_view_reports"
-                checked={permissions.can_view_reports}
-                onCheckedChange={(checked) =>
-                  setPermissions({ ...permissions, can_view_reports: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="can_manage_stock">Peut gérer le stock</Label>
-              <Switch
-                id="can_manage_stock"
-                checked={permissions.can_manage_stock}
-                onCheckedChange={(checked) =>
-                  setPermissions({ ...permissions, can_manage_stock: checked })
-                }
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="can_manage_suppliers">Peut gérer les fournisseurs</Label>
-              <Switch
-                id="can_manage_suppliers"
-                checked={permissions.can_manage_suppliers}
-                onCheckedChange={(checked) =>
-                  setPermissions({ ...permissions, can_manage_suppliers: checked })
-                }
-              />
-            </div>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="can_view_products">Peut voir les produits</Label>
+                <Switch
+                  id="can_view_products"
+                  checked={permissions.can_view_products}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_view_products: checked })
+                  }
+                />
+              </div>
 
               <div className="flex items-center justify-between">
-                <Label htmlFor="can_create_demands">Peut créer des commandes</Label>
+                <Label htmlFor="can_view_reports">Peut voir les rapports</Label>
+                <Switch
+                  id="can_view_reports"
+                  checked={permissions.can_view_reports}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_view_reports: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="can_manage_stock">Peut gérer le stock</Label>
+                <Switch
+                  id="can_manage_stock"
+                  checked={permissions.can_manage_stock}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_manage_stock: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="can_manage_suppliers">Peut gérer les fournisseurs</Label>
+                <Switch
+                  id="can_manage_suppliers"
+                  checked={permissions.can_manage_suppliers}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_manage_suppliers: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="can_create_demands">Peut créer des demandes</Label>
                 <Switch
                   id="can_create_demands"
                   checked={permissions.can_create_demands}
@@ -494,14 +509,84 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
                   }
                 />
               </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="can_manage_attendance">Peut gérer les présences</Label>
+                <Switch
+                  id="can_manage_attendance"
+                  checked={permissions.can_manage_attendance}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_manage_attendance: checked })
+                  }
+                />
+              </div>
+
+              <Separator />
+              
+              <h3 className="font-semibold">Permissions POS</h3>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="can_use_pos">Peut utiliser le POS</Label>
+                <Switch
+                  id="can_use_pos"
+                  checked={permissions.can_use_pos}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_use_pos: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="can_manage_orders">Peut gérer les commandes</Label>
+                <Switch
+                  id="can_manage_orders"
+                  checked={permissions.can_manage_orders}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_manage_orders: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="can_process_payments">Peut traiter les paiements</Label>
+                <Switch
+                  id="can_process_payments"
+                  checked={permissions.can_process_payments}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_process_payments: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="can_view_kitchen_display">Peut voir l'affichage cuisine</Label>
+                <Switch
+                  id="can_view_kitchen_display"
+                  checked={permissions.can_view_kitchen_display}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_view_kitchen_display: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="can_access_pos_reports">Peut accéder aux rapports POS</Label>
+                <Switch
+                  id="can_access_pos_reports"
+                  checked={permissions.can_access_pos_reports}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_access_pos_reports: checked })
+                  }
+                />
+              </div>
             </div>
           )}
 
           <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end">
-            <Button type="button" variant="outline" onClick={onClose} className="w-full sm:w-auto">
+            <Button type="button" variant="outline" onClick={onClose}>
               Annuler
             </Button>
-            <Button type="submit" className="w-full sm:w-auto">
+            <Button type="submit">
               {employee ? "Mettre à jour" : "Créer"}
             </Button>
           </div>
