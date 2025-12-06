@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
+import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
 
 export function AppSidebar() {
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const { open } = useSidebar();
+  const { isAdmin, permissions, loading: permissionsLoading } = useEmployeePermissions();
 
   const { data: settings } = useQuery({
     queryKey: ["app-settings"],
@@ -50,25 +52,42 @@ export function AppSidebar() {
     }
   }, [settings]);
 
-  // Build slug-aware navigation - all features accessible to all restaurants
-  const navigation = [
-    { name: "Tableau de bord", href: `/${slug}/dashboard`, icon: Home },
-    { name: "Produits", href: `/${slug}/products`, icon: Package },
-    { name: "Menu / Recettes", href: `/${slug}/menu-items`, icon: UtensilsCrossed },
-    { name: "Sortie de Stock", href: `/${slug}/sales`, icon: ShoppingCart },
-    { name: "Achats", href: `/${slug}/purchases`, icon: TrendingUp },
-    { name: "Commandes", href: `/${slug}/demands`, icon: ClipboardList },
-    { name: "Catégories", href: `/${slug}/category-management`, icon: LayoutGrid },
-    { name: "Fournisseurs", href: `/${slug}/suppliers`, icon: Users },
-    { name: "Présence", href: `/${slug}/attendance`, icon: ClipboardCheck },
-    { name: "Employés", href: `/${slug}/employees`, icon: Users },
-    { name: "Point de Vente", href: `/${slug}/pos`, icon: ShoppingBag },
-    { name: "Commandes POS", href: `/${slug}/pos/orders`, icon: ClipboardList },
-    { name: "Affichage Cuisine", href: `/${slug}/pos/kitchen`, icon: ChefHat },
-    { name: "Affichage Bar", href: `/${slug}/pos/bar`, icon: Wine },
-    { name: "Rapports POS", href: `/${slug}/pos/reports`, icon: BarChart3 },
-    { name: "Paramètres", href: `/${slug}/settings`, icon: Settings },
+  // All navigation items with their required permissions
+  const allNavigation = [
+    { name: "Tableau de bord", href: `/${slug}/dashboard`, icon: Home, permission: "can_view_reports" },
+    { name: "Produits", href: `/${slug}/products`, icon: Package, permission: "can_view_products" },
+    { name: "Menu / Recettes", href: `/${slug}/menu-items`, icon: UtensilsCrossed, permission: "can_view_products" },
+    { name: "Sortie de Stock", href: `/${slug}/sales`, icon: ShoppingCart, permission: "can_make_sales" },
+    { name: "Achats", href: `/${slug}/purchases`, icon: TrendingUp, permission: "can_manage_stock" },
+    { name: "Commandes", href: `/${slug}/demands`, icon: ClipboardList, permission: "can_create_demands" },
+    { name: "Catégories", href: `/${slug}/category-management`, icon: LayoutGrid, permission: "can_view_products" },
+    { name: "Fournisseurs", href: `/${slug}/suppliers`, icon: Users, permission: "can_manage_suppliers" },
+    { name: "Présence", href: `/${slug}/attendance`, icon: ClipboardCheck, permission: null }, // Always visible to all employees
+    { name: "Employés", href: `/${slug}/employees`, icon: Users, permission: "can_manage_attendance" },
+    { name: "Point de Vente", href: `/${slug}/pos`, icon: ShoppingBag, permission: "can_use_pos" },
+    { name: "Commandes POS", href: `/${slug}/pos/orders`, icon: ClipboardList, permission: "can_manage_orders" },
+    { name: "Affichage Cuisine", href: `/${slug}/pos/kitchen`, icon: ChefHat, permission: "can_view_kitchen_display" },
+    { name: "Affichage Bar", href: `/${slug}/pos/bar`, icon: Wine, permission: "can_view_bar_display" },
+    { name: "Rapports POS", href: `/${slug}/pos/reports`, icon: BarChart3, permission: "can_access_pos_reports" },
+    { name: "Paramètres", href: `/${slug}/settings`, icon: Settings, permission: "can_view_reports" }, // Admin-level
   ];
+
+  // Filter navigation based on permissions
+  const filteredNavigation = useMemo(() => {
+    if (permissionsLoading) return [];
+    
+    // Admins see everything
+    if (isAdmin) return allNavigation;
+    
+    // Filter based on employee permissions
+    return allNavigation.filter(item => {
+      // Items with no permission requirement are visible to all
+      if (item.permission === null) return true;
+      
+      // Check specific permission
+      return permissions[item.permission as keyof typeof permissions] === true;
+    });
+  }, [isAdmin, permissions, permissionsLoading, slug]);
 
   async function handleSignOut() {
     try {
@@ -109,7 +128,7 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="rounded-none">
-              {navigation.map(item => (
+              {filteredNavigation.map(item => (
                 <SidebarMenuItem key={item.name}>
                   <SidebarMenuButton asChild>
                     <NavLink 

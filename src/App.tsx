@@ -61,9 +61,11 @@ const App = () => (
               <TenantProvider>
                 <SubscriptionGuard>
                   <ProtectedRoute>
-                    <Layout>
-                      <Dashboard />
-                    </Layout>
+                    <PermissionRoute permission="can_view_reports">
+                      <Layout>
+                        <Dashboard />
+                      </Layout>
+                    </PermissionRoute>
                   </ProtectedRoute>
                 </SubscriptionGuard>
               </TenantProvider>
@@ -281,9 +283,11 @@ const App = () => (
               <TenantProvider>
                 <SubscriptionGuard>
                   <ProtectedRoute>
-                    <Layout>
-                      <KitchenDisplay />
-                    </Layout>
+                    <PermissionRoute permission="can_view_kitchen_display">
+                      <Layout>
+                        <KitchenDisplay />
+                      </Layout>
+                    </PermissionRoute>
                   </ProtectedRoute>
                 </SubscriptionGuard>
               </TenantProvider>
@@ -295,9 +299,11 @@ const App = () => (
               <TenantProvider>
                 <SubscriptionGuard>
                   <ProtectedRoute>
-                    <Layout>
-                      <BarDisplay />
-                    </Layout>
+                    <PermissionRoute permission="can_view_bar_display">
+                      <Layout>
+                        <BarDisplay />
+                      </Layout>
+                    </PermissionRoute>
                   </ProtectedRoute>
                 </SubscriptionGuard>
               </TenantProvider>

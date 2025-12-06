@@ -67,6 +67,9 @@ function findBestRouteForPermissions(
   if (permissions.can_view_kitchen_display) {
     return `/${slug}/pos/kitchen`;
   }
+  if (permissions.can_view_bar_display) {
+    return `/${slug}/pos/bar`;
+  }
   if (permissions.can_use_pos) {
     return `/${slug}/pos`;
   }
@@ -101,6 +104,6 @@ function findBestRouteForPermissions(
     return `/${slug}/pos`;
   }
   
-  // Last resort - this shouldn't normally happen
-  return `/${slug}/pos/kitchen`;
+  // Last resort - attendance is always accessible
+  return `/${slug}/attendance`;
 }
