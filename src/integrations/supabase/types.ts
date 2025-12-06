@@ -472,6 +472,7 @@ export type Database = {
           id: string
           menu_item_id: string
           order_id: string
+          preparation_status: string
           quantity: number
           special_instructions: string | null
           tenant_id: string | null
@@ -483,6 +484,7 @@ export type Database = {
           id?: string
           menu_item_id: string
           order_id: string
+          preparation_status?: string
           quantity: number
           special_instructions?: string | null
           tenant_id?: string | null
@@ -494,6 +496,7 @@ export type Database = {
           id?: string
           menu_item_id?: string
           order_id?: string
+          preparation_status?: string
           quantity?: number
           special_instructions?: string | null
           tenant_id?: string | null

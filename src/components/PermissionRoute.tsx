@@ -1,5 +1,5 @@
 import { ReactNode } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useParams } from "react-router-dom";
 import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
 
 interface PermissionRouteProps {
@@ -8,7 +8,8 @@ interface PermissionRouteProps {
 }
 
 export function PermissionRoute({ children, permission }: PermissionRouteProps) {
-  const { loading } = useEmployeePermissions();
+  const { slug } = useParams<{ slug: string }>();
+  const { isAdmin, permissions, loading } = useEmployeePermissions();
 
   if (loading) {
     return (
@@ -18,6 +19,16 @@ export function PermissionRoute({ children, permission }: PermissionRouteProps) 
     );
   }
 
-  // All restaurants have unrestricted access to all features
+  // Admins have all permissions
+  if (isAdmin) {
+    return <>{children}</>;
+  }
+
+  // If a specific permission is required, check it
+  if (permission && !permissions[permission]) {
+    // Redirect to dashboard if permission denied
+    return <Navigate to={`/${slug}/dashboard`} replace />;
+  }
+
   return <>{children}</>;
 }
