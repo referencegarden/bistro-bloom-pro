@@ -76,53 +76,87 @@ export default function Auth() {
   };
 
   useEffect(() => {
-    if (!slug) return;
+    // Don't run session checks until tenant is fully loaded
+    if (!slug || tenantLoading || !tenantId) return;
+
+    let isMounted = true;
 
     // Check existing session and redirect appropriately
     const checkSessionAndRedirect = async (session: any) => {
-      if (!session) return;
+      if (!session || !isMounted) return;
 
-      // Check if user is admin (admins go to dashboard)
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id)
-        .maybeSingle();
+      try {
+        // First verify user belongs to this tenant
+        const { data: tenantUser, error: tenantError } = await supabase
+          .from("tenant_users")
+          .select("tenant_id")
+          .eq("user_id", session.user.id)
+          .eq("tenant_id", tenantId)
+          .maybeSingle();
 
-      if (roleData?.role === 'admin' || roleData?.role === 'super_admin') {
-        navigate(`/${slug}/dashboard`, { replace: true });
-        return;
-      }
+        // If user doesn't belong to this tenant, sign them out silently
+        if (tenantError || !tenantUser) {
+          await supabase.auth.signOut({ scope: 'local' });
+          localStorage.removeItem('current_tenant_slug');
+          return; // Show login form
+        }
 
-      // For employees, check permissions and redirect to appropriate page
-      if (roleData?.role === 'employee') {
-        const { data: employee } = await supabase
-          .from("employees")
-          .select("id")
+        if (!isMounted) return;
+
+        // Check if user is admin (admins go to dashboard)
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
           .eq("user_id", session.user.id)
           .maybeSingle();
 
-        if (employee) {
-          const { data: perms } = await supabase
-            .from("employee_permissions")
-            .select("*")
-            .eq("employee_id", employee.id)
-            .maybeSingle();
+        if (!isMounted) return;
 
-          const route = getPermissionBasedRoute(perms);
-          navigate(route, { replace: true });
+        if (roleData?.role === 'admin' || roleData?.role === 'super_admin') {
+          navigate(`/${slug}/dashboard`, { replace: true });
           return;
         }
-      }
 
-      // Default redirect for other cases
-      navigate(`/${slug}/dashboard`, { replace: true });
+        // For employees, check permissions and redirect to appropriate page
+        if (roleData?.role === 'employee') {
+          const { data: employee } = await supabase
+            .from("employees")
+            .select("id")
+            .eq("user_id", session.user.id)
+            .eq("tenant_id", tenantId)
+            .maybeSingle();
+
+          if (!isMounted) return;
+
+          if (employee) {
+            const { data: perms } = await supabase
+              .from("employee_permissions")
+              .select("*")
+              .eq("employee_id", employee.id)
+              .maybeSingle();
+
+            if (!isMounted) return;
+
+            const route = getPermissionBasedRoute(perms);
+            navigate(route, { replace: true });
+            return;
+          }
+        }
+
+        // Default redirect for other cases
+        navigate(`/${slug}/dashboard`, { replace: true });
+      } catch (error) {
+        console.error("Session check error:", error);
+        // On error, clear session and show login form
+        await supabase.auth.signOut({ scope: 'local' });
+        localStorage.removeItem('current_tenant_slug');
+      }
     };
 
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        if (session) {
+        if (session && isMounted) {
           await checkSessionAndRedirect(session);
         }
       }
@@ -130,13 +164,16 @@ export default function Auth() {
 
     // Check if there's already a session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
-      if (session) {
+      if (session && isMounted) {
         await checkSessionAndRedirect(session);
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, [navigate, slug]);
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
+  }, [navigate, slug, tenantId, tenantLoading]);
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
