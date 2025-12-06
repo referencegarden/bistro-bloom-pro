@@ -170,6 +170,7 @@ export type Database = {
           can_manage_suppliers: boolean
           can_process_payments: boolean
           can_use_pos: boolean
+          can_view_bar_display: boolean | null
           can_view_kitchen_display: boolean
           can_view_products: boolean
           can_view_reports: boolean
@@ -189,6 +190,7 @@ export type Database = {
           can_manage_suppliers?: boolean
           can_process_payments?: boolean
           can_use_pos?: boolean
+          can_view_bar_display?: boolean | null
           can_view_kitchen_display?: boolean
           can_view_products?: boolean
           can_view_reports?: boolean
@@ -208,6 +210,7 @@ export type Database = {
           can_manage_suppliers?: boolean
           can_process_payments?: boolean
           can_use_pos?: boolean
+          can_view_bar_display?: boolean | null
           can_view_kitchen_display?: boolean
           can_view_products?: boolean
           can_view_reports?: boolean

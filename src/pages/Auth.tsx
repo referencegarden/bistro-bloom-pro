@@ -41,6 +41,9 @@ export default function Auth() {
     if (perms?.can_view_kitchen_display) {
       return `/${slug}/pos/kitchen`;
     }
+    if (perms?.can_view_bar_display) {
+      return `/${slug}/pos/bar`;
+    }
     if (perms?.can_use_pos) {
       return `/${slug}/pos`;
     }
@@ -68,8 +71,8 @@ export default function Auth() {
     if (perms?.can_create_demands) {
       return `/${slug}/demands`;
     }
-    // Default fallback - should not happen for properly configured employees
-    return `/${slug}/dashboard`;
+    // Default fallback - attendance is always accessible
+    return `/${slug}/attendance`;
   };
 
   useEffect(() => {
