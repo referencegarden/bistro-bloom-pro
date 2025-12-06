@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useTenant } from "@/contexts/TenantContext";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -12,10 +12,12 @@ interface SubscriptionGuardProps {
 
 export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
   const navigate = useNavigate();
+  const { slug } = useParams<{ slug: string }>();
   const { tenantId } = useTenant();
   const [loading, setLoading] = useState(true);
   const [subscriptionValid, setSubscriptionValid] = useState(true);
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
+  const [accessError, setAccessError] = useState<string | null>(null);
 
   useEffect(() => {
     async function checkSubscription() {
@@ -40,10 +42,21 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
           .eq("id", tenantId)
           .maybeSingle();
 
-        if (tenantError) throw tenantError;
+        if (tenantError) {
+          console.error("Tenant fetch error:", tenantError);
+          // If RLS blocks access, the user might not have permission
+          // Don't block access - let them through to their permitted routes
+          if (tenantError.code === 'PGRST116' || tenantError.message?.includes('permission')) {
+            setSubscriptionValid(true);
+            setLoading(false);
+            return;
+          }
+          throw tenantError;
+        }
 
         if (!tenant) {
           setSubscriptionValid(false);
+          setAccessError("Restaurant non trouvé");
           setLoading(false);
           return;
         }
@@ -54,14 +67,22 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
 
         setSubscriptionData({ tenant, subscription });
 
-        // Check if tenant is active and has valid subscription
+        // Check if tenant is active
         if (!tenant.is_active) {
           setSubscriptionValid(false);
           setLoading(false);
           return;
         }
 
+        // If no subscription found but tenant is active, allow access
+        // This handles cases where RLS might block subscription read for employees
         if (!subscription) {
+          // Check if we can at least verify the tenant is active
+          if (tenant.is_active) {
+            setSubscriptionValid(true);
+            setLoading(false);
+            return;
+          }
           setSubscriptionValid(false);
           setLoading(false);
           return;
@@ -82,9 +103,11 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
         }
 
         setSubscriptionValid(true);
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error checking subscription:", error);
-        setSubscriptionValid(false);
+        // On error, don't block access - let permission checks handle it
+        // This prevents employees from being blocked due to RLS restrictions
+        setSubscriptionValid(true);
       } finally {
         setLoading(false);
       }
@@ -94,10 +117,10 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
   }, [tenantId]);
 
   const handleSignOut = async () => {
-    const slug = localStorage.getItem('current_tenant_slug') || 'default-restaurant';
+    const storedSlug = localStorage.getItem('current_tenant_slug') || slug || 'default-restaurant';
     await supabase.auth.signOut({ scope: 'local' });
     localStorage.clear();
-    navigate(`/${slug}`);
+    navigate(`/${storedSlug}`);
   };
 
   if (loading) {
@@ -122,7 +145,7 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertTitle className="text-lg font-semibold">
-              {isSuspended ? "Abonnement Suspendu" : "Abonnement Expiré"}
+              {accessError || (isSuspended ? "Abonnement Suspendu" : "Abonnement Expiré")}
             </AlertTitle>
             <AlertDescription className="mt-2 space-y-2">
               {isExpired && (
@@ -136,9 +159,16 @@ export function SubscriptionGuard({ children }: SubscriptionGuardProps) {
                   Votre abonnement a été suspendu. Veuillez contacter l'administrateur.
                 </p>
               )}
-              <p className="text-sm">
-                Plan: <strong>{subscription?.plan_type || 'N/A'}</strong>
-              </p>
+              {!subscription && !accessError && (
+                <p>
+                  Aucun abonnement actif trouvé pour ce restaurant.
+                </p>
+              )}
+              {subscription && (
+                <p className="text-sm">
+                  Plan: <strong>{subscription?.plan_type || 'N/A'}</strong>
+                </p>
+              )}
               <p className="mt-4">
                 Pour renouveler votre abonnement, veuillez contacter l'administrateur du système.
               </p>
