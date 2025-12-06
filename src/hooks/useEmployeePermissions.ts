@@ -17,8 +17,24 @@ interface EmployeePermissions {
   can_access_pos_reports: boolean;
 }
 
+const defaultPermissions: EmployeePermissions = {
+  can_make_sales: false,
+  can_view_products: false,
+  can_view_reports: false,
+  can_manage_stock: false,
+  can_manage_suppliers: false,
+  can_create_demands: false,
+  can_manage_attendance: false,
+  can_use_pos: false,
+  can_manage_orders: false,
+  can_process_payments: false,
+  can_view_kitchen_display: false,
+  can_view_bar_display: false,
+  can_access_pos_reports: false,
+};
+
 export function useEmployeePermissions() {
-  const { data: session } = useQuery({
+  const { data: session, isLoading: sessionLoading } = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
       const { data } = await supabase.auth.getSession();
@@ -26,7 +42,7 @@ export function useEmployeePermissions() {
     },
   });
 
-  const { data: userRole } = useQuery({
+  const { data: userRole, isLoading: roleLoading } = useQuery({
     queryKey: ["user-role", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
@@ -42,7 +58,7 @@ export function useEmployeePermissions() {
     enabled: !!session?.user?.id,
   });
 
-  const { data: permissionsData, isLoading } = useQuery({
+  const { data: permissionsData, isLoading: permissionsLoading } = useQuery({
     queryKey: ["employee-permissions", session?.user?.id],
     queryFn: async () => {
       if (!session?.user?.id) return null;
@@ -68,21 +84,23 @@ export function useEmployeePermissions() {
     enabled: !!session?.user?.id && userRole === "employee",
   });
 
-  const permissions = permissionsData || {
-    can_make_sales: false,
-    can_view_products: false,
-    can_view_reports: false,
-    can_manage_stock: false,
-    can_manage_suppliers: false,
-    can_create_demands: false,
-    can_manage_attendance: false,
-    can_use_pos: false,
-    can_manage_orders: false,
-    can_process_payments: false,
-    can_view_kitchen_display: false,
-    can_view_bar_display: false,
-    can_access_pos_reports: false,
-  };
+  // Calculate overall loading state properly
+  const isLoading = sessionLoading || 
+    (!!session?.user?.id && roleLoading) || 
+    (!!session?.user?.id && userRole === "employee" && permissionsLoading);
+
+  // If still loading, return loading state with default permissions
+  if (isLoading) {
+    return {
+      isAdmin: false,
+      isEmployee: false,
+      isWaiter: false,
+      permissions: defaultPermissions,
+      loading: true,
+    };
+  }
+
+  const permissions = permissionsData || defaultPermissions;
 
   const isWaiter = userRole === "employee" && permissions.can_use_pos && !permissions.can_make_sales && !permissions.can_view_products;
 
@@ -116,7 +134,7 @@ export function useEmployeePermissions() {
       isEmployee: true,
       isWaiter,
       permissions,
-      loading: isLoading,
+      loading: false,
     };
   }
 
@@ -124,21 +142,7 @@ export function useEmployeePermissions() {
     isAdmin: false,
     isEmployee: false,
     isWaiter: false,
-    permissions: {
-      can_make_sales: false,
-      can_view_products: false,
-      can_view_reports: false,
-      can_manage_stock: false,
-      can_manage_suppliers: false,
-      can_create_demands: false,
-      can_manage_attendance: false,
-      can_use_pos: false,
-      can_manage_orders: false,
-      can_process_payments: false,
-      can_view_kitchen_display: false,
-      can_view_bar_display: false,
-      can_access_pos_reports: false,
-    },
+    permissions: defaultPermissions,
     loading: false,
   };
 }

@@ -43,31 +43,27 @@ export default function BarDisplay() {
     
     loadOrders();
 
-    // Subscribe to realtime updates
+    // Subscribe to realtime updates - immediate refresh
     const channel = supabase
-      .channel("bar_orders")
+      .channel("bar_orders_realtime")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
+        { event: "*", schema: "public", table: "orders", filter: `tenant_id=eq.${tenantId}` },
         () => {
           loadOrders();
         }
       )
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "order_items" },
+        { event: "*", schema: "public", table: "order_items", filter: `tenant_id=eq.${tenantId}` },
         () => {
           loadOrders();
         }
       )
       .subscribe();
 
-    // Auto-refresh every 30 seconds
-    const interval = setInterval(loadOrders, 30000);
-
     return () => {
       supabase.removeChannel(channel);
-      clearInterval(interval);
     };
   }, [tenantId]);
 
@@ -205,7 +201,7 @@ export default function BarDisplay() {
             </div>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Clock className="h-4 w-4" />
-              <span>Actualisation automatique: 30s</span>
+              <span className="text-blue-600 font-medium">Temps réel</span>
             </div>
           </div>
         </CardHeader>
