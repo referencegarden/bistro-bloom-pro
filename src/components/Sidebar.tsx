@@ -74,7 +74,10 @@ export function AppSidebar() {
 
   // Filter navigation based on permissions
   const filteredNavigation = useMemo(() => {
-    if (permissionsLoading) return [];
+    // While loading, show a minimal set for employees or nothing
+    if (permissionsLoading) {
+      return [];
+    }
     
     // Admins see everything
     if (isAdmin) return allNavigation;
@@ -87,7 +90,7 @@ export function AppSidebar() {
       // Check specific permission
       return permissions[item.permission as keyof typeof permissions] === true;
     });
-  }, [isAdmin, permissions, permissionsLoading, slug]);
+  }, [isAdmin, permissions, permissionsLoading, slug, allNavigation]);
 
   async function handleSignOut() {
     try {
