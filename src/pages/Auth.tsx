@@ -86,7 +86,7 @@ export default function Auth() {
       if (!session || !isMounted) return;
 
       try {
-        // First verify user belongs to this tenant
+        // Verify user belongs to this tenant - but DON'T sign out on failure
         const { data: tenantUser, error: tenantError } = await supabase
           .from("tenant_users")
           .select("tenant_id")
@@ -94,10 +94,15 @@ export default function Auth() {
           .eq("tenant_id", tenantId)
           .maybeSingle();
 
-        // If user doesn't belong to this tenant, sign them out silently
-        if (tenantError || !tenantUser) {
-          await supabase.auth.signOut({ scope: 'local' });
-          localStorage.removeItem('current_tenant_slug');
+        // If query error, log it but don't sign out - just show login form
+        if (tenantError) {
+          console.warn("Tenant verification query error:", tenantError.message);
+          return; // Show login form, don't destroy session
+        }
+
+        // If user doesn't belong to this tenant, just show login form
+        // Don't sign them out - they may be logged into another tenant
+        if (!tenantUser) {
           return; // Show login form
         }
 
@@ -146,10 +151,9 @@ export default function Auth() {
         // Default redirect for other cases
         navigate(`/${slug}/dashboard`, { replace: true });
       } catch (error) {
-        console.error("Session check error:", error);
-        // On error, clear session and show login form
-        await supabase.auth.signOut({ scope: 'local' });
-        localStorage.removeItem('current_tenant_slug');
+        // On error, just log it - don't sign out
+        console.warn("Session check error:", error);
+        // Show login form but preserve session
       }
     };
 
@@ -205,7 +209,6 @@ export default function Auth() {
     if (!tenantUser) {
       toast.error("Vous n'avez pas accès à ce restaurant");
       await supabase.auth.signOut({ scope: 'local' });
-      localStorage.clear();
       setLoading(false);
       return;
     }
