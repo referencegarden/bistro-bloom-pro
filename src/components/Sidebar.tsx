@@ -1,5 +1,5 @@
 import { NavLink, useNavigate, useParams } from "react-router-dom";
-import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList, UtensilsCrossed, ClipboardCheck, ShoppingBag, ChefHat, BarChart3, Wine } from "lucide-react";
+import { Home, Package, ShoppingCart, TrendingUp, LayoutGrid, Users, LogOut, Settings, ClipboardList, UtensilsCrossed, ClipboardCheck, ShoppingBag, ChefHat, BarChart3, Wine, Grid3X3 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -62,6 +62,7 @@ export function AppSidebar() {
     { name: "Commandes", href: `/${slug}/demands`, icon: ClipboardList, permission: "can_create_demands" },
     { name: "Catégories", href: `/${slug}/category-management`, icon: LayoutGrid, permission: "can_view_products" },
     { name: "Fournisseurs", href: `/${slug}/suppliers`, icon: Users, permission: "can_manage_suppliers" },
+    { name: "Tables", href: `/${slug}/tables`, icon: Grid3X3, permission: "can_manage_stock" },
     { name: "Présence", href: `/${slug}/attendance`, icon: ClipboardCheck, permission: null }, // Always visible to all employees
     { name: "Employés", href: `/${slug}/employees`, icon: Users, permission: "can_manage_attendance" },
     { name: "Point de Vente", href: `/${slug}/pos`, icon: ShoppingBag, permission: "can_use_pos" },

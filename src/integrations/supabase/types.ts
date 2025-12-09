@@ -27,6 +27,7 @@ export type Database = {
           tax_rate: number
           tenant_id: string | null
           updated_at: string
+          use_tables_system: boolean
         }
         Insert: {
           admin_logo_url?: string | null
@@ -40,6 +41,7 @@ export type Database = {
           tax_rate?: number
           tenant_id?: string | null
           updated_at?: string
+          use_tables_system?: boolean
         }
         Update: {
           admin_logo_url?: string | null
@@ -53,6 +55,7 @@ export type Database = {
           tax_rate?: number
           tenant_id?: string | null
           updated_at?: string
+          use_tables_system?: boolean
         }
         Relationships: [
           {
@@ -537,6 +540,7 @@ export type Database = {
           customer_phone: string | null
           employee_id: string | null
           id: string
+          is_open_tab: boolean
           notes: string | null
           order_number: string
           order_type: string
@@ -552,6 +556,7 @@ export type Database = {
           customer_phone?: string | null
           employee_id?: string | null
           id?: string
+          is_open_tab?: boolean
           notes?: string | null
           order_number: string
           order_type: string
@@ -567,6 +572,7 @@ export type Database = {
           customer_phone?: string | null
           employee_id?: string | null
           id?: string
+          is_open_tab?: boolean
           notes?: string | null
           order_number?: string
           order_type?: string

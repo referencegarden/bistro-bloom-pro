@@ -36,6 +36,7 @@ import SuperAdminTenants from "./pages/SuperAdminTenants";
 import SuperAdminSubscriptions from "./pages/SuperAdminSubscriptions";
 import { SuperAdminLayout } from "./components/SuperAdminLayout";
 import { SubscriptionGuard } from "./components/SubscriptionGuard";
+import Tables from "./pages/Tables";
 
 const queryClient = new QueryClient();
 
@@ -233,6 +234,20 @@ const App = () => (
                   <ProtectedRoute>
                     <Layout>
                       <CategoryManagement />
+                    </Layout>
+                  </ProtectedRoute>
+                </SubscriptionGuard>
+              </TenantProvider>
+            }
+          />
+          <Route
+            path="/:slug/tables"
+            element={
+              <TenantProvider>
+                <SubscriptionGuard>
+                  <ProtectedRoute>
+                    <Layout>
+                      <Tables />
                     </Layout>
                   </ProtectedRoute>
                 </SubscriptionGuard>
