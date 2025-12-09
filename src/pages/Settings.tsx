@@ -5,10 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { ColorPicker } from "@/components/ColorPicker";
 import { LogoUpload } from "@/components/LogoUpload";
 import { Separator } from "@/components/ui/separator";
+
 export default function Settings() {
   const queryClient = useQueryClient();
   const {
@@ -31,6 +33,7 @@ export default function Settings() {
   const [primaryColor, setPrimaryColor] = useState("hsl(142.1 76.2% 36.3%)");
   const [secondaryColor, setSecondaryColor] = useState("hsl(221.2 83.2% 53.3%)");
   const [backgroundColor, setBackgroundColor] = useState("hsl(0 0% 100%)");
+  const [useTablesSystem, setUseTablesSystem] = useState(true);
 
   // Update local state when settings load
   useEffect(() => {
@@ -41,8 +44,10 @@ export default function Settings() {
       setPrimaryColor(settings.primary_color);
       setSecondaryColor(settings.secondary_color);
       setBackgroundColor(settings.background_color);
+      setUseTablesSystem(settings.use_tables_system ?? true);
     }
   }, [settings]);
+
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
       const {
@@ -63,7 +68,16 @@ export default function Settings() {
   });
 
   // Track if there are unsaved changes
-  const isDirty = settings ? restaurantName !== settings.restaurant_name || adminLogoUrl !== (settings.admin_logo_url || "") || loginLogoUrl !== (settings.login_logo_url || "") || primaryColor !== settings.primary_color || secondaryColor !== settings.secondary_color || backgroundColor !== settings.background_color : false;
+  const isDirty = settings ? 
+    restaurantName !== settings.restaurant_name || 
+    adminLogoUrl !== (settings.admin_logo_url || "") || 
+    loginLogoUrl !== (settings.login_logo_url || "") || 
+    primaryColor !== settings.primary_color || 
+    secondaryColor !== settings.secondary_color || 
+    backgroundColor !== settings.background_color ||
+    useTablesSystem !== (settings.use_tables_system ?? true)
+    : false;
+
   const handleSaveAll = () => {
     if (!restaurantName.trim()) {
       toast.error("Le nom du restaurant ne peut pas être vide");
@@ -75,9 +89,11 @@ export default function Settings() {
       login_logo_url: loginLogoUrl || null,
       primary_color: primaryColor,
       secondary_color: secondaryColor,
-      background_color: backgroundColor
+      background_color: backgroundColor,
+      use_tables_system: useTablesSystem,
     });
   };
+
   const handleCancel = () => {
     if (settings) {
       setRestaurantName(settings.restaurant_name);
@@ -86,13 +102,16 @@ export default function Settings() {
       setPrimaryColor(settings.primary_color);
       setSecondaryColor(settings.secondary_color);
       setBackgroundColor(settings.background_color);
+      setUseTablesSystem(settings.use_tables_system ?? true);
     }
   };
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-full">
         <p className="text-muted-foreground">Chargement...</p>
       </div>;
   }
+
   return <div className="space-y-6 pb-24 px-0">
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold">Paramètres de l'Application</h1>
@@ -121,6 +140,28 @@ export default function Settings() {
           <div className="space-y-2">
             <Label htmlFor="restaurant-name">Nom du Restaurant</Label>
             <Input id="restaurant-name" value={restaurantName} onChange={e => setRestaurantName(e.target.value)} placeholder="RestaurantPro" />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Configuration POS</CardTitle>
+          <CardDescription>Configurez les options du point de vente</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="use-tables">Utiliser le système de tables</Label>
+              <p className="text-sm text-muted-foreground">
+                Lorsque activé, le POS exige la sélection d'une table pour les commandes sur place
+              </p>
+            </div>
+            <Switch
+              id="use-tables"
+              checked={useTablesSystem}
+              onCheckedChange={setUseTablesSystem}
+            />
           </div>
         </CardContent>
       </Card>
