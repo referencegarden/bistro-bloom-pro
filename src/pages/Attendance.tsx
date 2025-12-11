@@ -10,6 +10,7 @@ import { fr } from "date-fns/locale";
 import { detectWifiConnection, WifiStatus } from "@/lib/wifiDetection";
 import { AttendanceConfirmDialog } from "@/components/AttendanceConfirmDialog";
 import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
+import { useTenant } from "@/contexts/TenantContext";
 interface TodayAttendance {
   id: string;
   check_in_time: string | null;
@@ -27,6 +28,7 @@ interface WeeklyAttendance {
 export default function Attendance() {
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
+  const { tenantId } = useTenant();
   const { isAdmin, loading: permissionsLoading } = useEmployeePermissions();
   const [todayAttendance, setTodayAttendance] = useState<TodayAttendance | null>(null);
   const [weeklyAttendance, setWeeklyAttendance] = useState<WeeklyAttendance[]>([]);
@@ -39,9 +41,11 @@ export default function Attendance() {
   const [employeeId, setEmployeeId] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [actionType, setActionType] = useState<"check_in" | "check_out">("check_in");
-  const {
-    toast
-  } = useToast();
+  const [wifiSettings, setWifiSettings] = useState<{
+    requireWifi: boolean;
+    ssidName: string | null;
+  }>({ requireWifi: false, ssidName: null });
+  const { toast } = useToast();
 
   // Redirect admins to admin view
   useEffect(() => {
@@ -52,10 +56,15 @@ export default function Attendance() {
 
   useEffect(() => {
     loadEmployeeData();
-    checkWifiStatus();
-    const interval = setInterval(checkWifiStatus, 30000); // Check every 30 seconds
-    return () => clearInterval(interval);
   }, []);
+
+  useEffect(() => {
+    if (tenantId) {
+      checkWifiStatus();
+      const interval = setInterval(checkWifiStatus, 30000); // Check every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [tenantId]);
   useEffect(() => {
     if (employeeId) {
       loadTodayAttendance();
@@ -80,16 +89,15 @@ export default function Attendance() {
     const status = await detectWifiConnection();
 
     // Validate IP address with server
-    if (status.ipAddress) {
+    if (status.ipAddress && tenantId) {
       try {
-        const {
-          data,
-          error
-        } = await supabase.functions.invoke('wifi-validation', {
+        const { data, error } = await supabase.functions.invoke('wifi-validation', {
           body: {
-            ipAddress: status.ipAddress
+            ipAddress: status.ipAddress,
+            tenantId: tenantId
           }
         });
+        
         if (error) {
           console.error('Wi-Fi validation error:', error);
           setWifiStatus({
@@ -100,11 +108,30 @@ export default function Attendance() {
           return;
         }
 
+        // Store Wi-Fi settings from response
+        setWifiSettings({
+          requireWifi: data.requireWifi ?? false,
+          ssidName: data.ssidName || null
+        });
+
+        // If Wi-Fi is not required, always show as connected
+        if (!data.requireWifi) {
+          setWifiStatus({
+            ...status,
+            isConnected: true,
+            ssid: data.ssidName || null,
+            error: undefined
+          });
+          return;
+        }
+
         // Update status based on server validation
+        const wifiName = data.ssidName || "Wi-Fi du restaurant";
         setWifiStatus({
           ...status,
           isConnected: data.valid,
-          error: data.valid ? undefined : "Vous devez être connecté au Wi-Fi ReferenceGarden"
+          ssid: data.ssidName || null,
+          error: data.valid ? undefined : `Vous devez être connecté au ${wifiName}`
         });
       } catch (err) {
         console.error('Wi-Fi validation exception:', err);
@@ -168,7 +195,7 @@ export default function Attendance() {
           employee_id: employeeId,
           date: today,
           check_in_time: new Date().toISOString(),
-          wifi_ssid: wifiStatus.ssid || "ReferenceGarden",
+          wifi_ssid: wifiSettings.ssidName || wifiStatus.ssid || null,
           ip_address: wifiStatus.ipAddress,
           confirmed: true
         });
@@ -224,18 +251,31 @@ export default function Attendance() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {wifiStatus.isConnected ? <div className="flex items-center gap-2">
+          {!wifiSettings.requireWifi ? (
+            <div className="flex items-center gap-2">
               <div className="h-3 w-3 rounded-full bg-success animate-pulse" />
-              <p className="text-success font-medium">Connecté au réseau du restaurant</p>
-            </div> : <div>
+              <p className="text-success font-medium">Validation Wi-Fi non requise</p>
+            </div>
+          ) : wifiStatus.isConnected ? (
+            <div className="flex items-center gap-2">
+              <div className="h-3 w-3 rounded-full bg-success animate-pulse" />
+              <p className="text-success font-medium">
+                Connecté au {wifiSettings.ssidName || "réseau du restaurant"}
+              </p>
+            </div>
+          ) : (
+            <div>
               <div className="flex items-center gap-2 mb-2">
                 <div className="h-3 w-3 rounded-full bg-destructive" />
-                <p className="text-destructive font-medium">Non connecté au Wi-Fi ReferenceGarden</p>
+                <p className="text-destructive font-medium">
+                  Non connecté au {wifiSettings.ssidName || "Wi-Fi du restaurant"}
+                </p>
               </div>
               <p className="text-sm text-muted-foreground">
-                Vous devez être connecté au Wi-Fi ReferenceGarden pour confirmer votre présence.
+                Vous devez être connecté au {wifiSettings.ssidName || "Wi-Fi du restaurant"} pour confirmer votre présence.
               </p>
-            </div>}
+            </div>
+          )}
         </CardContent>
       </Card>
 
