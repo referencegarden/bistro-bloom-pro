@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { ColorPicker } from "@/components/ColorPicker";
 import { LogoUpload } from "@/components/LogoUpload";
 import { Separator } from "@/components/ui/separator";
+import { Wifi, Info } from "lucide-react";
 
 export default function Settings() {
   const queryClient = useQueryClient();
@@ -34,6 +35,12 @@ export default function Settings() {
   const [secondaryColor, setSecondaryColor] = useState("hsl(221.2 83.2% 53.3%)");
   const [backgroundColor, setBackgroundColor] = useState("hsl(0 0% 100%)");
   const [useTablesSystem, setUseTablesSystem] = useState(true);
+  
+  // Wi-Fi configuration for attendance
+  const [requireWifiForAttendance, setRequireWifiForAttendance] = useState(false);
+  const [wifiSsidName, setWifiSsidName] = useState("");
+  const [wifiIpRange, setWifiIpRange] = useState("");
+  const [wifiPublicIp, setWifiPublicIp] = useState("");
 
   // Update local state when settings load
   useEffect(() => {
@@ -45,6 +52,11 @@ export default function Settings() {
       setSecondaryColor(settings.secondary_color);
       setBackgroundColor(settings.background_color);
       setUseTablesSystem(settings.use_tables_system ?? true);
+      // Wi-Fi settings
+      setRequireWifiForAttendance((settings as any).require_wifi_for_attendance ?? false);
+      setWifiSsidName((settings as any).wifi_ssid_name || "");
+      setWifiIpRange((settings as any).wifi_ip_range || "");
+      setWifiPublicIp((settings as any).wifi_public_ip || "");
     }
   }, [settings]);
 
@@ -75,12 +87,20 @@ export default function Settings() {
     primaryColor !== settings.primary_color || 
     secondaryColor !== settings.secondary_color || 
     backgroundColor !== settings.background_color ||
-    useTablesSystem !== (settings.use_tables_system ?? true)
+    useTablesSystem !== (settings.use_tables_system ?? true) ||
+    requireWifiForAttendance !== ((settings as any).require_wifi_for_attendance ?? false) ||
+    wifiSsidName !== ((settings as any).wifi_ssid_name || "") ||
+    wifiIpRange !== ((settings as any).wifi_ip_range || "") ||
+    wifiPublicIp !== ((settings as any).wifi_public_ip || "")
     : false;
 
   const handleSaveAll = () => {
     if (!restaurantName.trim()) {
       toast.error("Le nom du restaurant ne peut pas être vide");
+      return;
+    }
+    if (requireWifiForAttendance && !wifiIpRange.trim()) {
+      toast.error("Veuillez configurer la plage d'adresses IP pour la validation Wi-Fi");
       return;
     }
     updateMutation.mutate({
@@ -91,6 +111,10 @@ export default function Settings() {
       secondary_color: secondaryColor,
       background_color: backgroundColor,
       use_tables_system: useTablesSystem,
+      require_wifi_for_attendance: requireWifiForAttendance,
+      wifi_ssid_name: wifiSsidName || null,
+      wifi_ip_range: wifiIpRange || null,
+      wifi_public_ip: wifiPublicIp || null,
     });
   };
 
@@ -103,6 +127,10 @@ export default function Settings() {
       setSecondaryColor(settings.secondary_color);
       setBackgroundColor(settings.background_color);
       setUseTablesSystem(settings.use_tables_system ?? true);
+      setRequireWifiForAttendance((settings as any).require_wifi_for_attendance ?? false);
+      setWifiSsidName((settings as any).wifi_ssid_name || "");
+      setWifiIpRange((settings as any).wifi_ip_range || "");
+      setWifiPublicIp((settings as any).wifi_public_ip || "");
     }
   };
 
@@ -163,6 +191,88 @@ export default function Settings() {
               onCheckedChange={setUseTablesSystem}
             />
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Wifi className="h-5 w-5" />
+            Configuration Wi-Fi pour la Présence
+          </CardTitle>
+          <CardDescription>
+            Configurez le réseau Wi-Fi requis pour que les employés puissent pointer leur présence
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label htmlFor="require-wifi">Exiger la connexion Wi-Fi pour pointer</Label>
+              <p className="text-sm text-muted-foreground">
+                Les employés doivent être connectés au Wi-Fi du restaurant pour enregistrer leur présence
+              </p>
+            </div>
+            <Switch
+              id="require-wifi"
+              checked={requireWifiForAttendance}
+              onCheckedChange={setRequireWifiForAttendance}
+            />
+          </div>
+
+          {requireWifiForAttendance && (
+            <div className="space-y-4 pt-4 border-t">
+              <div className="space-y-2">
+                <Label htmlFor="wifi-name">Nom du réseau Wi-Fi</Label>
+                <Input
+                  id="wifi-name"
+                  value={wifiSsidName}
+                  onChange={(e) => setWifiSsidName(e.target.value)}
+                  placeholder="Ex: RestaurantWiFi"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Ce nom sera affiché aux employés pour qu'ils sachent à quel réseau se connecter
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="wifi-ip-range">Plage d'adresses IP locale</Label>
+                <Input
+                  id="wifi-ip-range"
+                  value={wifiIpRange}
+                  onChange={(e) => setWifiIpRange(e.target.value)}
+                  placeholder="Ex: 192.168.1"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Les 3 premiers octets de l'adresse IP (ex: 192.168.1 pour accepter 192.168.1.x)
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="wifi-public-ip">Adresse IP publique (optionnel)</Label>
+                <Input
+                  id="wifi-public-ip"
+                  value={wifiPublicIp}
+                  onChange={(e) => setWifiPublicIp(e.target.value)}
+                  placeholder="Ex: 196.119.10.37"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Pour les appareils mobiles qui exposent l'IP publique au lieu de l'IP locale
+                </p>
+              </div>
+
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
+                <Info className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
+                <div className="text-sm text-muted-foreground">
+                  <p className="font-medium mb-1">Comment trouver votre plage IP :</p>
+                  <ol className="list-decimal list-inside space-y-1">
+                    <li>Connectez-vous au Wi-Fi du restaurant</li>
+                    <li>Allez dans Paramètres → Wi-Fi → Détails du réseau</li>
+                    <li>Notez les 3 premiers chiffres de votre adresse IP (ex: 192.168.1)</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
 

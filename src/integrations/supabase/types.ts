@@ -22,12 +22,16 @@ export type Database = {
           id: string
           login_logo_url: string | null
           primary_color: string
+          require_wifi_for_attendance: boolean
           restaurant_name: string
           secondary_color: string
           tax_rate: number
           tenant_id: string | null
           updated_at: string
           use_tables_system: boolean
+          wifi_ip_range: string | null
+          wifi_public_ip: string | null
+          wifi_ssid_name: string | null
         }
         Insert: {
           admin_logo_url?: string | null
@@ -36,12 +40,16 @@ export type Database = {
           id?: string
           login_logo_url?: string | null
           primary_color?: string
+          require_wifi_for_attendance?: boolean
           restaurant_name?: string
           secondary_color?: string
           tax_rate?: number
           tenant_id?: string | null
           updated_at?: string
           use_tables_system?: boolean
+          wifi_ip_range?: string | null
+          wifi_public_ip?: string | null
+          wifi_ssid_name?: string | null
         }
         Update: {
           admin_logo_url?: string | null
@@ -50,12 +58,16 @@ export type Database = {
           id?: string
           login_logo_url?: string | null
           primary_color?: string
+          require_wifi_for_attendance?: boolean
           restaurant_name?: string
           secondary_color?: string
           tax_rate?: number
           tenant_id?: string | null
           updated_at?: string
           use_tables_system?: boolean
+          wifi_ip_range?: string | null
+          wifi_public_ip?: string | null
+          wifi_ssid_name?: string | null
         }
         Relationships: [
           {

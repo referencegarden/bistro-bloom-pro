@@ -22,7 +22,7 @@ export async function detectWifiConnection(): Promise<WifiStatus> {
     // Return detected IP - validation will happen server-side
     return {
       isConnected: true,
-      ssid: "ReferenceGarden", // User will confirm this
+      ssid: null, // Will be set from tenant settings
       ipAddress,
     };
   } catch (error) {
