@@ -66,19 +66,20 @@ serve(async (req) => {
       );
     }
 
-    // Find employee by comparing PIN hash using bcrypt
+    // Find employee by comparing PIN hash using async bcrypt with concurrent execution
     let employee = null;
-    for (const emp of employees || []) {
+    const matchPromises = (employees || []).map(async (emp) => {
       try {
-        const isMatch = bcrypt.compareSync(trimmedPin, emp.pin_hash);
-        if (isMatch) {
-          employee = emp;
-          break;
-        }
+        const isMatch = await bcrypt.compare(trimmedPin, emp.pin_hash);
+        return isMatch ? emp : null;
       } catch (e) {
         console.error('Error comparing PIN for employee:', emp.id, e);
+        return null;
       }
-    }
+    });
+
+    const results = await Promise.all(matchPromises);
+    employee = results.find((e) => e !== null) || null;
 
     if (!employee) {
       return new Response(

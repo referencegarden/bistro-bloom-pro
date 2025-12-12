@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, useParams } from "react-router-dom";
 import { useTenant } from "@/contexts/TenantContext";
@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { Store } from "lucide-react";
+import { Store, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
 export default function Auth() {
@@ -19,6 +19,9 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pin, setPin] = useState("");
+  
+  // Flag to skip onAuthStateChange processing during employee login
+  const isEmployeeLoginInProgress = useRef(false);
 
   const { data: settings } = useQuery({
     queryKey: ["app-settings-public", tenantId],
@@ -160,6 +163,8 @@ export default function Auth() {
     // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
+        // Skip if employee login is handling the redirect
+        if (isEmployeeLoginInProgress.current) return;
         if (session && isMounted) {
           await checkSessionAndRedirect(session);
         }
@@ -224,6 +229,8 @@ export default function Auth() {
   async function handleEmployeeLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    isEmployeeLoginInProgress.current = true;
+    
     try {
       const { data, error } = await supabase.functions.invoke('employee-pin-login', {
         body: {
@@ -236,6 +243,7 @@ export default function Auth() {
       if (data.error) {
         toast.error(data.error);
         setLoading(false);
+        isEmployeeLoginInProgress.current = false;
         return;
       }
 
@@ -248,6 +256,7 @@ export default function Auth() {
       if (sessionError) {
         toast.error("Échec de connexion");
         setLoading(false);
+        isEmployeeLoginInProgress.current = false;
         return;
       }
 
@@ -270,6 +279,7 @@ export default function Auth() {
       toast.error("Échec de connexion");
     } finally {
       setLoading(false);
+      isEmployeeLoginInProgress.current = false;
     }
   }
 
@@ -369,7 +379,12 @@ export default function Auth() {
                   />
                 </div>
                 <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Connexion..." : "Se connecter"}
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Connexion en cours...
+                    </>
+                  ) : "Se connecter"}
                 </Button>
               </form>
               <p className="text-sm text-center text-muted-foreground mt-4">
