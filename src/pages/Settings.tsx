@@ -10,7 +10,8 @@ import { toast } from "sonner";
 import { ColorPicker } from "@/components/ColorPicker";
 import { LogoUpload } from "@/components/LogoUpload";
 import { Separator } from "@/components/ui/separator";
-import { Wifi, Info } from "lucide-react";
+import { Wifi, Info, Search, Loader2, CheckCircle } from "lucide-react";
+import { detectWifiConnection } from "@/lib/wifiDetection";
 
 export default function Settings() {
   const queryClient = useQueryClient();
@@ -41,6 +42,8 @@ export default function Settings() {
   const [wifiSsidName, setWifiSsidName] = useState("");
   const [wifiIpRange, setWifiIpRange] = useState("");
   const [wifiPublicIp, setWifiPublicIp] = useState("");
+  const [isDetectingNetwork, setIsDetectingNetwork] = useState(false);
+  const [detectedIp, setDetectedIp] = useState<string | null>(null);
 
   // Update local state when settings load
   useEffect(() => {
@@ -134,6 +137,32 @@ export default function Settings() {
     }
   };
 
+  const handleDetectNetwork = async () => {
+    setIsDetectingNetwork(true);
+    setDetectedIp(null);
+    try {
+      const wifiStatus = await detectWifiConnection();
+      if (wifiStatus.ipAddress) {
+        const ipParts = wifiStatus.ipAddress.split('.');
+        if (ipParts.length >= 3) {
+          const ipRange = ipParts.slice(0, 3).join('.');
+          setWifiIpRange(ipRange);
+          setDetectedIp(wifiStatus.ipAddress);
+          toast.success(`Réseau détecté! IP: ${wifiStatus.ipAddress}`);
+        } else {
+          toast.error("Format d'adresse IP invalide");
+        }
+      } else {
+        toast.error("Impossible de détecter l'adresse IP. Vérifiez votre connexion réseau.");
+      }
+    } catch (error) {
+      console.error("Network detection error:", error);
+      toast.error("Erreur lors de la détection du réseau");
+    } finally {
+      setIsDetectingNetwork(false);
+    }
+  };
+
   if (isLoading) {
     return <div className="flex items-center justify-center h-full">
         <p className="text-muted-foreground">Chargement...</p>
@@ -221,6 +250,43 @@ export default function Settings() {
 
           {requireWifiForAttendance && (
             <div className="space-y-4 pt-4 border-t">
+              {/* Detect Network Button */}
+              <div className="p-4 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">Détection automatique</p>
+                    <p className="text-xs text-muted-foreground">
+                      Connectez-vous au Wi-Fi du restaurant, puis cliquez pour détecter les paramètres réseau
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleDetectNetwork}
+                    disabled={isDetectingNetwork}
+                    className="w-full sm:w-auto"
+                  >
+                    {isDetectingNetwork ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Détection...
+                      </>
+                    ) : (
+                      <>
+                        <Search className="h-4 w-4 mr-2" />
+                        Détecter mon réseau
+                      </>
+                    )}
+                  </Button>
+                </div>
+                {detectedIp && (
+                  <div className="mt-3 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                    <CheckCircle className="h-4 w-4" />
+                    <span>Réseau détecté - IP: {detectedIp}</span>
+                  </div>
+                )}
+              </div>
+
               <div className="space-y-2">
                 <Label htmlFor="wifi-name">Nom du réseau Wi-Fi</Label>
                 <Input
@@ -263,7 +329,7 @@ export default function Settings() {
               <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
                 <Info className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                 <div className="text-sm text-muted-foreground">
-                  <p className="font-medium mb-1">Comment trouver votre plage IP :</p>
+                  <p className="font-medium mb-1">Comment trouver votre plage IP manuellement :</p>
                   <ol className="list-decimal list-inside space-y-1">
                     <li>Connectez-vous au Wi-Fi du restaurant</li>
                     <li>Allez dans Paramètres → Wi-Fi → Détails du réseau</li>
