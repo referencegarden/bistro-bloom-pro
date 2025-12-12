@@ -66,20 +66,19 @@ serve(async (req) => {
       );
     }
 
-    // Find employee by comparing PIN hash using async bcrypt with concurrent execution
+    // Find employee by comparing PIN hash using bcrypt (sync version - required in Deno)
     let employee = null;
-    const matchPromises = (employees || []).map(async (emp) => {
+    for (const emp of employees || []) {
       try {
-        const isMatch = await bcrypt.compare(trimmedPin, emp.pin_hash);
-        return isMatch ? emp : null;
+        const isMatch = bcrypt.compareSync(trimmedPin, emp.pin_hash);
+        if (isMatch) {
+          employee = emp;
+          break; // Exit loop early once we find a match
+        }
       } catch (e) {
         console.error('Error comparing PIN for employee:', emp.id, e);
-        return null;
       }
-    });
-
-    const results = await Promise.all(matchPromises);
-    employee = results.find((e) => e !== null) || null;
+    }
 
     if (!employee) {
       return new Response(
