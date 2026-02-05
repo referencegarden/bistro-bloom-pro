@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { Navigate, Outlet, useNavigate } from "react-router-dom";
+import { Navigate, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Shield, LayoutDashboard, Users, CreditCard, LogOut } from "lucide-react";
+import { Shield, LayoutDashboard, Users, CreditCard, LogOut, Package } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function SuperAdminLayout() {
@@ -62,6 +62,9 @@ export function SuperAdminLayout() {
     return <Navigate to="/super-admin/login" replace />;
   }
 
+  const location = useLocation();
+  const isActive = (path: string) => location.pathname === path;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -84,7 +87,7 @@ export function SuperAdminLayout() {
           <div className="flex gap-1">
             <Button
               variant="ghost"
-              className="rounded-none border-b-2 border-transparent data-[active=true]:border-primary"
+              className={`rounded-none border-b-2 ${isActive("/super-admin/dashboard") ? "border-primary" : "border-transparent"}`}
               onClick={() => navigate("/super-admin/dashboard")}
             >
               <LayoutDashboard className="h-4 w-4 mr-2" />
@@ -92,7 +95,7 @@ export function SuperAdminLayout() {
             </Button>
             <Button
               variant="ghost"
-              className="rounded-none border-b-2 border-transparent data-[active=true]:border-primary"
+              className={`rounded-none border-b-2 ${isActive("/super-admin/tenants") ? "border-primary" : "border-transparent"}`}
               onClick={() => navigate("/super-admin/tenants")}
             >
               <Users className="h-4 w-4 mr-2" />
@@ -100,11 +103,19 @@ export function SuperAdminLayout() {
             </Button>
             <Button
               variant="ghost"
-              className="rounded-none border-b-2 border-transparent data-[active=true]:border-primary"
+              className={`rounded-none border-b-2 ${isActive("/super-admin/subscriptions") ? "border-primary" : "border-transparent"}`}
               onClick={() => navigate("/super-admin/subscriptions")}
             >
               <CreditCard className="h-4 w-4 mr-2" />
               Subscriptions
+            </Button>
+            <Button
+              variant="ghost"
+              className={`rounded-none border-b-2 ${isActive("/super-admin/plans") ? "border-primary" : "border-transparent"}`}
+              onClick={() => navigate("/super-admin/plans")}
+            >
+              <Package className="h-4 w-4 mr-2" />
+              Plans
             </Button>
           </div>
         </div>

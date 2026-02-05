@@ -197,7 +197,10 @@ export default function Attendance() {
           check_in_time: new Date().toISOString(),
           wifi_ssid: wifiSettings.ssidName || wifiStatus.ssid || null,
           ip_address: wifiStatus.ipAddress,
-          confirmed: true
+          confirmed: true,
+          tenant_id: tenantId,
+        }, {
+          onConflict: 'employee_id,date'
         });
         if (error) throw error;
         toast({
