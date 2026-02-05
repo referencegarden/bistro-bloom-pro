@@ -7,12 +7,14 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupConte
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
+import { usePlanFeatures } from "@/hooks/usePlanFeatures";
 
 export function AppSidebar() {
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const { open } = useSidebar();
   const { isAdmin, permissions, loading: permissionsLoading } = useEmployeePermissions();
+  const { hasFeature, loading: planLoading } = usePlanFeatures();
 
   const { data: settings } = useQuery({
     queryKey: ["app-settings"],
@@ -52,46 +54,51 @@ export function AppSidebar() {
     }
   }, [settings]);
 
-  // All navigation items with their required permissions
+  // All navigation items with their required permissions and plan feature keys
   const allNavigation = [
-    { name: "Tableau de bord", href: `/${slug}/dashboard`, icon: Home, permission: "can_view_reports" },
-    { name: "Produits", href: `/${slug}/products`, icon: Package, permission: "can_view_products" },
-    { name: "Menu / Recettes", href: `/${slug}/menu-items`, icon: UtensilsCrossed, permission: "can_view_products" },
-    { name: "Sortie de Stock", href: `/${slug}/sales`, icon: ShoppingCart, permission: "can_make_sales" },
-    { name: "Achats", href: `/${slug}/purchases`, icon: TrendingUp, permission: "can_manage_stock" },
-    { name: "Commandes", href: `/${slug}/demands`, icon: ClipboardList, permission: "can_create_demands" },
-    { name: "Catégories", href: `/${slug}/category-management`, icon: LayoutGrid, permission: "can_view_products" },
-    { name: "Fournisseurs", href: `/${slug}/suppliers`, icon: Users, permission: "can_manage_suppliers" },
-    { name: "Tables", href: `/${slug}/tables`, icon: Grid3X3, permission: "can_manage_stock" },
-    { name: "Présence", href: `/${slug}/attendance`, icon: ClipboardCheck, permission: null }, // Always visible to all employees
-    { name: "Employés", href: `/${slug}/employees`, icon: Users, permission: "can_manage_attendance" },
-    { name: "Point de Vente", href: `/${slug}/pos`, icon: ShoppingBag, permission: "can_use_pos" },
-    { name: "Commandes POS", href: `/${slug}/pos/orders`, icon: ClipboardList, permission: "can_manage_orders" },
-    { name: "Affichage Cuisine", href: `/${slug}/pos/kitchen`, icon: ChefHat, permission: "can_view_kitchen_display" },
-    { name: "Affichage Bar", href: `/${slug}/pos/bar`, icon: Wine, permission: "can_view_bar_display" },
-    { name: "Rapports POS", href: `/${slug}/pos/reports`, icon: BarChart3, permission: "can_access_pos_reports" },
-    { name: "Paramètres", href: `/${slug}/settings`, icon: Settings, permission: "can_view_reports" }, // Admin-level
+    { name: "Tableau de bord", href: `/${slug}/dashboard`, icon: Home, permission: "can_view_reports", feature: "dashboard" },
+    { name: "Produits", href: `/${slug}/products`, icon: Package, permission: "can_view_products", feature: "products" },
+    { name: "Menu / Recettes", href: `/${slug}/menu-items`, icon: UtensilsCrossed, permission: "can_view_products", feature: "menu_items" },
+    { name: "Sortie de Stock", href: `/${slug}/sales`, icon: ShoppingCart, permission: "can_make_sales", feature: "sales" },
+    { name: "Achats", href: `/${slug}/purchases`, icon: TrendingUp, permission: "can_manage_stock", feature: "purchases" },
+    { name: "Commandes", href: `/${slug}/demands`, icon: ClipboardList, permission: "can_create_demands", feature: "demands" },
+    { name: "Catégories", href: `/${slug}/category-management`, icon: LayoutGrid, permission: "can_view_products", feature: "categories" },
+    { name: "Fournisseurs", href: `/${slug}/suppliers`, icon: Users, permission: "can_manage_suppliers", feature: "suppliers" },
+    { name: "Tables", href: `/${slug}/tables`, icon: Grid3X3, permission: "can_manage_stock", feature: "tables" },
+    { name: "Présence", href: `/${slug}/attendance`, icon: ClipboardCheck, permission: null, feature: "attendance" }, // Always visible to all employees
+    { name: "Employés", href: `/${slug}/employees`, icon: Users, permission: "can_manage_attendance", feature: "employees" },
+    { name: "Point de Vente", href: `/${slug}/pos`, icon: ShoppingBag, permission: "can_use_pos", feature: "pos" },
+    { name: "Commandes POS", href: `/${slug}/pos/orders`, icon: ClipboardList, permission: "can_manage_orders", feature: "pos_orders" },
+    { name: "Affichage Cuisine", href: `/${slug}/pos/kitchen`, icon: ChefHat, permission: "can_view_kitchen_display", feature: "kitchen_display" },
+    { name: "Affichage Bar", href: `/${slug}/pos/bar`, icon: Wine, permission: "can_view_bar_display", feature: "bar_display" },
+    { name: "Rapports POS", href: `/${slug}/pos/reports`, icon: BarChart3, permission: "can_access_pos_reports", feature: "pos_reports" },
+    { name: "Paramètres", href: `/${slug}/settings`, icon: Settings, permission: "can_view_reports", feature: "settings" }, // Admin-level
   ];
 
-  // Filter navigation based on permissions
+  // Filter navigation based on permissions AND plan features
   const filteredNavigation = useMemo(() => {
     // While loading, show a minimal set for employees or nothing
-    if (permissionsLoading) {
+    if (permissionsLoading || planLoading) {
       return [];
     }
     
-    // Admins see everything
-    if (isAdmin) return allNavigation;
-    
-    // Filter based on employee permissions
+    // Filter based on plan features first, then permissions
     return allNavigation.filter(item => {
-      // Items with no permission requirement are visible to all
+      // Check if feature is enabled in the plan (admins can still see everything if plan allows)
+      if (!hasFeature(item.feature)) {
+        return false;
+      }
+      
+      // Admins see everything that's in their plan
+      if (isAdmin) return true;
+      
+      // Items with no permission requirement are visible to all (if plan allows)
       if (item.permission === null) return true;
       
       // Check specific permission
       return permissions[item.permission as keyof typeof permissions] === true;
     });
-  }, [isAdmin, permissions, permissionsLoading, slug, allNavigation]);
+  }, [isAdmin, permissions, permissionsLoading, planLoading, slug, allNavigation, hasFeature]);
 
   async function handleSignOut() {
     try {

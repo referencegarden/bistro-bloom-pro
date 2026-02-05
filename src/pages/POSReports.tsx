@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useTenant } from "@/contexts/TenantContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -41,6 +42,7 @@ interface EmployeeSalesItem {
 }
 
 export default function POSReports() {
+  const { tenantId } = useTenant();
   const [reportData, setReportData] = useState<SalesReportItem[]>([]);
   const [employeeReport, setEmployeeReport] = useState<EmployeeSalesItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,8 +56,10 @@ export default function POSReports() {
   }, [dateRange]);
 
   useEffect(() => {
-    loadReport();
-  }, [startDate, endDate]);
+    if (tenantId) {
+      loadReport();
+    }
+  }, [startDate, endDate, tenantId]);
 
   const updateDateRange = (range: string) => {
     const now = new Date();
@@ -76,16 +80,19 @@ export default function POSReports() {
   };
 
   const loadReport = async () => {
+    if (!tenantId) return;
     setLoading(true);
     try {
       const [productsResult, employeesResult] = await Promise.all([
         supabase.rpc("get_pos_sales_report", {
           _start_date: startDate.toISOString(),
           _end_date: endDate.toISOString(),
+          _tenant_id: tenantId,
         }),
         supabase.rpc("get_pos_sales_by_employee", {
           _start_date: startDate.toISOString(),
           _end_date: endDate.toISOString(),
+          _tenant_id: tenantId,
         }),
       ]);
 
