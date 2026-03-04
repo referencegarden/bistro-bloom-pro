@@ -3,7 +3,6 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "lucide-react";
-import { ConnectionStatus } from "./ConnectionStatus";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -47,7 +46,6 @@ export function Layout({ children }: LayoutProps) {
               </div>
             )}
           </header>
-          <ConnectionStatus />
           <main className="flex-1 overflow-y-auto bg-background p-4 sm:p-6 lg:p-8">
             {children}
           </main>
