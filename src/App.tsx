@@ -34,6 +34,7 @@ import SuperAdminInitialize from "./pages/SuperAdminInitialize";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminTenants from "./pages/SuperAdminTenants";
 import SuperAdminSubscriptions from "./pages/SuperAdminSubscriptions";
+import SuperAdminPlans from "./pages/SuperAdminPlans";
 import { SuperAdminLayout } from "./components/SuperAdminLayout";
 import { SubscriptionGuard } from "./components/SubscriptionGuard";
 import Tables from "./pages/Tables";
