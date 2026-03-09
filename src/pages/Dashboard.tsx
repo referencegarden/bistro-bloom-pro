@@ -92,7 +92,6 @@ export default function Dashboard() {
     const pendingDemands = (demandsRes.data || []).filter((d: any) => d.status === "pending").length;
     const inStockDemands = (demandsRes.data || []).filter((d: any) => d.status === "in_stock").length;
 
-    // Purchases by day (last 7 days)
     const dayMap: Record<string, number> = {};
     for (let i = 0; i < 7; i++) {
       const d = subDays(today, 6 - i);
@@ -104,7 +103,6 @@ export default function Dashboard() {
     });
     const purchasesByDay = Object.entries(dayMap).map(([date, total]) => ({ date, total }));
 
-    // Stock value by category
     const catMap = new Map<string, string>();
     (categoriesRes.data || []).forEach((c: any) => catMap.set(c.id, c.name));
     const catValues: Record<string, number> = {};
@@ -138,7 +136,7 @@ export default function Dashboard() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Tableau de bord</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Tableau de bord</h1>
           <div className="flex items-center gap-2 mt-1">
             <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
             <p className="text-sm text-muted-foreground capitalize">{todayFormatted}</p>
@@ -148,30 +146,31 @@ export default function Dashboard() {
       </div>
 
       {/* Stat Cards */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard title="Produits Totaux" value={stats.totalProducts.toString()} icon={Package} variant="emerald" />
-        <StatCard title="Achats Totaux" value={`${stats.totalPurchases.toFixed(2)} DH`} icon={TrendingUp} variant="blue" />
+        <StatCard title="Achats Totaux" value={`${stats.totalPurchases.toFixed(2)} DH`} icon={TrendingUp} variant="violet" />
         <StatCard title="Achats du Jour" value={`${stats.dailyPurchases.toFixed(2)} DH`} icon={ShoppingCart} variant="amber" />
-        <StatCard title="Valeur du Stock" value={`${stats.totalStockValue.toFixed(2)} DH`} icon={Package} variant="violet" />
+        <StatCard title="Valeur du Stock" value={`${stats.totalStockValue.toFixed(2)} DH`} icon={Package} variant="blue" />
       </div>
 
       {/* Quick Actions */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
         <Card
-          className="cursor-pointer group border-l-4 border-l-[hsl(var(--warning))] transition-all hover:shadow-md"
+          className="cursor-pointer group border-l-4 border-l-[hsl(var(--warning))] bg-card transition-all hover:shadow-lg"
           onClick={() => navigate(`/${slug}/demands`)}
         >
-          <CardContent className="p-4 sm:p-5">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Commandes en Attente</p>
-                <p className="text-3xl font-bold mt-1">{stats.pendingDemands}</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Commandes en Attente</p>
+                <p className="text-4xl font-bold mt-2 text-foreground">{stats.pendingDemands}</p>
+                <p className="text-xs text-[hsl(var(--warning))] font-semibold mt-1 uppercase">À traiter</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-[hsl(var(--warning)/0.1)] flex items-center justify-center">
-                <ClipboardList className="h-5 w-5 text-[hsl(var(--warning))]" />
+              <div className="w-14 h-14 rounded-2xl bg-[hsl(var(--warning)/0.1)] flex items-center justify-center">
+                <ClipboardList className="h-7 w-7 text-[hsl(var(--warning))]" />
               </div>
             </div>
-            <div className="flex items-center gap-1 mt-3 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+            <div className="flex items-center gap-1 mt-4 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
               <span>Gérer les commandes</span>
               <ArrowRight className="h-3 w-3" />
             </div>
@@ -179,20 +178,21 @@ export default function Dashboard() {
         </Card>
 
         <Card
-          className="cursor-pointer group border-l-4 border-l-[hsl(var(--success))] transition-all hover:shadow-md"
+          className="cursor-pointer group border-l-4 border-l-[hsl(var(--success))] bg-card transition-all hover:shadow-lg"
           onClick={() => navigate(`/${slug}/demands`)}
         >
-          <CardContent className="p-4 sm:p-5">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Produits en Stock</p>
-                <p className="text-3xl font-bold mt-1">{stats.inStockDemands}</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Produits en Stock</p>
+                <p className="text-4xl font-bold mt-2 text-foreground">{stats.inStockDemands}</p>
+                <p className="text-xs text-[hsl(var(--success))] font-semibold mt-1 uppercase">Niveau optimal</p>
               </div>
-              <div className="w-10 h-10 rounded-xl bg-[hsl(var(--success)/0.1)] flex items-center justify-center">
-                <ClipboardList className="h-5 w-5 text-[hsl(var(--success))]" />
+              <div className="w-14 h-14 rounded-2xl bg-[hsl(var(--success)/0.1)] flex items-center justify-center">
+                <Package className="h-7 w-7 text-[hsl(var(--success))]" />
               </div>
             </div>
-            <div className="flex items-center gap-1 mt-3 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
+            <div className="flex items-center gap-1 mt-4 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
               <span>Prêts pour l'achat</span>
               <ArrowRight className="h-3 w-3" />
             </div>
@@ -201,7 +201,7 @@ export default function Dashboard() {
       </div>
 
       {/* Charts */}
-      <div className="grid gap-3 sm:gap-4 grid-cols-1 md:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
         <PurchasesChart data={stats.purchasesByDay} />
         <StockByCategoryChart data={stats.stockByCategory} />
       </div>
