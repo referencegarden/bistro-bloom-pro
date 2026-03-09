@@ -9,6 +9,7 @@ import { useEffect, useMemo } from "react";
 import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
 import { useTenant } from "@/contexts/TenantContext";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export function AppSidebar() {
   const navigate = useNavigate();
@@ -16,6 +17,7 @@ export function AppSidebar() {
   const { open } = useSidebar();
   const { tenantId } = useTenant();
   const { isAdmin, permissions, loading: permissionsLoading } = useEmployeePermissions();
+  const { t } = useLanguage();
 
   const { data: settings } = useQuery({
     queryKey: ["app-settings"],
@@ -99,31 +101,30 @@ export function AppSidebar() {
     }
   }, [settings]);
 
-  // Navigation grouped by section
   const operationsNav = [
-    { name: "Tableau de bord", href: `/${slug}/dashboard`, icon: Home, permission: "can_view_reports", featureKey: "dashboard" },
-    { name: "Produits", href: `/${slug}/products`, icon: Package, permission: "can_view_products", featureKey: "products" },
-    { name: "Menu / Recettes", href: `/${slug}/menu-items`, icon: UtensilsCrossed, permission: "can_view_products", featureKey: "menu_items" },
-    { name: "Catégories", href: `/${slug}/category-management`, icon: LayoutGrid, permission: "can_view_products", featureKey: "categories" },
-    { name: "Fournisseurs", href: `/${slug}/suppliers`, icon: Users, permission: "can_manage_suppliers", featureKey: "suppliers" },
-    { name: "Tables", href: `/${slug}/tables`, icon: Grid3X3, permission: "can_manage_stock", featureKey: "tables" },
+    { name: t("nav.dashboard"), href: `/${slug}/dashboard`, icon: Home, permission: "can_view_reports", featureKey: "dashboard" },
+    { name: t("nav.products"), href: `/${slug}/products`, icon: Package, permission: "can_view_products", featureKey: "products" },
+    { name: t("nav.menuRecipes"), href: `/${slug}/menu-items`, icon: UtensilsCrossed, permission: "can_view_products", featureKey: "menu_items" },
+    { name: t("nav.categories"), href: `/${slug}/category-management`, icon: LayoutGrid, permission: "can_view_products", featureKey: "categories" },
+    { name: t("nav.suppliers"), href: `/${slug}/suppliers`, icon: Users, permission: "can_manage_suppliers", featureKey: "suppliers" },
+    { name: t("nav.tables"), href: `/${slug}/tables`, icon: Grid3X3, permission: "can_manage_stock", featureKey: "tables" },
   ];
 
   const salesNav = [
-    { name: "Sortie de Stock", href: `/${slug}/sales`, icon: ShoppingCart, permission: "can_make_sales", featureKey: "sales" },
-    { name: "Achats", href: `/${slug}/purchases`, icon: TrendingUp, permission: "can_manage_stock", featureKey: "purchases" },
-    { name: "Commandes", href: `/${slug}/demands`, icon: ClipboardList, permission: "can_create_demands", featureKey: "demands" },
-    { name: "Point de Vente", href: `/${slug}/pos`, icon: ShoppingBag, permission: "can_use_pos", featureKey: "pos" },
-    { name: "Commandes POS", href: `/${slug}/pos/orders`, icon: ClipboardList, permission: "can_manage_orders", featureKey: "pos_orders" },
+    { name: t("nav.stockOut"), href: `/${slug}/sales`, icon: ShoppingCart, permission: "can_make_sales", featureKey: "sales" },
+    { name: t("nav.purchases"), href: `/${slug}/purchases`, icon: TrendingUp, permission: "can_manage_stock", featureKey: "purchases" },
+    { name: t("nav.orders"), href: `/${slug}/demands`, icon: ClipboardList, permission: "can_create_demands", featureKey: "demands" },
+    { name: t("nav.pos"), href: `/${slug}/pos`, icon: ShoppingBag, permission: "can_use_pos", featureKey: "pos" },
+    { name: t("nav.posOrders"), href: `/${slug}/pos/orders`, icon: ClipboardList, permission: "can_manage_orders", featureKey: "pos_orders" },
   ];
 
   const managementNav = [
-    { name: "Affichage Cuisine", href: `/${slug}/pos/kitchen`, icon: ChefHat, permission: "can_view_kitchen_display", featureKey: "kitchen_display" },
-    { name: "Affichage Bar", href: `/${slug}/pos/bar`, icon: Wine, permission: "can_view_bar_display", featureKey: "bar_display" },
-    { name: "Rapports POS", href: `/${slug}/pos/reports`, icon: BarChart3, permission: "can_access_pos_reports", featureKey: "pos_reports" },
-    { name: "Présence", href: `/${slug}/attendance`, icon: ClipboardCheck, permission: null, featureKey: "attendance" },
-    { name: "Employés", href: `/${slug}/employees`, icon: Users, permission: "can_manage_attendance", featureKey: "employees" },
-    { name: "Paramètres", href: `/${slug}/settings`, icon: Settings, permission: "can_view_reports", featureKey: "settings" },
+    { name: t("nav.kitchenDisplay"), href: `/${slug}/pos/kitchen`, icon: ChefHat, permission: "can_view_kitchen_display", featureKey: "kitchen_display" },
+    { name: t("nav.barDisplay"), href: `/${slug}/pos/bar`, icon: Wine, permission: "can_view_bar_display", featureKey: "bar_display" },
+    { name: t("nav.posReports"), href: `/${slug}/pos/reports`, icon: BarChart3, permission: "can_access_pos_reports", featureKey: "pos_reports" },
+    { name: t("nav.attendance"), href: `/${slug}/attendance`, icon: ClipboardCheck, permission: null, featureKey: "attendance" },
+    { name: t("nav.employees"), href: `/${slug}/employees`, icon: Users, permission: "can_manage_attendance", featureKey: "employees" },
+    { name: t("nav.settings"), href: `/${slug}/settings`, icon: Settings, permission: "can_view_reports", featureKey: "settings" },
   ];
 
   const planLoading = subscriptionLoading || featuresLoading;
@@ -144,9 +145,9 @@ export function AppSidebar() {
     });
   };
 
-  const filteredOps = useMemo(() => filterItems(operationsNav), [permissionsLoading, planLoading, enabledFeatures, isAdmin, permissions, slug]);
-  const filteredSales = useMemo(() => filterItems(salesNav), [permissionsLoading, planLoading, enabledFeatures, isAdmin, permissions, slug]);
-  const filteredMgmt = useMemo(() => filterItems(managementNav), [permissionsLoading, planLoading, enabledFeatures, isAdmin, permissions, slug]);
+  const filteredOps = useMemo(() => filterItems(operationsNav), [permissionsLoading, planLoading, enabledFeatures, isAdmin, permissions, slug, t]);
+  const filteredSales = useMemo(() => filterItems(salesNav), [permissionsLoading, planLoading, enabledFeatures, isAdmin, permissions, slug, t]);
+  const filteredMgmt = useMemo(() => filterItems(managementNav), [permissionsLoading, planLoading, enabledFeatures, isAdmin, permissions, slug, t]);
 
   async function handleSignOut() {
     try {
@@ -154,13 +155,13 @@ export function AppSidebar() {
       const { error } = await supabase.auth.signOut({ scope: 'local' });
       if (error) throw error;
       localStorage.clear();
-      toast.success("Déconnecté avec succès");
+      toast.success(t("nav.logoutSuccess"));
       navigate(`/${currentSlug}`);
     } catch (error) {
       console.error("Logout error:", error);
       const currentSlug = slug || localStorage.getItem('current_tenant_slug') || 'default-restaurant';
       localStorage.clear();
-      toast.success("Déconnecté");
+      toast.success(t("nav.logoutSuccess"));
       navigate(`/${currentSlug}`);
     }
   }
@@ -179,7 +180,7 @@ export function AppSidebar() {
         <SidebarGroupContent>
           <SidebarMenu>
             {items.map(item => (
-              <SidebarMenuItem key={item.name}>
+              <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton asChild>
                   <NavLink
                     to={item.href}
@@ -220,9 +221,9 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="py-2">
-        {renderNavGroup("Opérations", filteredOps)}
-        {renderNavGroup("Ventes", filteredSales)}
-        {renderNavGroup("Gestion", filteredMgmt)}
+        {renderNavGroup(t("nav.operations"), filteredOps)}
+        {renderNavGroup(t("nav.sales"), filteredSales)}
+        {renderNavGroup(t("nav.management"), filteredMgmt)}
       </SidebarContent>
 
       <SidebarFooter className="border-t border-sidebar-border p-3">
@@ -245,7 +246,7 @@ export function AppSidebar() {
           onClick={handleSignOut}
         >
           <LogOut className="mr-2 h-4 w-4" />
-          {open && <span>Déconnexion</span>}
+          {open && <span>{t("nav.logout")}</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>
