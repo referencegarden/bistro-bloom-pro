@@ -1,28 +1,42 @@
 
-## Analysis: Features Not Appearing in Pro Plan
 
-### What I Found
-The restaurant "paincake" is on the **pro plan**, and the sidebar is correctly filtering features based on what's enabled in `plan_features`.
+## Plan: Restaurant Dashboard UI Overhaul
 
-Looking at the database, these features are **disabled (is_enabled: false)** for the pro plan:
-- `attendance` (Présence) → **false**
-- `bar_display` (Affichage Bar) → **false**  
-- `categories` (Catégories) → **false**
-- `dashboard` (Tableau de bord) → **false**
+### Overview
+Complete redesign of the restaurant dashboard with modern visuals, charts, better layout, and mobile responsiveness.
 
-### This is NOT a Code Bug
-The plan feature filtering system is working correctly. The issue is that these features simply haven't been toggled ON for the pro plan in the Super Admin Plans page.
+### Changes
 
-### Solution
-Go to `/super-admin/plans` → click the **Pro** tab → toggle ON these features:
+#### 1. `src/components/StatCard.tsx` — Modern redesign
+- Add gradient backgrounds with colored icon containers
+- Add subtle shadow and hover animations
+- Include trend indicators with percentage changes
+- Use colored accents per card type (green for products, blue for purchases, orange for daily, purple for stock value)
 
-| Feature | Current State | Action Needed |
-|---------|--------------|---------------|
-| Présence | ❌ Disabled | Toggle ON |
-| Affichage Bar | ❌ Disabled | Toggle ON |
-| Catégories | ❌ Disabled | Toggle ON |
-| Tableau de bord | ❌ Disabled | Toggle ON |
+#### 2. `src/pages/Dashboard.tsx` — Full restructure
+- **Header**: Add greeting with current date, keep export button
+- **Stats row**: Redesigned 4 stat cards with icons in colored circles, gradient accents
+- **Charts section** (new): 
+  - Area chart showing purchases over the last 7 days (using recharts, already installed)
+  - Bar chart for stock value by top categories
+- **Quick actions row**: Pending demands + In-stock demands cards with progress indicators and colored borders
+- **Low stock alerts**: Redesigned as a table with severity indicators (color-coded rows based on how far below threshold), sortable
+- **Mobile**: Stack all sections vertically, charts take full width, stat cards 2-column on tablet, 1-column on phone
 
-Once you toggle these features to "enabled" in the Plans management page, they will immediately appear in the paincake restaurant's sidebar.
+#### 3. `src/components/DashboardCharts.tsx` — New component
+- `PurchasesChart`: Area/line chart for last 7 days of purchases (fetches from `purchases` table grouped by date)
+- `StockByCategoryChart`: Horizontal bar chart showing stock value per category
+- Uses recharts `AreaChart`, `BarChart` with Tailwind-matching colors
+- Responsive containers with `ResponsiveContainer`
 
-**No code changes required** - just data configuration in the super-admin panel.
+#### 4. Layout improvements
+- Better spacing and visual hierarchy
+- Cards with subtle borders and shadows instead of flat look
+- Consistent color palette using CSS variables
+
+### Technical Details
+- All charts use `recharts` (already installed)
+- Dashboard data fetching extended to include daily purchases for last 7 days and stock by category
+- No database changes needed — all data already available
+- Mobile breakpoints: `sm` (2-col stats), `md` (charts side-by-side), `lg` (4-col stats)
+
