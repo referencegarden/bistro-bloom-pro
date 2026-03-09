@@ -252,6 +252,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
             can_manage_orders: true,
             can_process_payments: true,
             can_view_kitchen_display: false,
+            can_view_bar_display: false,
             can_access_pos_reports: false,
             can_make_sales: false,
             can_view_products: false,
@@ -273,6 +274,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
             can_manage_orders: permissions.can_manage_orders,
             can_process_payments: permissions.can_process_payments,
             can_view_kitchen_display: permissions.can_view_kitchen_display,
+            can_view_bar_display: permissions.can_view_bar_display,
             can_access_pos_reports: permissions.can_access_pos_reports,
             can_manage_attendance: permissions.can_manage_attendance,
           };
