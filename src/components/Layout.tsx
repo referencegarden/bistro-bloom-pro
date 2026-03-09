@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Bell, User } from "lucide-react";
 import { useEffect } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface LayoutProps {
   children: React.ReactNode;
