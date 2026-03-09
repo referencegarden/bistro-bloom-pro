@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Store, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -19,8 +20,8 @@ export default function Auth() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [pin, setPin] = useState("");
+  const { t } = useLanguage();
   
-  // Flag to skip onAuthStateChange processing during employee login
   const isEmployeeLoginInProgress = useRef(false);
 
   const { data: settings } = useQuery({
@@ -38,58 +39,30 @@ export default function Auth() {
     enabled: !!tenantId,
   });
 
-  // Helper function to get the best redirect route based on permissions
   const getPermissionBasedRoute = (perms: any): string => {
-    // Priority order for redirects based on permissions
-    if (perms?.can_view_kitchen_display) {
-      return `/${slug}/pos/kitchen`;
-    }
-    if (perms?.can_view_bar_display) {
-      return `/${slug}/pos/bar`;
-    }
-    if (perms?.can_use_pos) {
-      return `/${slug}/pos`;
-    }
-    if (perms?.can_access_pos_reports) {
-      return `/${slug}/pos/reports`;
-    }
-    if (perms?.can_make_sales) {
-      return `/${slug}/sales`;
-    }
-    if (perms?.can_view_products) {
-      return `/${slug}/products`;
-    }
-    if (perms?.can_manage_stock) {
-      return `/${slug}/products`;
-    }
-    if (perms?.can_manage_suppliers) {
-      return `/${slug}/suppliers`;
-    }
-    if (perms?.can_manage_attendance) {
-      return `/${slug}/attendance`;
-    }
-    if (perms?.can_view_reports) {
-      return `/${slug}/dashboard`;
-    }
-    if (perms?.can_create_demands) {
-      return `/${slug}/demands`;
-    }
-    // Default fallback - attendance is always accessible
+    if (perms?.can_view_kitchen_display) return `/${slug}/pos/kitchen`;
+    if (perms?.can_view_bar_display) return `/${slug}/pos/bar`;
+    if (perms?.can_use_pos) return `/${slug}/pos`;
+    if (perms?.can_access_pos_reports) return `/${slug}/pos/reports`;
+    if (perms?.can_make_sales) return `/${slug}/sales`;
+    if (perms?.can_view_products) return `/${slug}/products`;
+    if (perms?.can_manage_stock) return `/${slug}/products`;
+    if (perms?.can_manage_suppliers) return `/${slug}/suppliers`;
+    if (perms?.can_manage_attendance) return `/${slug}/attendance`;
+    if (perms?.can_view_reports) return `/${slug}/dashboard`;
+    if (perms?.can_create_demands) return `/${slug}/demands`;
     return `/${slug}/attendance`;
   };
 
   useEffect(() => {
-    // Don't run session checks until tenant is fully loaded
     if (!slug || tenantLoading || !tenantId) return;
 
     let isMounted = true;
 
-    // Check existing session and redirect appropriately
     const checkSessionAndRedirect = async (session: any) => {
       if (!session || !isMounted) return;
 
       try {
-        // Verify user belongs to this tenant - but DON'T sign out on failure
         const { data: tenantUser, error: tenantError } = await supabase
           .from("tenant_users")
           .select("tenant_id")
@@ -97,21 +70,14 @@ export default function Auth() {
           .eq("tenant_id", tenantId)
           .maybeSingle();
 
-        // If query error, log it but don't sign out - just show login form
         if (tenantError) {
           console.warn("Tenant verification query error:", tenantError.message);
-          return; // Show login form, don't destroy session
+          return;
         }
 
-        // If user doesn't belong to this tenant, just show login form
-        // Don't sign them out - they may be logged into another tenant
-        if (!tenantUser) {
-          return; // Show login form
-        }
-
+        if (!tenantUser) return;
         if (!isMounted) return;
 
-        // Check if user is admin (admins go to dashboard)
         const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
@@ -125,7 +91,6 @@ export default function Auth() {
           return;
         }
 
-        // For employees, check permissions and redirect to appropriate page
         if (roleData?.role === 'employee') {
           const { data: employee } = await supabase
             .from("employees")
@@ -151,19 +116,14 @@ export default function Auth() {
           }
         }
 
-        // Default redirect for other cases
         navigate(`/${slug}/dashboard`, { replace: true });
       } catch (error) {
-        // On error, just log it - don't sign out
         console.warn("Session check error:", error);
-        // Show login form but preserve session
       }
     };
 
-    // Listen for auth state changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        // Skip if employee login is handling the redirect
         if (isEmployeeLoginInProgress.current) return;
         if (session && isMounted) {
           await checkSessionAndRedirect(session);
@@ -171,7 +131,6 @@ export default function Auth() {
       }
     );
 
-    // Check if there's already a session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session && isMounted) {
         await checkSessionAndRedirect(session);
@@ -187,23 +146,19 @@ export default function Auth() {
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
     if (!tenantId) {
-      toast.error("Restaurant not found");
+      toast.error(t("auth.restaurantNotFound"));
       return;
     }
 
     setLoading(true);
-    const { data: authData, error } = await supabase.auth.signInWithPassword({
-      email,
-      password
-    });
+    const { data: authData, error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      toast.error("Échec de connexion: " + error.message);
+      toast.error(t("auth.loginFailed") + ": " + error.message);
       setLoading(false);
       return;
     }
 
-    // Verify user belongs to this tenant
     const { data: tenantUser } = await supabase
       .from("tenant_users")
       .select("tenant_id")
@@ -212,18 +167,15 @@ export default function Auth() {
       .maybeSingle();
 
     if (!tenantUser) {
-      toast.error("Vous n'avez pas accès à ce restaurant");
+      toast.error(t("auth.noAccess"));
       await supabase.auth.signOut({ scope: 'local' });
       setLoading(false);
       return;
     }
 
-    // Store tenant slug for sign-out redirect
     localStorage.setItem('current_tenant_slug', slug || '');
-    
-    toast.success("Connexion réussie!");
+    toast.success(t("auth.loginSuccess"));
 
-    // Check user role to determine redirect
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
@@ -231,7 +183,6 @@ export default function Auth() {
       .maybeSingle();
 
     if (roleData?.role === 'employee') {
-      // For employees, redirect based on their permissions
       const { data: empRecord } = await supabase
         .from("employees")
         .select("id")
@@ -252,7 +203,6 @@ export default function Auth() {
         navigate(`/${slug}/attendance`, { replace: true });
       }
     } else {
-      // Admins go to dashboard
       navigate(`/${slug}/dashboard`, { replace: true });
     }
     setLoading(false);
@@ -265,10 +215,7 @@ export default function Auth() {
     
     try {
       const { data, error } = await supabase.functions.invoke('employee-pin-login', {
-        body: {
-          pin: pin.trim(),
-          tenantId: tenantId
-        }
+        body: { pin: pin.trim(), tenantId: tenantId }
       });
 
       if (error) throw error;
@@ -279,25 +226,21 @@ export default function Auth() {
         return;
       }
 
-      // Set the session using the tokens
       const { error: sessionError } = await supabase.auth.setSession({
         access_token: data.access_token,
         refresh_token: data.refresh_token
       });
 
       if (sessionError) {
-        toast.error("Échec de connexion");
+        toast.error(t("auth.loginFailed"));
         setLoading(false);
         isEmployeeLoginInProgress.current = false;
         return;
       }
 
-      // Store tenant slug for sign-out redirect
       localStorage.setItem('current_tenant_slug', slug || '');
-      
-      toast.success(`Bienvenue ${data.employee.name}`);
+      toast.success(`${t("auth.welcome")} ${data.employee.name}`);
 
-      // Smart redirect based on permissions
       const { data: perms } = await supabase
         .from("employee_permissions")
         .select("*")
@@ -308,7 +251,7 @@ export default function Auth() {
       navigate(route);
     } catch (error) {
       console.error('Employee login error:', error);
-      toast.error("Échec de connexion");
+      toast.error(t("auth.loginFailed"));
     } finally {
       setLoading(false);
       isEmployeeLoginInProgress.current = false;
@@ -328,9 +271,9 @@ export default function Auth() {
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
         <Card className="w-full max-w-md">
           <CardHeader>
-            <CardTitle className="text-center text-destructive">Restaurant Not Found</CardTitle>
+            <CardTitle className="text-center text-destructive">{t("auth.restaurantNotFound")}</CardTitle>
             <CardDescription className="text-center">
-              The restaurant "{slug}" does not exist or is not active.
+              {t("auth.restaurantNotFoundDesc").replace("{slug}", slug || "")}
             </CardDescription>
           </CardHeader>
         </Card>
@@ -352,34 +295,34 @@ export default function Auth() {
             )}
           </div>
           <CardTitle className="text-2xl font-bold">
-            {settings?.restaurant_name || tenantName || "Gestion de Restaurant"}
+            {settings?.restaurant_name || tenantName || t("auth.restaurantManagement")}
           </CardTitle>
           <CardDescription>
-            Connectez-vous pour accéder à votre tableau de bord
+            {t("auth.loginSubtitle")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="admin" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="admin">Administrateur</TabsTrigger>
-              <TabsTrigger value="employee">Employé</TabsTrigger>
+              <TabsTrigger value="admin">{t("auth.admin")}</TabsTrigger>
+              <TabsTrigger value="employee">{t("auth.employee")}</TabsTrigger>
             </TabsList>
 
             <TabsContent value="admin" className="space-y-4 mt-4">
               <form onSubmit={handleSignIn} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="signin-email">{t("auth.email")}</Label>
                   <Input 
                     id="signin-email" 
                     type="email" 
-                    placeholder="votre@email.com" 
+                    placeholder={t("auth.emailPlaceholder")} 
                     value={email} 
                     onChange={e => setEmail(e.target.value)} 
                     required 
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Mot de passe</Label>
+                  <Label htmlFor="signin-password">{t("auth.password")}</Label>
                   <Input 
                     id="signin-password" 
                     type="password" 
@@ -390,7 +333,7 @@ export default function Auth() {
                   />
                 </div>
                 <Button type="submit" disabled={loading} className="w-full bg-green-900 hover:bg-green-800">
-                  {loading ? "Connexion..." : "Se connecter"}
+                  {loading ? t("auth.loggingIn") : t("auth.login")}
                 </Button>
               </form>
             </TabsContent>
@@ -398,11 +341,11 @@ export default function Auth() {
             <TabsContent value="employee" className="space-y-4 mt-4">
               <form onSubmit={handleEmployeeLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="employee-pin">Code PIN</Label>
+                  <Label htmlFor="employee-pin">{t("auth.pinCode")}</Label>
                   <Input 
                     id="employee-pin" 
                     type="password" 
-                    placeholder="Entrez votre code PIN" 
+                    placeholder={t("auth.pinPlaceholder")} 
                     maxLength={6} 
                     value={pin} 
                     onChange={e => setPin(e.target.value)} 
@@ -414,19 +357,19 @@ export default function Auth() {
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      Connexion en cours...
+                      {t("auth.loginInProgress")}
                     </>
-                  ) : "Se connecter"}
+                  ) : t("auth.login")}
                 </Button>
               </form>
               <p className="text-sm text-center text-muted-foreground mt-4">
-                Contactez votre administrateur si vous avez oublié votre code PIN
+                {t("auth.forgotPin")}
               </p>
             </TabsContent>
           </Tabs>
 
           <p className="text-sm text-muted-foreground text-center mt-4">
-            Besoin d'un compte ? Contactez l'administrateur.
+            {t("auth.needAccount")}
           </p>
         </CardContent>
       </Card>

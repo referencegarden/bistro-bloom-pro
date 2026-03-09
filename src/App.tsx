@@ -8,6 +8,7 @@ import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PermissionRoute } from "./components/PermissionRoute";
 import { TenantProvider } from "./contexts/TenantContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Sales from "./pages/Sales";
@@ -45,6 +46,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <ThemeProvider defaultTheme="system" storageKey="restaurant-theme">
     <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
       <TooltipProvider>
       <Toaster />
       <Sonner />
@@ -355,6 +357,7 @@ const App = () => (
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
+    </LanguageProvider>
   </QueryClientProvider>
 </ThemeProvider>
 );

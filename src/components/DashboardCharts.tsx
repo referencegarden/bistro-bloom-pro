@@ -1,15 +1,17 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface PurchasesChartProps {
   data: { date: string; total: number }[];
 }
 
 export function PurchasesChart({ data }: PurchasesChartProps) {
+  const { t } = useLanguage();
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Achats - 7 derniers jours</CardTitle>
+        <CardTitle className="text-base font-semibold">{t("chart.purchasesWeek")}</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-[240px] sm:h-[280px]">
@@ -31,7 +33,7 @@ export function PurchasesChart({ data }: PurchasesChartProps) {
                   borderRadius: "8px",
                   fontSize: "12px",
                 }}
-                formatter={(value: number) => [`${value.toFixed(2)} DH`, "Total"]}
+                formatter={(value: number) => [`${value.toFixed(2)} DH`, t("common.total")]}
               />
               <Area
                 type="monotone"
@@ -62,18 +64,19 @@ const barColors = [
 ];
 
 export function StockByCategoryChart({ data }: StockByCategoryChartProps) {
+  const { t } = useLanguage();
   const total = data.reduce((sum, d) => sum + d.value, 0);
 
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-base font-semibold">Stock par Catégorie</CardTitle>
+        <CardTitle className="text-base font-semibold">{t("chart.stockByCategory")}</CardTitle>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="h-[240px] sm:h-[280px] flex flex-col justify-center">
           {data.length === 0 ? (
             <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
-              Aucune donnée disponible
+              {t("chart.noData")}
             </div>
           ) : (
             <div className="space-y-3">

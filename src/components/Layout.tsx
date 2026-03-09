@@ -5,17 +5,21 @@ import { supabase } from "@/integrations/supabase/client";
 import { Bell, User } from "lucide-react";
 import { useEffect } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
 export function Layout({ children }: LayoutProps) {
-  // Force light theme for restaurant pages
+  const { dir } = useLanguage();
+
+  // Force light theme for restaurant pages + handle RTL
   useEffect(() => {
     document.documentElement.classList.remove("dark");
     document.documentElement.classList.add("light");
-  }, []);
+    document.documentElement.dir = dir;
+  }, [dir]);
 
   const { data: employeeData } = useQuery({
     queryKey: ["current-employee"],

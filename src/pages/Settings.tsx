@@ -10,21 +10,22 @@ import { toast } from "sonner";
 import { ColorPicker } from "@/components/ColorPicker";
 import { LogoUpload } from "@/components/LogoUpload";
 import { Separator } from "@/components/ui/separator";
-import { Wifi, Info, Search, Loader2, CheckCircle } from "lucide-react";
+import { Wifi, Info, Search, Loader2, CheckCircle, Globe } from "lucide-react";
 import { detectWifiConnection } from "@/lib/wifiDetection";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { Language } from "@/lib/translations";
 
 export default function Settings() {
   const queryClient = useQueryClient();
+  const { t, language: currentLanguage, setLanguage } = useLanguage();
   const {
     data: settings,
     isLoading
   } = useQuery({
     queryKey: ["app-settings"],
     queryFn: async () => {
-      const {
-        data,
-        error
-      } = await supabase.from("app_settings").select("*").single();
+      const { data, error } = await supabase.from("app_settings").select("*").single();
       if (error) throw error;
       return data;
     }
@@ -36,8 +37,8 @@ export default function Settings() {
   const [secondaryColor, setSecondaryColor] = useState("hsl(221.2 83.2% 53.3%)");
   const [backgroundColor, setBackgroundColor] = useState("hsl(0 0% 100%)");
   const [useTablesSystem, setUseTablesSystem] = useState(true);
+  const [selectedLanguage, setSelectedLanguage] = useState<Language>("fr");
   
-  // Wi-Fi configuration for attendance
   const [requireWifiForAttendance, setRequireWifiForAttendance] = useState(false);
   const [wifiSsidName, setWifiSsidName] = useState("");
   const [wifiIpRange, setWifiIpRange] = useState("");
@@ -45,7 +46,6 @@ export default function Settings() {
   const [isDetectingNetwork, setIsDetectingNetwork] = useState(false);
   const [detectedIp, setDetectedIp] = useState<string | null>(null);
 
-  // Update local state when settings load
   useEffect(() => {
     if (settings) {
       setRestaurantName(settings.restaurant_name);
@@ -55,34 +55,31 @@ export default function Settings() {
       setSecondaryColor(settings.secondary_color);
       setBackgroundColor(settings.background_color);
       setUseTablesSystem(settings.use_tables_system ?? true);
-      // Wi-Fi settings
       setRequireWifiForAttendance((settings as any).require_wifi_for_attendance ?? false);
       setWifiSsidName((settings as any).wifi_ssid_name || "");
       setWifiIpRange((settings as any).wifi_ip_range || "");
       setWifiPublicIp((settings as any).wifi_public_ip || "");
+      setSelectedLanguage(((settings as any).language as Language) || "fr");
     }
   }, [settings]);
 
   const updateMutation = useMutation({
     mutationFn: async (data: any) => {
-      const {
-        error
-      } = await supabase.from("app_settings").update(data).eq("id", settings?.id);
+      const { error } = await supabase.from("app_settings").update(data).eq("id", settings?.id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["app-settings"]
-      });
-      toast.success("Paramètres enregistrés avec succès");
+      queryClient.invalidateQueries({ queryKey: ["app-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["app-settings-language"] });
+      setLanguage(selectedLanguage);
+      toast.success(t("settings.savedSuccess"));
     },
     onError: error => {
       console.error("Error updating settings:", error);
-      toast.error("Échec de la mise à jour des paramètres");
+      toast.error(t("settings.saveFailed"));
     }
   });
 
-  // Track if there are unsaved changes
   const isDirty = settings ? 
     restaurantName !== settings.restaurant_name || 
     adminLogoUrl !== (settings.admin_logo_url || "") || 
@@ -94,16 +91,17 @@ export default function Settings() {
     requireWifiForAttendance !== ((settings as any).require_wifi_for_attendance ?? false) ||
     wifiSsidName !== ((settings as any).wifi_ssid_name || "") ||
     wifiIpRange !== ((settings as any).wifi_ip_range || "") ||
-    wifiPublicIp !== ((settings as any).wifi_public_ip || "")
+    wifiPublicIp !== ((settings as any).wifi_public_ip || "") ||
+    selectedLanguage !== (((settings as any).language as Language) || "fr")
     : false;
 
   const handleSaveAll = () => {
     if (!restaurantName.trim()) {
-      toast.error("Le nom du restaurant ne peut pas être vide");
+      toast.error(t("settings.nameEmpty"));
       return;
     }
     if (requireWifiForAttendance && !wifiIpRange.trim()) {
-      toast.error("Veuillez configurer la plage d'adresses IP pour la validation Wi-Fi");
+      toast.error(t("settings.ipRequired"));
       return;
     }
     updateMutation.mutate({
@@ -118,6 +116,7 @@ export default function Settings() {
       wifi_ssid_name: wifiSsidName || null,
       wifi_ip_range: wifiIpRange || null,
       wifi_public_ip: wifiPublicIp || null,
+      language: selectedLanguage,
     });
   };
 
@@ -134,6 +133,7 @@ export default function Settings() {
       setWifiSsidName((settings as any).wifi_ssid_name || "");
       setWifiIpRange((settings as any).wifi_ip_range || "");
       setWifiPublicIp((settings as any).wifi_public_ip || "");
+      setSelectedLanguage(((settings as any).language as Language) || "fr");
     }
   };
 
@@ -148,16 +148,14 @@ export default function Settings() {
           const ipRange = ipParts.slice(0, 3).join('.');
           setWifiIpRange(ipRange);
           setDetectedIp(wifiStatus.ipAddress);
-          toast.success(`Réseau détecté! IP: ${wifiStatus.ipAddress}`);
-        } else {
-          toast.error("Format d'adresse IP invalide");
+          toast.success(`${t("settings.networkDetected")} ${wifiStatus.ipAddress}`);
         }
       } else {
-        toast.error("Impossible de détecter l'adresse IP. Vérifiez votre connexion réseau.");
+        toast.error(t("settings.saveFailed"));
       }
     } catch (error) {
       console.error("Network detection error:", error);
-      toast.error("Erreur lors de la détection du réseau");
+      toast.error(t("settings.saveFailed"));
     } finally {
       setIsDetectingNetwork(false);
     }
@@ -165,37 +163,92 @@ export default function Settings() {
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-full">
-        <p className="text-muted-foreground">Chargement...</p>
+        <p className="text-muted-foreground">{t("common.loading")}</p>
       </div>;
   }
 
   return <div className="space-y-6 pb-24 px-0">
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold">Paramètres de l'Application</h1>
-        <p className="text-muted-foreground">Personnalisez l'apparence et les informations de votre application</p>
+        <h1 className="text-2xl sm:text-3xl font-bold">{t("settings.title")}</h1>
+        <p className="text-muted-foreground">{t("settings.subtitle")}</p>
       </div>
+
+      {/* Language Card */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Globe className="h-5 w-5" />
+            {t("settings.language")}
+          </CardTitle>
+          <CardDescription>{t("settings.languageDesc")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <RadioGroup
+            value={selectedLanguage}
+            onValueChange={(val) => setSelectedLanguage(val as Language)}
+            className="grid grid-cols-1 sm:grid-cols-3 gap-4"
+          >
+            <Label
+              htmlFor="lang-fr"
+              className={`flex items-center gap-3 rounded-lg border-2 p-4 cursor-pointer transition-colors ${
+                selectedLanguage === 'fr' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <RadioGroupItem value="fr" id="lang-fr" />
+              <div>
+                <p className="font-medium">🇫🇷 Français</p>
+                <p className="text-xs text-muted-foreground">French</p>
+              </div>
+            </Label>
+            <Label
+              htmlFor="lang-en"
+              className={`flex items-center gap-3 rounded-lg border-2 p-4 cursor-pointer transition-colors ${
+                selectedLanguage === 'en' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <RadioGroupItem value="en" id="lang-en" />
+              <div>
+                <p className="font-medium">🇬🇧 English</p>
+                <p className="text-xs text-muted-foreground">English</p>
+              </div>
+            </Label>
+            <Label
+              htmlFor="lang-ar"
+              className={`flex items-center gap-3 rounded-lg border-2 p-4 cursor-pointer transition-colors ${
+                selectedLanguage === 'ar' ? 'border-primary bg-primary/5' : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <RadioGroupItem value="ar" id="lang-ar" />
+              <div>
+                <p className="font-medium">🇲🇦 الدارجة المغربية</p>
+                <p className="text-xs text-muted-foreground">Moroccan Darija</p>
+              </div>
+            </Label>
+          </RadioGroup>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Logos</CardTitle>
-          <CardDescription>Téléchargez les logos pour l'interface admin et la page de connexion</CardDescription>
+          <CardTitle>{t("settings.logos")}</CardTitle>
+          <CardDescription>{t("settings.logosDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-6 md:grid-cols-2">
-            <LogoUpload label="Logo Interface Admin" currentUrl={adminLogoUrl} onChange={setAdminLogoUrl} bucketPath="admin-logo" />
-            <LogoUpload label="Logo Page de Connexion" currentUrl={loginLogoUrl} onChange={setLoginLogoUrl} bucketPath="login-logo" />
+            <LogoUpload label={t("settings.adminLogo")} currentUrl={adminLogoUrl} onChange={setAdminLogoUrl} bucketPath="admin-logo" />
+            <LogoUpload label={t("settings.loginLogo")} currentUrl={loginLogoUrl} onChange={setLoginLogoUrl} bucketPath="login-logo" />
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Nom du Restaurant</CardTitle>
-          <CardDescription>Ce nom apparaîtra dans la barre latérale et le titre de la page</CardDescription>
+          <CardTitle>{t("settings.restaurantName")}</CardTitle>
+          <CardDescription>{t("settings.restaurantNameDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="restaurant-name">Nom du Restaurant</Label>
+            <Label htmlFor="restaurant-name">{t("settings.restaurantName")}</Label>
             <Input id="restaurant-name" value={restaurantName} onChange={e => setRestaurantName(e.target.value)} placeholder="RestaurantPro" />
           </div>
         </CardContent>
@@ -203,15 +256,15 @@ export default function Settings() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Configuration POS</CardTitle>
-          <CardDescription>Configurez les options du point de vente</CardDescription>
+          <CardTitle>{t("settings.posConfig")}</CardTitle>
+          <CardDescription>{t("settings.posConfigDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="use-tables">Utiliser le système de tables</Label>
+              <Label htmlFor="use-tables">{t("settings.useTablesSystem")}</Label>
               <p className="text-sm text-muted-foreground">
-                Lorsque activé, le POS exige la sélection d'une table pour les commandes sur place
+                {t("settings.useTablesSystemDesc")}
               </p>
             </div>
             <Switch
@@ -227,18 +280,18 @@ export default function Settings() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Wifi className="h-5 w-5" />
-            Configuration Wi-Fi pour la Présence
+            {t("settings.wifiConfig")}
           </CardTitle>
           <CardDescription>
-            Configurez le réseau Wi-Fi requis pour que les employés puissent pointer leur présence
+            {t("settings.wifiConfigDesc")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="space-y-0.5">
-              <Label htmlFor="require-wifi">Exiger la connexion Wi-Fi pour pointer</Label>
+              <Label htmlFor="require-wifi">{t("settings.requireWifi")}</Label>
               <p className="text-sm text-muted-foreground">
-                Les employés doivent être connectés au Wi-Fi du restaurant pour enregistrer leur présence
+                {t("settings.requireWifiDesc")}
               </p>
             </div>
             <Switch
@@ -250,13 +303,12 @@ export default function Settings() {
 
           {requireWifiForAttendance && (
             <div className="space-y-4 pt-4 border-t">
-              {/* Detect Network Button */}
               <div className="p-4 rounded-lg border-2 border-dashed border-primary/30 bg-primary/5">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <div className="flex-1">
-                    <p className="font-medium text-sm">Détection automatique</p>
+                    <p className="font-medium text-sm">{t("settings.autoDetect")}</p>
                     <p className="text-xs text-muted-foreground">
-                      Connectez-vous au Wi-Fi du restaurant, puis cliquez pour détecter les paramètres réseau
+                      {t("settings.autoDetectDesc")}
                     </p>
                   </div>
                   <Button
@@ -269,71 +321,71 @@ export default function Settings() {
                     {isDetectingNetwork ? (
                       <>
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Détection...
+                        {t("settings.detecting")}
                       </>
                     ) : (
                       <>
                         <Search className="h-4 w-4 mr-2" />
-                        Détecter mon réseau
+                        {t("settings.detectNetwork")}
                       </>
                     )}
                   </Button>
                 </div>
                 {detectedIp && (
-                  <div className="mt-3 flex items-center gap-2 text-sm text-green-600 dark:text-green-400">
+                  <div className="mt-3 flex items-center gap-2 text-sm text-green-600">
                     <CheckCircle className="h-4 w-4" />
-                    <span>Réseau détecté - IP: {detectedIp}</span>
+                    <span>{t("settings.networkDetected")} {detectedIp}</span>
                   </div>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="wifi-name">Nom du réseau Wi-Fi</Label>
+                <Label htmlFor="wifi-name">{t("settings.wifiName")}</Label>
                 <Input
                   id="wifi-name"
                   value={wifiSsidName}
                   onChange={(e) => setWifiSsidName(e.target.value)}
-                  placeholder="Ex: RestaurantWiFi"
+                  placeholder={t("settings.wifiNamePlaceholder")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Ce nom sera affiché aux employés pour qu'ils sachent à quel réseau se connecter
+                  {t("settings.wifiNameDesc")}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="wifi-ip-range">Plage d'adresses IP locale</Label>
+                <Label htmlFor="wifi-ip-range">{t("settings.ipRange")}</Label>
                 <Input
                   id="wifi-ip-range"
                   value={wifiIpRange}
                   onChange={(e) => setWifiIpRange(e.target.value)}
-                  placeholder="Ex: 192.168.1"
+                  placeholder={t("settings.ipRangePlaceholder")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Les 3 premiers octets de l'adresse IP (ex: 192.168.1 pour accepter 192.168.1.x)
+                  {t("settings.ipRangeDesc")}
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="wifi-public-ip">Adresse IP publique (optionnel)</Label>
+                <Label htmlFor="wifi-public-ip">{t("settings.publicIp")}</Label>
                 <Input
                   id="wifi-public-ip"
                   value={wifiPublicIp}
                   onChange={(e) => setWifiPublicIp(e.target.value)}
-                  placeholder="Ex: 196.119.10.37"
+                  placeholder={t("settings.publicIpPlaceholder")}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Pour les appareils mobiles qui exposent l'IP publique au lieu de l'IP locale
+                  {t("settings.publicIpDesc")}
                 </p>
               </div>
 
               <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
                 <Info className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
                 <div className="text-sm text-muted-foreground">
-                  <p className="font-medium mb-1">Comment trouver votre plage IP manuellement :</p>
+                  <p className="font-medium mb-1">{t("settings.howToFindIp")}</p>
                   <ol className="list-decimal list-inside space-y-1">
-                    <li>Connectez-vous au Wi-Fi du restaurant</li>
-                    <li>Allez dans Paramètres → Wi-Fi → Détails du réseau</li>
-                    <li>Notez les 3 premiers chiffres de votre adresse IP (ex: 192.168.1)</li>
+                    <li>{t("settings.ipStep1")}</li>
+                    <li>{t("settings.ipStep2")}</li>
+                    <li>{t("settings.ipStep3")}</li>
                   </ol>
                 </div>
               </div>
@@ -344,49 +396,42 @@ export default function Settings() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Couleurs du Système</CardTitle>
-          <CardDescription>Personnalisez les couleurs principales de votre application</CardDescription>
+          <CardTitle>{t("settings.systemColors")}</CardTitle>
+          <CardDescription>{t("settings.systemColorsDesc")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="grid gap-4 md:grid-cols-3">
-            <ColorPicker label="Couleur Primaire" value={primaryColor} onChange={setPrimaryColor} />
-            <ColorPicker label="Couleur Secondaire" value={secondaryColor} onChange={setSecondaryColor} />
-            <ColorPicker label="Couleur de Fond" value={backgroundColor} onChange={setBackgroundColor} />
+            <ColorPicker label={t("settings.primaryColor")} value={primaryColor} onChange={setPrimaryColor} />
+            <ColorPicker label={t("settings.secondaryColor")} value={secondaryColor} onChange={setSecondaryColor} />
+            <ColorPicker label={t("settings.backgroundColor")} value={backgroundColor} onChange={setBackgroundColor} />
           </div>
 
           <Separator />
 
           <div className="space-y-4">
-            <h4 className="font-medium">Aperçu</h4>
+            <h4 className="font-medium">{t("settings.preview")}</h4>
             <div className="grid gap-2 md:grid-cols-3">
-              <div className="h-20 rounded-lg border" style={{
-              backgroundColor: primaryColor
-            }}>
-                <p className="text-center text-white text-sm font-medium pt-8">Primaire</p>
+              <div className="h-20 rounded-lg border" style={{ backgroundColor: primaryColor }}>
+                <p className="text-center text-white text-sm font-medium pt-8">{t("settings.primary")}</p>
               </div>
-              <div className="h-20 rounded-lg border" style={{
-              backgroundColor: secondaryColor
-            }}>
-                <p className="text-center text-white text-sm font-medium pt-8">Secondaire</p>
+              <div className="h-20 rounded-lg border" style={{ backgroundColor: secondaryColor }}>
+                <p className="text-center text-white text-sm font-medium pt-8">{t("settings.secondary")}</p>
               </div>
-              <div className="h-20 rounded-lg border" style={{
-              backgroundColor: backgroundColor
-            }}>
-                <p className="text-center text-foreground text-sm font-medium pt-8">Fond</p>
+              <div className="h-20 rounded-lg border" style={{ backgroundColor: backgroundColor }}>
+                <p className="text-center text-foreground text-sm font-medium pt-8">{t("settings.background")}</p>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {/* Sticky Save Bar */}
       {isDirty && <div className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
           <div className="container flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-4 px-4 sm:px-6 py-3 sm:py-4">
             <Button variant="outline" onClick={handleCancel} disabled={updateMutation.isPending} className="w-full sm:w-auto">
-              Annuler
+              {t("settings.cancel")}
             </Button>
             <Button onClick={handleSaveAll} disabled={updateMutation.isPending || !settings} className="w-full sm:w-auto">
-              {updateMutation.isPending ? "Enregistrement..." : "Enregistrer les modifications"}
+              {updateMutation.isPending ? t("settings.saving") : t("settings.saveChanges")}
             </Button>
           </div>
         </div>}

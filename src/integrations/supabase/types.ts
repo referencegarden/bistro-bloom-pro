@@ -20,6 +20,7 @@ export type Database = {
           background_color: string
           created_at: string
           id: string
+          language: string
           login_logo_url: string | null
           primary_color: string
           require_wifi_for_attendance: boolean
@@ -38,6 +39,7 @@ export type Database = {
           background_color?: string
           created_at?: string
           id?: string
+          language?: string
           login_logo_url?: string | null
           primary_color?: string
           require_wifi_for_attendance?: boolean
@@ -56,6 +58,7 @@ export type Database = {
           background_color?: string
           created_at?: string
           id?: string
+          language?: string
           login_logo_url?: string | null
           primary_color?: string
           require_wifi_for_attendance?: boolean

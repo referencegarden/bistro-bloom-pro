@@ -10,7 +10,8 @@ import { ReportExport } from "@/components/ReportExport";
 import { PurchasesChart, StockByCategoryChart } from "@/components/DashboardCharts";
 import { useNavigate, useParams } from "react-router-dom";
 import { format, subDays } from "date-fns";
-import { fr } from "date-fns/locale";
+import { fr, enUS, ar } from "date-fns/locale";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 interface DashboardStats {
   totalProducts: number;
@@ -33,6 +34,7 @@ interface DashboardStats {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
+  const { t, language } = useLanguage();
   const [stats, setStats] = useState<DashboardStats>({
     totalProducts: 0,
     totalSales: 0,
@@ -51,6 +53,8 @@ export default function Dashboard() {
   const totalPages = Math.ceil(stats.lowStockProducts.length / ITEMS_PER_PAGE);
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
   const paginatedProducts = stats.lowStockProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
+  const dateLocale = language === "ar" ? ar : language === "en" ? enUS : fr;
 
   useEffect(() => {
     loadDashboardData();
@@ -129,14 +133,14 @@ export default function Dashboard() {
     });
   }
 
-  const todayFormatted = format(new Date(), "EEEE d MMMM yyyy", { locale: fr });
+  const todayFormatted = format(new Date(), "EEEE d MMMM yyyy", { locale: dateLocale });
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Tableau de bord</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t("dashboard.title")}</h1>
           <div className="flex items-center gap-2 mt-1">
             <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
             <p className="text-sm text-muted-foreground capitalize">{todayFormatted}</p>
@@ -147,10 +151,10 @@ export default function Dashboard() {
 
       {/* Stat Cards */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="Produits Totaux" value={stats.totalProducts.toString()} icon={Package} variant="emerald" />
-        <StatCard title="Achats Totaux" value={`${stats.totalPurchases.toFixed(2)} DH`} icon={TrendingUp} variant="violet" />
-        <StatCard title="Achats du Jour" value={`${stats.dailyPurchases.toFixed(2)} DH`} icon={ShoppingCart} variant="amber" />
-        <StatCard title="Valeur du Stock" value={`${stats.totalStockValue.toFixed(2)} DH`} icon={Package} variant="blue" />
+        <StatCard title={t("dashboard.totalProducts")} value={stats.totalProducts.toString()} icon={Package} variant="emerald" />
+        <StatCard title={t("dashboard.totalPurchases")} value={`${stats.totalPurchases.toFixed(2)} DH`} icon={TrendingUp} variant="violet" />
+        <StatCard title={t("dashboard.dailyPurchases")} value={`${stats.dailyPurchases.toFixed(2)} DH`} icon={ShoppingCart} variant="amber" />
+        <StatCard title={t("dashboard.stockValue")} value={`${stats.totalStockValue.toFixed(2)} DH`} icon={Package} variant="blue" />
       </div>
 
       {/* Quick Actions */}
@@ -162,16 +166,16 @@ export default function Dashboard() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Commandes en Attente</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("dashboard.pendingOrders")}</p>
                 <p className="text-4xl font-bold mt-2 text-foreground">{stats.pendingDemands}</p>
-                <p className="text-xs text-[hsl(var(--warning))] font-semibold mt-1 uppercase">À traiter</p>
+                <p className="text-xs text-[hsl(var(--warning))] font-semibold mt-1 uppercase">{t("dashboard.toProcess")}</p>
               </div>
               <div className="w-14 h-14 rounded-2xl bg-[hsl(var(--warning)/0.1)] flex items-center justify-center">
                 <ClipboardList className="h-7 w-7 text-[hsl(var(--warning))]" />
               </div>
             </div>
             <div className="flex items-center gap-1 mt-4 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
-              <span>Gérer les commandes</span>
+              <span>{t("dashboard.manageOrders")}</span>
               <ArrowRight className="h-3 w-3" />
             </div>
           </CardContent>
@@ -184,16 +188,16 @@ export default function Dashboard() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Produits en Stock</p>
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("dashboard.inStockProducts")}</p>
                 <p className="text-4xl font-bold mt-2 text-foreground">{stats.inStockDemands}</p>
-                <p className="text-xs text-[hsl(var(--success))] font-semibold mt-1 uppercase">Niveau optimal</p>
+                <p className="text-xs text-[hsl(var(--success))] font-semibold mt-1 uppercase">{t("dashboard.optimalLevel")}</p>
               </div>
               <div className="w-14 h-14 rounded-2xl bg-[hsl(var(--success)/0.1)] flex items-center justify-center">
                 <Package className="h-7 w-7 text-[hsl(var(--success))]" />
               </div>
             </div>
             <div className="flex items-center gap-1 mt-4 text-xs text-muted-foreground group-hover:text-foreground transition-colors">
-              <span>Prêts pour l'achat</span>
+              <span>{t("dashboard.readyToPurchase")}</span>
               <ArrowRight className="h-3 w-3" />
             </div>
           </CardContent>
@@ -215,7 +219,7 @@ export default function Dashboard() {
                 <div className="w-8 h-8 rounded-lg bg-destructive/10 flex items-center justify-center">
                   <AlertTriangle className="h-4 w-4 text-destructive" />
                 </div>
-                Alertes Stock Faible
+                {t("dashboard.lowStockAlerts")}
                 <Badge variant="destructive" className="ml-1 text-xs">
                   {stats.lowStockProducts.length}
                 </Badge>
@@ -250,7 +254,7 @@ export default function Dashboard() {
                         variant={severity === "destructive" ? "destructive" : "secondary"}
                         className="text-[10px] px-1.5"
                       >
-                        {severity === "destructive" ? "Critique" : severity === "warning" ? "Bas" : "Alerte"}
+                        {severity === "destructive" ? t("dashboard.critical") : severity === "warning" ? t("dashboard.low") : t("dashboard.alert")}
                       </Badge>
                     </div>
                   </div>
@@ -266,7 +270,7 @@ export default function Dashboard() {
                   onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                 >
-                  Précédent
+                  {t("dashboard.previous")}
                 </Button>
                 <span className="text-xs text-muted-foreground">
                   {currentPage} / {totalPages}
@@ -277,7 +281,7 @@ export default function Dashboard() {
                   onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                 >
-                  Suivant
+                  {t("dashboard.next")}
                 </Button>
               </div>
             )}
