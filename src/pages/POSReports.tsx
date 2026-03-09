@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Download, TrendingUp, DollarSign, ShoppingCart, Award, Users } from "lucide-react";
-import * as XLSX from "xlsx";
+import { createWorkbook, addJsonSheet, downloadWorkbook } from "@/lib/excelExport";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 
 interface SalesReportItem {
@@ -102,39 +102,31 @@ export default function POSReports() {
     }
   };
 
-  const exportToExcel = () => {
-    const wb = XLSX.utils.book_new();
+  const exportToExcel = async () => {
+    const wb = await createWorkbook();
     
-    // Products sheet
-    const productsWs = XLSX.utils.json_to_sheet(
-      reportData.map((item) => ({
-        Rang: item.rank,
-        "Nom du Produit": item.menu_item_name,
-        Catégorie: item.menu_item_category || "-",
-        "Quantité Vendue": item.total_quantity,
-        "Revenu Total (DH)": item.total_revenue.toFixed(2),
-        "Nombre de Commandes": item.order_count,
-        "Valeur Moyenne (DH)": item.avg_order_value.toFixed(2),
-        "% des Ventes": item.sales_percentage.toFixed(2) + "%",
-      }))
-    );
-    
-    // Employees sheet
-    const employeesWs = XLSX.utils.json_to_sheet(
-      employeeReport.map((item) => ({
-        Rang: item.rank,
-        Serveur: item.employee_name,
-        Poste: item.employee_position || "-",
-        "Nombre de Commandes": item.total_orders,
-        "Revenu Total (DH)": item.total_revenue.toFixed(2),
-        "Articles Vendus": item.total_items_sold,
-        "Valeur Moyenne (DH)": item.avg_order_value.toFixed(2),
-      }))
-    );
+    addJsonSheet(wb, "Produits", reportData.map((item) => ({
+      Rang: item.rank,
+      "Nom du Produit": item.menu_item_name,
+      Catégorie: item.menu_item_category || "-",
+      "Quantité Vendue": item.total_quantity,
+      "Revenu Total (DH)": item.total_revenue.toFixed(2),
+      "Nombre de Commandes": item.order_count,
+      "Valeur Moyenne (DH)": item.avg_order_value.toFixed(2),
+      "% des Ventes": item.sales_percentage.toFixed(2) + "%",
+    })));
 
-    XLSX.utils.book_append_sheet(wb, productsWs, "Produits");
-    XLSX.utils.book_append_sheet(wb, employeesWs, "Serveurs");
-    XLSX.writeFile(wb, `Rapport_POS_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+    addJsonSheet(wb, "Serveurs", employeeReport.map((item) => ({
+      Rang: item.rank,
+      Serveur: item.employee_name,
+      Poste: item.employee_position || "-",
+      "Nombre de Commandes": item.total_orders,
+      "Revenu Total (DH)": item.total_revenue.toFixed(2),
+      "Articles Vendus": item.total_items_sold,
+      "Valeur Moyenne (DH)": item.avg_order_value.toFixed(2),
+    })));
+
+    await downloadWorkbook(wb, `Rapport_POS_${format(new Date(), "yyyy-MM-dd")}.xlsx`);
     toast.success("Rapport exporté avec succès");
   };
 
