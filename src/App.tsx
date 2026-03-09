@@ -8,6 +8,7 @@ import { Layout } from "./components/Layout";
 import { ProtectedRoute } from "./components/ProtectedRoute";
 import { PermissionRoute } from "./components/PermissionRoute";
 import { TenantProvider } from "./contexts/TenantContext";
+import { LanguageProvider } from "./contexts/LanguageContext";
 import Dashboard from "./pages/Dashboard";
 import Products from "./pages/Products";
 import Sales from "./pages/Sales";
