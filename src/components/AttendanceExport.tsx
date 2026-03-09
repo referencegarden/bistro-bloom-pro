@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { format } from "date-fns";
-import * as XLSX from "xlsx";
+import { createWorkbook, addJsonSheet, downloadWorkbook } from "@/lib/excelExport";
 
 interface AttendanceRecord {
   id: string;
@@ -22,52 +22,33 @@ interface AttendanceExportProps {
   records: AttendanceRecord[];
 }
 
+function mapRecords(records: AttendanceRecord[]) {
+  return records.map(record => ({
+    "Employé": record.employees.name,
+    "Poste": record.employees.position || "-",
+    "Date": format(new Date(record.date), "dd/MM/yyyy"),
+    "Arrivée": record.check_in_time ? format(new Date(record.check_in_time), "HH:mm") : "-",
+    "Départ": record.check_out_time ? format(new Date(record.check_out_time), "HH:mm") : "-",
+    "Wi-Fi": record.wifi_ssid === "ReferenceGarden" ? "✓ Validé" : "✗ Non validé",
+    "Adresse IP": record.ip_address || "-",
+    "Statut": record.status === "present" ? "Présent" : record.status === "pending" ? "En cours" : "Absent",
+    "Notes": record.notes || "-"
+  }));
+}
+
 export function AttendanceExport({ records }: AttendanceExportProps) {
-  const exportToExcel = () => {
-    const exportData = records.map(record => ({
-      "Employé": record.employees.name,
-      "Poste": record.employees.position || "-",
-      "Date": format(new Date(record.date), "dd/MM/yyyy"),
-      "Arrivée": record.check_in_time ? format(new Date(record.check_in_time), "HH:mm") : "-",
-      "Départ": record.check_out_time ? format(new Date(record.check_out_time), "HH:mm") : "-",
-      "Wi-Fi": record.wifi_ssid === "ReferenceGarden" ? "✓ Validé" : "✗ Non validé",
-      "Adresse IP": record.ip_address || "-",
-      "Statut": record.status === "present" ? "Présent" : record.status === "pending" ? "En cours" : "Absent",
-      "Notes": record.notes || "-"
-    }));
-
-    const ws = XLSX.utils.json_to_sheet(exportData);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Présences");
-
-    // Set column widths
-    ws['!cols'] = [
-      { wch: 20 }, // Employé
-      { wch: 15 }, // Poste
-      { wch: 12 }, // Date
-      { wch: 10 }, // Arrivée
-      { wch: 10 }, // Départ
-      { wch: 15 }, // Wi-Fi
-      { wch: 15 }, // IP
-      { wch: 12 }, // Statut
-      { wch: 30 }  // Notes
-    ];
-
+  const exportToExcel = async () => {
+    const exportData = mapRecords(records);
+    const wb = await createWorkbook();
+    addJsonSheet(wb, "Présences", exportData, [20, 15, 12, 10, 10, 15, 15, 12, 30]);
     const fileName = `presences_${format(new Date(), "yyyy-MM-dd")}.xlsx`;
-    XLSX.writeFile(wb, fileName);
+    await downloadWorkbook(wb, fileName);
   };
 
   const exportToCSV = () => {
     const headers = [
-      "Employé",
-      "Poste",
-      "Date",
-      "Arrivée",
-      "Départ",
-      "Wi-Fi",
-      "Adresse IP",
-      "Statut",
-      "Notes"
+      "Employé", "Poste", "Date", "Arrivée", "Départ",
+      "Wi-Fi", "Adresse IP", "Statut", "Notes"
     ];
 
     const csvData = records.map(record => [

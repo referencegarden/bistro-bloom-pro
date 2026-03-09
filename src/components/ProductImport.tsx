@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import * as XLSX from 'xlsx';
+import { readWorkbookFromFile, sheetToJson } from "@/lib/excelExport";
 import { Upload, FileSpreadsheet, AlertCircle, CheckCircle2 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -27,6 +27,73 @@ interface ImportResult {
   errors: Array<{ row: number; name: string; error: string }>;
 }
 
+function parseProducts(rows: Record<string, unknown>[]): ImportProduct[] {
+  return rows.map((row) => {
+    const normalizedRow: Record<string, unknown> = {};
+    Object.keys(row).forEach(key => {
+      normalizedRow[key.toLowerCase().trim()] = row[key];
+    });
+
+    const rawCategory = String(
+      normalizedRow['category name'] ||
+      normalizedRow.category ||
+      normalizedRow['catégorie'] ||
+      normalizedRow.categorie ||
+      normalizedRow.categ_id ||
+      normalizedRow['categ id'] ||
+      normalizedRow.categ ||
+      ''
+    );
+
+    const category_name = rawCategory.includes('/')
+      ? rawCategory.split('/').pop()?.trim()
+      : rawCategory;
+
+    return {
+      name: String(normalizedRow.name || normalizedRow.nom || ''),
+      unit_of_measure: String(normalizedRow['unit of measure'] || normalizedRow['unité de mesure'] || normalizedRow.unit || ''),
+      cost: parseFloat(
+        String(
+          normalizedRow.cost ||
+          normalizedRow['coût'] ||
+          normalizedRow.prix ||
+          normalizedRow['sales price'] ||
+          normalizedRow['prix de vente'] ||
+          normalizedRow['sale price'] ||
+          0
+        )
+      ),
+      category_name,
+    };
+  });
+}
+
+function deduplicateProducts(allProducts: ImportProduct[]): ImportProduct[] {
+  const productMap = new Map<string, ImportProduct>();
+  allProducts.forEach(product => {
+    const key = product.name.toLowerCase().trim();
+    if (key) {
+      const existing = productMap.get(key);
+      if (!existing || (product.unit_of_measure && !isNaN(product.cost))) {
+        productMap.set(key, product);
+      }
+    }
+  });
+  return Array.from(productMap.values());
+}
+
+async function parseFile(file: File): Promise<ImportProduct[]> {
+  const workbook = await readWorkbookFromFile(file);
+  let allProducts: ImportProduct[] = [];
+
+  workbook.eachSheet((worksheet) => {
+    const jsonData = sheetToJson(worksheet);
+    allProducts = allProducts.concat(parseProducts(jsonData));
+  });
+
+  return deduplicateProducts(allProducts);
+}
+
 export const ProductImport = ({ open, onClose }: ProductImportProps) => {
   const [file, setFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
@@ -41,70 +108,8 @@ export const ProductImport = ({ open, onClose }: ProductImportProps) => {
     setResult(null);
 
     try {
-      const data = await selectedFile.arrayBuffer();
-      const workbook = XLSX.read(data);
-      
-      // Parse all sheets and combine rows
-      let allProducts: ImportProduct[] = [];
-      
-      workbook.SheetNames.forEach(sheetName => {
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
-
-        const parsedProducts: ImportProduct[] = jsonData.map((row: any) => {
-          const normalizedRow: any = {};
-          Object.keys(row).forEach(key => {
-            normalizedRow[key.toLowerCase().trim()] = row[key];
-          });
-
-          const rawCategory = normalizedRow['category name'] || 
-                              normalizedRow.category || 
-                              normalizedRow.catégorie || 
-                              normalizedRow.categorie ||
-                              normalizedRow.categ_id ||
-                              normalizedRow['categ id'] ||
-                              normalizedRow.categ ||
-                              '';
-          
-          // Extract last part if it's a path like "MATERIEL / MATERIEL BAR"
-          const category_name = rawCategory.includes('/') 
-            ? rawCategory.split('/').pop()?.trim() 
-            : rawCategory;
-
-          return {
-            name: normalizedRow.name || normalizedRow.nom || '',
-            unit_of_measure: normalizedRow['unit of measure'] || normalizedRow['unité de mesure'] || normalizedRow.unit || '',
-            cost: parseFloat(
-              normalizedRow.cost || 
-              normalizedRow.coût || 
-              normalizedRow.prix || 
-              normalizedRow['sales price'] ||
-              normalizedRow['prix de vente'] ||
-              normalizedRow['sale price'] ||
-              0
-            ),
-            category_name,
-          };
-        });
-
-        allProducts = allProducts.concat(parsedProducts);
-      });
-
-      // Deduplicate by product name (keep last occurrence with most info)
-      const productMap = new Map<string, ImportProduct>();
-      allProducts.forEach(product => {
-        const key = product.name.toLowerCase().trim();
-        if (key) {
-          const existing = productMap.get(key);
-          // Keep the one with more information
-          if (!existing || (product.unit_of_measure && !isNaN(product.cost))) {
-            productMap.set(key, product);
-          }
-        }
-      });
-
-      const products = Array.from(productMap.values());
-      setPreview(products.slice(0, 5)); // Show first 5 rows as preview
+      const products = await parseFile(selectedFile);
+      setPreview(products.slice(0, 5));
       toast.success(`Fichier chargé: ${products.length} produits trouvés`);
     } catch (error) {
       console.error('Error reading file:', error);
@@ -123,69 +128,7 @@ export const ProductImport = ({ open, onClose }: ProductImportProps) => {
     setResult(null);
 
     try {
-      const data = await file.arrayBuffer();
-      const workbook = XLSX.read(data);
-      
-      // Parse all sheets and combine rows
-      let allProducts: ImportProduct[] = [];
-      
-      workbook.SheetNames.forEach(sheetName => {
-        const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json<any>(worksheet);
-
-        const parsedProducts: ImportProduct[] = jsonData.map((row: any) => {
-          const normalizedRow: any = {};
-          Object.keys(row).forEach(key => {
-            normalizedRow[key.toLowerCase().trim()] = row[key];
-          });
-
-          const rawCategory = normalizedRow['category name'] || 
-                              normalizedRow.category || 
-                              normalizedRow.catégorie || 
-                              normalizedRow.categorie ||
-                              normalizedRow.categ_id ||
-                              normalizedRow['categ id'] ||
-                              normalizedRow.categ ||
-                              '';
-          
-          // Extract last part if it's a path like "MATERIEL / MATERIEL BAR"
-          const category_name = rawCategory.includes('/') 
-            ? rawCategory.split('/').pop()?.trim() 
-            : rawCategory;
-
-          return {
-            name: normalizedRow.name || normalizedRow.nom || '',
-            unit_of_measure: normalizedRow['unit of measure'] || normalizedRow['unité de mesure'] || normalizedRow.unit || '',
-            cost: parseFloat(
-              normalizedRow.cost || 
-              normalizedRow.coût || 
-              normalizedRow.prix || 
-              normalizedRow['sales price'] ||
-              normalizedRow['prix de vente'] ||
-              normalizedRow['sale price'] ||
-              0
-            ),
-            category_name,
-          };
-        });
-
-        allProducts = allProducts.concat(parsedProducts);
-      });
-
-      // Deduplicate by product name (keep last occurrence with most info)
-      const productMap = new Map<string, ImportProduct>();
-      allProducts.forEach(product => {
-        const key = product.name.toLowerCase().trim();
-        if (key) {
-          const existing = productMap.get(key);
-          // Keep the one with more information
-          if (!existing || (product.unit_of_measure && !isNaN(product.cost))) {
-            productMap.set(key, product);
-          }
-        }
-      });
-
-      const products = Array.from(productMap.values());
+      const products = await parseFile(file);
 
       const { data: importResult, error } = await supabase.functions.invoke('import-products', {
         body: { products },
@@ -194,7 +137,7 @@ export const ProductImport = ({ open, onClose }: ProductImportProps) => {
       if (error) throw error;
 
       setResult(importResult);
-      
+
       if (importResult.failed === 0) {
         toast.success(`${importResult.success} produits importés avec succès!`);
         setTimeout(() => {
