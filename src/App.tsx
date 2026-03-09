@@ -46,6 +46,7 @@ const queryClient = new QueryClient();
 const App = () => (
   <ThemeProvider defaultTheme="system" storageKey="restaurant-theme">
     <QueryClientProvider client={queryClient}>
+      <LanguageProvider>
       <TooltipProvider>
       <Toaster />
       <Sonner />
