@@ -48,16 +48,17 @@ interface EmployeePermissions {
 }
 
 const defaultPermissions: EmployeePermissions = {
-  can_make_sales: true,
-  can_view_products: true,
+  can_make_sales: false,
+  can_view_products: false,
   can_view_reports: false,
   can_manage_stock: false,
   can_manage_suppliers: false,
-  can_create_demands: true,
+  can_create_demands: false,
   can_use_pos: false,
   can_manage_orders: false,
   can_process_payments: false,
   can_view_kitchen_display: false,
+  can_view_bar_display: false,
   can_access_pos_reports: false,
   can_manage_attendance: false,
 };
