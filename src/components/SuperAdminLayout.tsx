@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Navigate, Outlet, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Shield, LayoutDashboard, Users, CreditCard, LogOut } from "lucide-react";
+import { Shield, LayoutDashboard, Users, CreditCard, LogOut, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 export function SuperAdminLayout() {
