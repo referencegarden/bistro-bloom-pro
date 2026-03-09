@@ -12,11 +12,14 @@ interface LayoutProps {
 }
 
 export function Layout({ children }: LayoutProps) {
-  // Force light theme for restaurant pages
+  const { dir } = useLanguage();
+
+  // Force light theme for restaurant pages + handle RTL
   useEffect(() => {
     document.documentElement.classList.remove("dark");
     document.documentElement.classList.add("light");
-  }, []);
+    document.documentElement.dir = dir;
+  }, [dir]);
 
   const { data: employeeData } = useQuery({
     queryKey: ["current-employee"],
