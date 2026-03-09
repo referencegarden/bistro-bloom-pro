@@ -34,6 +34,7 @@ import SuperAdminInitialize from "./pages/SuperAdminInitialize";
 import SuperAdminDashboard from "./pages/SuperAdminDashboard";
 import SuperAdminTenants from "./pages/SuperAdminTenants";
 import SuperAdminSubscriptions from "./pages/SuperAdminSubscriptions";
+import SuperAdminPlans from "./pages/SuperAdminPlans";
 import { SuperAdminLayout } from "./components/SuperAdminLayout";
 import { SubscriptionGuard } from "./components/SubscriptionGuard";
 import Tables from "./pages/Tables";
@@ -345,6 +346,7 @@ const App = () => (
             <Route path="dashboard" element={<SuperAdminDashboard />} />
             <Route path="tenants" element={<SuperAdminTenants />} />
             <Route path="subscriptions" element={<SuperAdminSubscriptions />} />
+            <Route path="plans" element={<SuperAdminPlans />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

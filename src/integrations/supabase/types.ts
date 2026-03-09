@@ -715,6 +715,39 @@ export type Database = {
           },
         ]
       }
+      plan_features: {
+        Row: {
+          created_at: string | null
+          feature_description: string | null
+          feature_key: string
+          feature_name: string
+          id: string
+          is_enabled: boolean
+          plan_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          feature_description?: string | null
+          feature_key: string
+          feature_name: string
+          id?: string
+          is_enabled?: boolean
+          plan_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          feature_description?: string | null
+          feature_key?: string
+          feature_name?: string
+          id?: string
+          is_enabled?: boolean
+          plan_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       pos_categories: {
         Row: {
           color: string
@@ -1255,33 +1288,70 @@ export type Database = {
       cancel_order: { Args: { _order_id: string }; Returns: Json }
       confirm_order: { Args: { _order_id: string }; Returns: Json }
       generate_receipt_data: { Args: { _order_id: string }; Returns: Json }
-      get_pos_sales_by_employee: {
-        Args: { _end_date: string; _start_date: string }
-        Returns: {
-          avg_order_value: number
-          employee_id: string
-          employee_name: string
-          employee_position: string
-          rank: number
-          total_items_sold: number
-          total_orders: number
-          total_revenue: number
-        }[]
-      }
-      get_pos_sales_report: {
-        Args: { _end_date: string; _start_date: string }
-        Returns: {
-          avg_order_value: number
-          menu_item_category: string
-          menu_item_id: string
-          menu_item_name: string
-          order_count: number
-          rank: number
-          sales_percentage: number
-          total_quantity: number
-          total_revenue: number
-        }[]
-      }
+      get_pos_sales_by_employee:
+        | {
+            Args: { _end_date: string; _start_date: string }
+            Returns: {
+              avg_order_value: number
+              employee_id: string
+              employee_name: string
+              employee_position: string
+              rank: number
+              total_items_sold: number
+              total_orders: number
+              total_revenue: number
+            }[]
+          }
+        | {
+            Args: {
+              _end_date: string
+              _start_date: string
+              _tenant_id?: string
+            }
+            Returns: {
+              avg_order_value: number
+              employee_id: string
+              employee_name: string
+              employee_position: string
+              rank: number
+              total_items_sold: number
+              total_orders: number
+              total_revenue: number
+            }[]
+          }
+      get_pos_sales_report:
+        | {
+            Args: { _end_date: string; _start_date: string }
+            Returns: {
+              avg_order_value: number
+              menu_item_category: string
+              menu_item_id: string
+              menu_item_name: string
+              order_count: number
+              rank: number
+              sales_percentage: number
+              total_quantity: number
+              total_revenue: number
+            }[]
+          }
+        | {
+            Args: {
+              _end_date: string
+              _start_date: string
+              _tenant_id?: string
+            }
+            Returns: {
+              avg_order_value: number
+              menu_item_category: string
+              menu_item_id: string
+              menu_item_name: string
+              order_count: number
+              rank: number
+              sales_percentage: number
+              total_quantity: number
+              total_revenue: number
+            }[]
+          }
       get_unit_conversion_factor: {
         Args: { from_unit: string; to_unit: string }
         Returns: number
