@@ -38,6 +38,13 @@ All colors MUST be HSL.
 
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
+    --info: 217 91% 60%;
+
+    --chart-emerald: 160 84% 39%;
+    --chart-blue: 217 91% 60%;
+    --chart-amber: 38 92% 50%;
+    --chart-violet: 263 70% 50%;
+    --chart-rose: 350 89% 60%;
 
     --radius: 0.5rem;
 
@@ -89,6 +96,14 @@ All colors MUST be HSL.
 
     --success: 142 76% 36%;
     --warning: 38 92% 50%;
+    --info: 217 91% 60%;
+
+    --chart-emerald: 160 84% 39%;
+    --chart-blue: 217 91% 60%;
+    --chart-amber: 38 92% 50%;
+    --chart-violet: 263 70% 50%;
+    --chart-rose: 350 89% 60%;
+
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
