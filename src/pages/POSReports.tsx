@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Download, TrendingUp, DollarSign, ShoppingCart, Award, Users } from "lucide-react";
-import * as XLSX from "xlsx";
+import { createWorkbook, addJsonSheet, downloadWorkbook } from "@/lib/excelExport";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 
 interface SalesReportItem {
