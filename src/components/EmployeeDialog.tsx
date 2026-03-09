@@ -106,11 +106,12 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
               can_view_reports: data.can_view_reports,
               can_manage_stock: data.can_manage_stock,
               can_manage_suppliers: data.can_manage_suppliers ?? false,
-              can_create_demands: data.can_create_demands ?? true,
+              can_create_demands: data.can_create_demands ?? false,
               can_use_pos: data.can_use_pos ?? false,
               can_manage_orders: data.can_manage_orders ?? false,
               can_process_payments: data.can_process_payments ?? false,
               can_view_kitchen_display: data.can_view_kitchen_display ?? false,
+              can_view_bar_display: data.can_view_bar_display ?? false,
               can_access_pos_reports: data.can_access_pos_reports ?? false,
               can_manage_attendance: data.can_manage_attendance ?? false,
             };
