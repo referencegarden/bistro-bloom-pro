@@ -12,17 +12,39 @@ export default function SuperAdminInitialize() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [initSecret, setInitSecret] = useState("");
 
   const handleInitialize = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (password !== confirmPassword) {
+      toast({
+        title: "Error",
+        description: "Passwords do not match",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (password.length < 8) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 8 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       const { data, error } = await supabase.functions.invoke('initialize-super-admin', {
         body: {
-          email: 'admin@Servara.com',
-          password: 'Ayoub1994??%%',
+          email,
+          password,
           initSecret,
         },
       });
@@ -43,7 +65,6 @@ export default function SuperAdminInitialize() {
         description: "Super admin account created successfully. You can now log in.",
       });
 
-      // Redirect to login page after 2 seconds
       setTimeout(() => {
         navigate("/super-admin/login");
       }, 2000);
@@ -70,29 +91,47 @@ export default function SuperAdminInitialize() {
           </div>
           <CardTitle className="text-2xl text-center">Initialize Super Admin</CardTitle>
           <CardDescription className="text-center">
-            Enter your initialization secret to create the first super admin account
+            Enter your credentials and initialization secret to create the first super admin account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleInitialize} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-muted-foreground">Email (pre-configured)</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
-                value="admin@Servara.com"
-                disabled
-                className="bg-muted"
+                placeholder="admin@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                disabled={loading}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-muted-foreground">Password (pre-configured)</Label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
-                value="••••••••••••"
-                disabled
-                className="bg-muted"
+                placeholder="Minimum 8 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+                minLength={8}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="confirmPassword">Confirm Password</Label>
+              <Input
+                id="confirmPassword"
+                type="password"
+                placeholder="Confirm your password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                disabled={loading}
+                minLength={8}
               />
             </div>
             <div className="space-y-2">
