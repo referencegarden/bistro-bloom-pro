@@ -7,11 +7,13 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupConte
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useMemo } from "react";
 import { useEmployeePermissions } from "@/hooks/useEmployeePermissions";
+import { useTenant } from "@/contexts/TenantContext";
 
 export function AppSidebar() {
   const navigate = useNavigate();
   const { slug } = useParams<{ slug: string }>();
   const { open } = useSidebar();
+  const { tenantId } = useTenant();
   const { isAdmin, permissions, loading: permissionsLoading } = useEmployeePermissions();
 
   const { data: settings } = useQuery({
@@ -21,6 +23,38 @@ export function AppSidebar() {
       if (error) throw error;
       return data;
     }
+  });
+
+  // Fetch the tenant's subscription plan type
+  const { data: subscription, isLoading: subscriptionLoading } = useQuery({
+    queryKey: ["tenant-subscription", tenantId],
+    queryFn: async () => {
+      if (!tenantId) return null;
+      const { data, error } = await supabase
+        .from("subscriptions")
+        .select("plan_type, status, end_date")
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!tenantId,
+  });
+
+  // Fetch enabled features for the current plan
+  const { data: enabledFeatures, isLoading: featuresLoading } = useQuery({
+    queryKey: ["plan-features", subscription?.plan_type],
+    queryFn: async () => {
+      if (!subscription?.plan_type) return [];
+      const { data, error } = await supabase
+        .from("plan_features")
+        .select("feature_key")
+        .eq("plan_type", subscription.plan_type)
+        .eq("is_enabled", true);
+      if (error) throw error;
+      return data?.map(f => f.feature_key) || [];
+    },
+    enabled: !!subscription?.plan_type,
   });
 
   // Apply colors dynamically
@@ -52,46 +86,57 @@ export function AppSidebar() {
     }
   }, [settings]);
 
-  // All navigation items with their required permissions
+  // All navigation items with their required permissions and feature keys
   const allNavigation = [
-    { name: "Tableau de bord", href: `/${slug}/dashboard`, icon: Home, permission: "can_view_reports" },
-    { name: "Produits", href: `/${slug}/products`, icon: Package, permission: "can_view_products" },
-    { name: "Menu / Recettes", href: `/${slug}/menu-items`, icon: UtensilsCrossed, permission: "can_view_products" },
-    { name: "Sortie de Stock", href: `/${slug}/sales`, icon: ShoppingCart, permission: "can_make_sales" },
-    { name: "Achats", href: `/${slug}/purchases`, icon: TrendingUp, permission: "can_manage_stock" },
-    { name: "Commandes", href: `/${slug}/demands`, icon: ClipboardList, permission: "can_create_demands" },
-    { name: "Catégories", href: `/${slug}/category-management`, icon: LayoutGrid, permission: "can_view_products" },
-    { name: "Fournisseurs", href: `/${slug}/suppliers`, icon: Users, permission: "can_manage_suppliers" },
-    { name: "Tables", href: `/${slug}/tables`, icon: Grid3X3, permission: "can_manage_stock" },
-    { name: "Présence", href: `/${slug}/attendance`, icon: ClipboardCheck, permission: null }, // Always visible to all employees
-    { name: "Employés", href: `/${slug}/employees`, icon: Users, permission: "can_manage_attendance" },
-    { name: "Point de Vente", href: `/${slug}/pos`, icon: ShoppingBag, permission: "can_use_pos" },
-    { name: "Commandes POS", href: `/${slug}/pos/orders`, icon: ClipboardList, permission: "can_manage_orders" },
-    { name: "Affichage Cuisine", href: `/${slug}/pos/kitchen`, icon: ChefHat, permission: "can_view_kitchen_display" },
-    { name: "Affichage Bar", href: `/${slug}/pos/bar`, icon: Wine, permission: "can_view_bar_display" },
-    { name: "Rapports POS", href: `/${slug}/pos/reports`, icon: BarChart3, permission: "can_access_pos_reports" },
-    { name: "Paramètres", href: `/${slug}/settings`, icon: Settings, permission: "can_view_reports" }, // Admin-level
+    { name: "Tableau de bord", href: `/${slug}/dashboard`, icon: Home, permission: "can_view_reports", featureKey: "dashboard" },
+    { name: "Produits", href: `/${slug}/products`, icon: Package, permission: "can_view_products", featureKey: "products" },
+    { name: "Menu / Recettes", href: `/${slug}/menu-items`, icon: UtensilsCrossed, permission: "can_view_products", featureKey: "menu_items" },
+    { name: "Sortie de Stock", href: `/${slug}/sales`, icon: ShoppingCart, permission: "can_make_sales", featureKey: "sales" },
+    { name: "Achats", href: `/${slug}/purchases`, icon: TrendingUp, permission: "can_manage_stock", featureKey: "purchases" },
+    { name: "Commandes", href: `/${slug}/demands`, icon: ClipboardList, permission: "can_create_demands", featureKey: "demands" },
+    { name: "Catégories", href: `/${slug}/category-management`, icon: LayoutGrid, permission: "can_view_products", featureKey: "categories" },
+    { name: "Fournisseurs", href: `/${slug}/suppliers`, icon: Users, permission: "can_manage_suppliers", featureKey: "suppliers" },
+    { name: "Tables", href: `/${slug}/tables`, icon: Grid3X3, permission: "can_manage_stock", featureKey: "tables" },
+    { name: "Présence", href: `/${slug}/attendance`, icon: ClipboardCheck, permission: null, featureKey: "attendance" },
+    { name: "Employés", href: `/${slug}/employees`, icon: Users, permission: "can_manage_attendance", featureKey: "employees" },
+    { name: "Point de Vente", href: `/${slug}/pos`, icon: ShoppingBag, permission: "can_use_pos", featureKey: "pos" },
+    { name: "Commandes POS", href: `/${slug}/pos/orders`, icon: ClipboardList, permission: "can_manage_orders", featureKey: "pos_orders" },
+    { name: "Affichage Cuisine", href: `/${slug}/pos/kitchen`, icon: ChefHat, permission: "can_view_kitchen_display", featureKey: "kitchen_display" },
+    { name: "Affichage Bar", href: `/${slug}/pos/bar`, icon: Wine, permission: "can_view_bar_display", featureKey: "bar_display" },
+    { name: "Rapports POS", href: `/${slug}/pos/reports`, icon: BarChart3, permission: "can_access_pos_reports", featureKey: "pos_reports" },
+    { name: "Paramètres", href: `/${slug}/settings`, icon: Settings, permission: "can_view_reports", featureKey: "settings" },
   ];
 
-  // Filter navigation based on permissions
+  const planLoading = subscriptionLoading || featuresLoading;
+
+  // Filter navigation based on plan features AND permissions
   const filteredNavigation = useMemo(() => {
-    // While loading, show a minimal set for employees or nothing
-    if (permissionsLoading) {
+    // While loading, show nothing
+    if (permissionsLoading || planLoading) {
       return [];
     }
     
-    // Admins see everything
-    if (isAdmin) return allNavigation;
+    // Step 1: Filter by plan features (only show features enabled for the plan)
+    const planFilteredItems = allNavigation.filter(item => {
+      // If no enabledFeatures loaded yet or no subscription, show all (fallback)
+      if (!enabledFeatures || enabledFeatures.length === 0) return true;
+      // Check if feature is enabled in the plan
+      return enabledFeatures.includes(item.featureKey);
+    });
+    
+    // Step 2: Filter by employee permissions
+    // Admins see all plan-enabled features
+    if (isAdmin) return planFilteredItems;
     
     // Filter based on employee permissions
-    return allNavigation.filter(item => {
+    return planFilteredItems.filter(item => {
       // Items with no permission requirement are visible to all
       if (item.permission === null) return true;
       
       // Check specific permission
       return permissions[item.permission as keyof typeof permissions] === true;
     });
-  }, [isAdmin, permissions, permissionsLoading, slug, allNavigation]);
+  }, [isAdmin, permissions, permissionsLoading, planLoading, enabledFeatures, slug, allNavigation]);
 
   async function handleSignOut() {
     try {
