@@ -575,6 +575,17 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
               </div>
 
               <div className="flex items-center justify-between">
+                <Label htmlFor="can_view_bar_display">Peut voir l'affichage bar</Label>
+                <Switch
+                  id="can_view_bar_display"
+                  checked={permissions.can_view_bar_display}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_view_bar_display: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
                 <Label htmlFor="can_access_pos_reports">Peut accéder aux rapports POS</Label>
                 <Switch
                   id="can_access_pos_reports"
