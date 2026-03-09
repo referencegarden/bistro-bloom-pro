@@ -222,7 +222,39 @@ export default function Auth() {
     localStorage.setItem('current_tenant_slug', slug || '');
     
     toast.success("Connexion réussie!");
-    navigate(`/${slug}/dashboard`);
+
+    // Check user role to determine redirect
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", authData.user.id)
+      .maybeSingle();
+
+    if (roleData?.role === 'employee') {
+      // For employees, redirect based on their permissions
+      const { data: empRecord } = await supabase
+        .from("employees")
+        .select("id")
+        .eq("user_id", authData.user.id)
+        .eq("tenant_id", tenantId)
+        .maybeSingle();
+
+      if (empRecord) {
+        const { data: perms } = await supabase
+          .from("employee_permissions")
+          .select("*")
+          .eq("employee_id", empRecord.id)
+          .maybeSingle();
+
+        const route = getPermissionBasedRoute(perms);
+        navigate(route, { replace: true });
+      } else {
+        navigate(`/${slug}/attendance`, { replace: true });
+      }
+    } else {
+      // Admins go to dashboard
+      navigate(`/${slug}/dashboard`, { replace: true });
+    }
     setLoading(false);
   }
 

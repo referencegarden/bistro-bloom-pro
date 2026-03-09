@@ -43,6 +43,7 @@ interface EmployeePermissions {
   can_manage_orders: boolean;
   can_process_payments: boolean;
   can_view_kitchen_display: boolean;
+  can_view_bar_display: boolean;
   can_access_pos_reports: boolean;
   can_manage_attendance: boolean;
 }
