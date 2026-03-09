@@ -106,6 +106,14 @@ export function SuperAdminLayout() {
               <CreditCard className="h-4 w-4 mr-2" />
               Subscriptions
             </Button>
+            <Button
+              variant="ghost"
+              className="rounded-none border-b-2 border-transparent data-[active=true]:border-primary"
+              onClick={() => navigate("/super-admin/plans")}
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Plans
+            </Button>
           </div>
         </div>
       </nav>
