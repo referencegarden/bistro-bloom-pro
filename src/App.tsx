@@ -346,6 +346,7 @@ const App = () => (
             <Route path="dashboard" element={<SuperAdminDashboard />} />
             <Route path="tenants" element={<SuperAdminTenants />} />
             <Route path="subscriptions" element={<SuperAdminSubscriptions />} />
+            <Route path="plans" element={<SuperAdminPlans />} />
           </Route>
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
