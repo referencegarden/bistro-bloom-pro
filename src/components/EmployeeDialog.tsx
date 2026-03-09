@@ -43,21 +43,23 @@ interface EmployeePermissions {
   can_manage_orders: boolean;
   can_process_payments: boolean;
   can_view_kitchen_display: boolean;
+  can_view_bar_display: boolean;
   can_access_pos_reports: boolean;
   can_manage_attendance: boolean;
 }
 
 const defaultPermissions: EmployeePermissions = {
-  can_make_sales: true,
-  can_view_products: true,
+  can_make_sales: false,
+  can_view_products: false,
   can_view_reports: false,
   can_manage_stock: false,
   can_manage_suppliers: false,
-  can_create_demands: true,
+  can_create_demands: false,
   can_use_pos: false,
   can_manage_orders: false,
   can_process_payments: false,
   can_view_kitchen_display: false,
+  can_view_bar_display: false,
   can_access_pos_reports: false,
   can_manage_attendance: false,
 };
@@ -104,11 +106,12 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
               can_view_reports: data.can_view_reports,
               can_manage_stock: data.can_manage_stock,
               can_manage_suppliers: data.can_manage_suppliers ?? false,
-              can_create_demands: data.can_create_demands ?? true,
+              can_create_demands: data.can_create_demands ?? false,
               can_use_pos: data.can_use_pos ?? false,
               can_manage_orders: data.can_manage_orders ?? false,
               can_process_payments: data.can_process_payments ?? false,
               can_view_kitchen_display: data.can_view_kitchen_display ?? false,
+              can_view_bar_display: data.can_view_bar_display ?? false,
               can_access_pos_reports: data.can_access_pos_reports ?? false,
               can_manage_attendance: data.can_manage_attendance ?? false,
             };
@@ -249,6 +252,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
             can_manage_orders: true,
             can_process_payments: true,
             can_view_kitchen_display: false,
+            can_view_bar_display: false,
             can_access_pos_reports: false,
             can_make_sales: false,
             can_view_products: false,
@@ -270,6 +274,7 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
             can_manage_orders: permissions.can_manage_orders,
             can_process_payments: permissions.can_process_payments,
             can_view_kitchen_display: permissions.can_view_kitchen_display,
+            can_view_bar_display: permissions.can_view_bar_display,
             can_access_pos_reports: permissions.can_access_pos_reports,
             can_manage_attendance: permissions.can_manage_attendance,
           };
@@ -565,6 +570,17 @@ export function EmployeeDialog({ open, employee, onClose }: EmployeeDialogProps)
                   checked={permissions.can_view_kitchen_display}
                   onCheckedChange={(checked) =>
                     setPermissions({ ...permissions, can_view_kitchen_display: checked })
+                  }
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <Label htmlFor="can_view_bar_display">Peut voir l'affichage bar</Label>
+                <Switch
+                  id="can_view_bar_display"
+                  checked={permissions.can_view_bar_display}
+                  onCheckedChange={(checked) =>
+                    setPermissions({ ...permissions, can_view_bar_display: checked })
                   }
                 />
               </div>
